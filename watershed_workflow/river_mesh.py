@@ -86,7 +86,10 @@ def _computeExpectedNumElems(river: River) -> int:
     return sum(len(reach.linestring.coords) - 1 for reach in river)
 
 
-def _plotRiver(river: River, coords: np.ndarray, ax: matplotlib.axes.Axes) -> None:
+def _plotRiver(river: River,
+               coords: np.ndarray,
+               ax: matplotlib.axes.Axes,
+               intersections : Optional[gpd.GeoDataFrame] = None) -> None:
     """Plot the river and elements for a debugging plot.
 
     Parameters
@@ -98,18 +101,30 @@ def _plotRiver(river: River, coords: np.ndarray, ax: matplotlib.axes.Axes) -> No
     ax : matplotlib.axes.Axes
         Axes to plot on.
     """
-    river.plot(color='b', marker='+', ax=ax)
-
     elems = gpd.GeoDataFrame(geometry=[
         shapely.geometry.Polygon(coords[elem]) for reach in river for elem in reach[names.ELEMS]
-    ])
-    watershed_workflow.plot.linestringsWithCoords(elems.boundary, color='g', marker='x', ax=ax)
+    ], crs=river.df.crs)
+
+
+    if intersections is not None:
+        int_mp = intersections.buffer(2000).union_all()
+        river.df[river.df.intersects(int_mp)].plot(ax=ax, color='b')#, marker='+')
+
+        elems = elems[elems.intersects(int_mp)]
+        logging.info(f' ... plotting {len(elems)} elements near {len(intersections)} intersections')
+    else:
+        river.df.plot(ax=ax, color='b')
+
+    elems.boundary.plot(ax=ax, color='g')#, marker='x')
+    # watershed_workflow.plot.linestringsWithCoords(elems.boundary, color='g', marker='x', ax=ax)
 
 
 def createRiversMesh(hucs : SplitHUCs,
                      rivers : List[River],
                      computeWidth : Callable[[River], float],
-                     ax : Optional[matplotlib.axes.Axes] = None) -> \
+                     ax : Optional[matplotlib.axes.Axes] = None,
+                     plot : bool = False,
+                     ) -> \
                      Tuple[np.ndarray,
                            List[List[int]],
                            List[shapely.geometry.Polygon],
@@ -143,16 +158,17 @@ def createRiversMesh(hucs : SplitHUCs,
     coords_gid_start = 0
     elems_gid_start = 0
 
-    for river in rivers:
+    for i,river in enumerate(rivers):
         # create the mesh
         lcoords, lelems = createRiverMesh(river, computeWidth, elems_gid_start)
+        logging.info(f' ... created a mesh with {len(lelems)} elements for river {i}')
         elems_gid_start += len(lelems)
 
         # adjust the HUC linestrings to include the small cross-stream
         # segment
         adjustHUCsToRiverMesh(hucs, river, lcoords)
 
-        if ax is not None:
+        if ax is not None and plot:
             logging.info('Plotting the river mesh')
             _plotRiver(river, lcoords, ax)
 
@@ -173,7 +189,8 @@ def createRiversMesh(hucs : SplitHUCs,
         coords.append(lcoords)
 
     if ax is not None:
-        hucs.plotAsLinestrings(color='k', marker='x', ax=ax)
+        #hucs.plotAsLinestrings(color='k', marker='x', ax=ax)
+        hucs.plotAsLinestrings(color='k', ax=ax)
 
     all_coords = np.concatenate(coords)
 
@@ -209,8 +226,11 @@ def createRiversMesh(hucs : SplitHUCs,
         },
                                             geometry=intersection_p,
                                             crs=hucs.crs)
+        logging.info(f' ... found {len(intersections_df)} intersections:')
+        logging.info(f'  at: {intersections_df.centroid}')
         if ax is not None:
-            intersections_df.plot(color='k', ax=ax)
+            _plotRiver(river, lcoords, ax, intersections_df)
+            intersections_df.plot(color='r', marker='x', ax=ax)
 
     else:
         intersections_df = None
@@ -220,7 +240,8 @@ def createRiversMesh(hucs : SplitHUCs,
 
 def createRiverMesh(river: River,
                     computeWidth: Callable[[River, ], float],
-                    elems_gid_start: int = 0):
+                    elems_gid_start: int = 0,
+                    check_convexity: bool = True):
     """Returns list of elems and river corridor polygons for a given list of river trees
 
     Parameters
@@ -231,6 +252,13 @@ def createRiverMesh(river: River,
         Function that computes the width for a given reach.
     elems_gid_start : int, optional
         Starting global ID for elements, by default 0.
+    check_convexity : bool, optional
+        If True, check each element for convexity and attempt to fix
+        non-convex tip elements after projection.  Set to False to skip
+        this pass entirely, which is useful when deliberately testing
+        degenerate width configurations that would otherwise raise inside
+        the convexity fixer.  Default is True.
+
     Returns
     -------
     corrs: list(shapely.geometry.Polygon)
@@ -281,7 +309,7 @@ def createRiverMesh(river: River,
 
             # add paddler's right internal points by two-touches projection
             for i in reversed(range(1, len(reach.linestring.coords) - 1)):
-                coords[k] = projectTwo(reach.linestring.coords[i - 1], reach.linestring.coords[i],
+                coords[k] = projectTwoClampedMiter(reach.linestring.coords[i - 1], reach.linestring.coords[i],
                                        reach.linestring.coords[i + 1], halfwidth, halfwidth,
                                        reach.index == debug[0] and i == debug[1])
                 if reach.index == debug[0] and i == debug[1]:
@@ -303,7 +331,7 @@ def createRiverMesh(river: River,
             elif len(reach.children) == 1:
                 # add an upstream, paddler's right point based on inline junction of two reaches
                 child_halfwidth = computeWidth(reach.children[0]) / 2.
-                coords[k] = projectTwo(reach.children[0].linestring.coords[-2],
+                coords[k] = projectTwoClampedMiter(reach.children[0].linestring.coords[-2],
                                        reach.linestring.coords[0], reach.linestring.coords[1],
                                        child_halfwidth, halfwidth, reach.index == debug[0]
                                        and 0 == debug[1])
@@ -335,7 +363,7 @@ def createRiverMesh(river: River,
             elif len(reach.children) == 1:
                 # add an upstream, paddler's left pont based on inline junction of two reaches
                 child_halfwidth = computeWidth(reach.children[-1]) / 2.
-                coords[k] = projectTwo(reach.linestring.coords[1], reach.linestring.coords[0],
+                coords[k] = projectTwoClampedMiter(reach.linestring.coords[1], reach.linestring.coords[0],
                                        reach.children[-1].linestring.coords[-2], halfwidth,
                                        child_halfwidth, reach.index == debug[0] and 0 == debug[1])
                 if reach.index == debug[0] and 0 == debug[1]:
@@ -360,7 +388,7 @@ def createRiverMesh(river: River,
 
             # add a paddler's left internal point
             for i in range(1, len(reach.linestring.coords) - 1):
-                coords[k] = projectTwo(reach.linestring.coords[i + 1], reach.linestring.coords[i],
+                coords[k] = projectTwoClampedMiter(reach.linestring.coords[i + 1], reach.linestring.coords[i],
                                        reach.linestring.coords[i - 1], halfwidth, halfwidth,
                                        (reach.index == debug[0] and i == debug[1]))
                 if reach.index == debug[0] and i == debug[1]:
@@ -399,44 +427,67 @@ def createRiverMesh(river: River,
 
     assert k == len(coords)
 
-    # another pass to check for convexity
+    # clamp middle junction points so they cannot overshoot the flanking points
+    # For a reach with 2+ children the first element is a pentagon (or wider).
+    # The flanking points (paddler's right and left at the junction) are already
+    # placed; the middle point(s) must not be farther from the junction centre p
+    # than either flanking point, or they can break convexity.
     for reach in river:
-        for k, elem in enumerate(reach[names.ELEMS]):
-            e_coords = coords[elem]
-            if not watershed_workflow.utils.isConvex(e_coords):
-                if k != 0:
-                    fig, ax = plt.subplots(1, 1)
+        if len(reach.children) < 2:
+            continue
+        p = np.asarray(reach.linestring.coords[0])
+        pentagon = reach[names.ELEMS][0]
+        # pentagon order: [right_dn, right_up, mid_1, ..., left_up, left_dn]
+        # flanking upstream points are index 1 (right) and index -2 (left)
+        right_up = coords[pentagon[1]]
+        left_up  = coords[pentagon[-2]]
+        cap_d = min(np.linalg.norm(right_up - p), np.linalg.norm(left_up - p))
+        # middle points are everything between index 1 and index -2 (exclusive)
+        for idx in pentagon[2:-2]:
+            m = coords[idx]
+            d = np.linalg.norm(m - p)
+            if d > cap_d:
+                coords[idx] = p + cap_d * (m - p) / d
 
-                    reaches = [reach, ]
-                    if reach.parent is not None:
-                        reaches.append(reach.parent)
-                    reaches = reaches + list(reach.children)
-                    for r in reaches:
-                        ax.plot(r.linestring.xy[0], r.linestring.xy[1], 'b-x')
+    # another pass to check for convexity
+    if check_convexity:
+        for reach in river:
+            for k, elem in enumerate(reach[names.ELEMS]):
+                e_coords = coords[elem]
+                if not watershed_workflow.utils.isConvex(e_coords):
+                    if k != 0:
+                        fig, ax = plt.subplots(1, 1)
 
-                    for k2, e2 in enumerate(reach.parent[names.ELEMS]):
-                        e_coords2 = coords[e2]
-                        poly2 = shapely.geometry.Polygon(e_coords2)
-                        ax.plot(poly2.exterior.xy[0], poly2.exterior.xy[1], '-x', color='purple')
+                        reaches = [reach, ]
+                        if reach.parent is not None:
+                            reaches.append(reach.parent)
+                        reaches = reaches + list(reach.children)
+                        for r in reaches:
+                            ax.plot(r.linestring.xy[0], r.linestring.xy[1], 'b-x')
 
-                    for lcv_reach in reach.parent.children:
-                        for k2, e2 in enumerate(lcv_reach[names.ELEMS]):
+                        for k2, e2 in enumerate(reach.parent[names.ELEMS]):
                             e_coords2 = coords[e2]
                             poly2 = shapely.geometry.Polygon(e_coords2)
-                            ax.plot(poly2.exterior.xy[0], poly2.exterior.xy[1], '-x', color='grey')
-                        
-                    poly = shapely.geometry.Polygon(e_coords)
-                    ax.plot(poly.exterior.xy[0], poly.exterior.xy[1], 'g-x')
+                            ax.plot(poly2.exterior.xy[0], poly2.exterior.xy[1], '-x', color='purple')
 
-                    ls = reach.linestring
-                    ax.plot(ls.xy[0], ls.xy[1], 'r-x')
-                    ax.set_aspect('equal', adjustable='box')
-                    plt.show()
-                    raise RuntimeError(f'Convexity in non-0th ({k})th element of reach {reach.index} with ID {reach[names.ID]}')
-                
-                new_e_coords = fixConvexity(reach, e_coords, computeWidth)
-                for c_index, coord in zip(elem, new_e_coords):
-                    coords[c_index] = coord
+                        for lcv_reach in reach.parent.children:
+                            for k2, e2 in enumerate(lcv_reach[names.ELEMS]):
+                                e_coords2 = coords[e2]
+                                poly2 = shapely.geometry.Polygon(e_coords2)
+                                ax.plot(poly2.exterior.xy[0], poly2.exterior.xy[1], '-x', color='grey')
+
+                        poly = shapely.geometry.Polygon(e_coords)
+                        ax.plot(poly.exterior.xy[0], poly.exterior.xy[1], 'g-x')
+
+                        ls = reach.linestring
+                        ax.plot(ls.xy[0], ls.xy[1], 'r-x')
+                        ax.set_aspect('equal', adjustable='box')
+                        plt.show()
+                        raise RuntimeError(f'Convexity in non-0th ({k})th element of reach {reach.index} with ID {reach[names.ID]}')
+
+                    new_e_coords = fixConvexity(reach, e_coords, computeWidth)
+                    for c_index, coord in zip(elem, new_e_coords):
+                        coords[c_index] = coord
 
     # gather elems
     elems = [e for reach in river.postOrder() for e in reach[names.ELEMS]]
@@ -638,7 +689,7 @@ def projectOne(p_up: np.ndarray, p: np.ndarray, width: float) -> np.ndarray:
     return p + width*perp
 
 
-def projectTwo(p_up: np.ndarray,
+def _projectTwoMiter(p_up: np.ndarray,
                p: np.ndarray,
                p_dn: np.ndarray,
                width1: float,
@@ -690,20 +741,152 @@ def projectTwo(p_up: np.ndarray,
             logging.info(f"parallel! results in intersection = {new_p}")
         return new_p
 
-    elif np.linalg.norm(intersection - p) \
-         > 4 * max(abs(width1), abs(width2)):
-        # a degenerative point often caused by differing widths and nearly parallel lines
-        new_p1 = projectOne(p_up, p, width1)
-        new_p2 = projectOne(p_dn, p, -width2)
-        new_p = np.array(watershed_workflow.utils.computeMidpoint(new_p1, new_p2))
-        if debug:
-            logging.info(f"results in failure of intersection, computing midpoint = {new_p}")
-        return new_p
-
     else:
         if debug:
             logging.info(f"results in intersection = {intersection}")
         return intersection
+
+
+def projectTwoClampedMiter(p_up: np.ndarray,
+                           p: np.ndarray,
+                           p_dn: np.ndarray,
+                           width1: float,
+                           width2: float,
+                           debug: bool = False) -> np.ndarray:
+    """Find a bank point using the miter approach, clamped to avoid overshoot.
+
+    Computes the miter intersection via _projectTwoMiter(), then applies one
+    of two strategies depending on the bend angle theta at p:
+
+    - theta > 90 deg (nearly-straight reach, p_up-p-p_dn angle close to
+      180): the miter direction becomes unreliable; fall back to the
+      bisector direction with the average width, similarly capped.
+    - theta <= 90 deg (sharp bend): the miter direction is reliable; cap
+      |m - p| to 3/4 * min(|p_up - p|, |p_dn - p|) to prevent overshoot.
+
+    In both cases the fallback also triggers when |m - p| already exceeds
+    the cap (e.g. parallel segments where _projectTwoMiter returns a
+    perpendicular).
+
+    Parameters
+    ----------
+    p_up : np.ndarray
+        Upstream point coordinates.
+    p : np.ndarray
+        Middle point coordinates.
+    p_dn : np.ndarray
+        Downstream point coordinates.
+    width1 : float
+        Width for upstream segment.
+    width2 : float
+        Width for downstream segment.
+    debug : bool, optional
+        Whether to log debug information, by default False.
+
+    Returns
+    -------
+    np.ndarray
+        Projected bank point coordinates.
+    """
+    p_up = np.asarray(p_up, dtype=float)
+    p = np.asarray(p, dtype=float)
+    p_dn = np.asarray(p_dn, dtype=float)
+
+    cap_d = 0.75 * min(np.linalg.norm(p_up - p), np.linalg.norm(p_dn - p))
+    avg_width = (width1 + width2) / 2.0
+
+    # bend angle theta at p: angle between incoming and outgoing unit tangents
+    v_up = (p_up - p) / np.linalg.norm(p_up - p)
+    v_dn = (p_dn - p) / np.linalg.norm(p_dn - p)
+    cos_theta = np.clip(np.dot(v_up, v_dn), -1.0, 1.0)
+    theta = np.degrees(np.arccos(cos_theta))  # 180 = straight, 0 = U-turn
+
+    m = _projectTwoMiter(p_up, p, p_dn, width1, width2, debug)
+    d = np.linalg.norm(m - p)
+
+    if d > cap_d:
+        if theta > 90.0:
+            # nearly-straight bend + overshoot: miter direction unreliable, use bisector
+            if debug:
+                logging.info(f"bisector fallback: theta={theta:.1f}, d={d:.4f}, cap_d={cap_d:.4f}")
+            m = projectTwoBisector(p_up, p, p_dn, avg_width, debug)
+            d = np.linalg.norm(m - p)
+            if d > cap_d:
+                m = p + cap_d * (m - p) / d
+        else:
+            # sharp bend (theta <= 90) + overshoot: miter direction is fine, just clamp length
+            if debug:
+                logging.info(f"clamping miter: theta={theta:.1f}, d={d:.4f}, cap_d={cap_d:.4f}")
+            m = p + cap_d * (m - p) / d
+    return m
+
+
+def projectTwoBisector(p_up: np.ndarray,
+                       p: np.ndarray,
+                       p_dn: np.ndarray,
+                       width: float,
+                       debug: bool = False) -> np.ndarray:
+    """Find a point that is width away from p along the bisector of p_up --> p --> p_dn.
+
+    Unlike projectTwoMiter(), which uses a miter approach and accepts two widths,
+    this uses the angle bisector of the two segments and a single width.  The
+    result is always exactly width away from p, so it cannot overshoot
+    regardless of the bend angle or width ratio between adjacent reaches.
+
+    When the two segments are antiparallel (straight line, zero bend), the
+    bisector is degenerate and the function falls back to a simple perpendicular
+    projection via projectOne() using the upstream segment.
+
+    Parameters
+    ----------
+    p_up : np.ndarray
+        Upstream point coordinates.
+    p : np.ndarray
+        Middle point coordinates.
+    p_dn : np.ndarray
+        Downstream point coordinates.
+    width : float
+        Distance from p to the projected bank point, measured along the bisector.
+    debug : bool, optional
+        Whether to log debug information, by default False.
+
+    Returns
+    -------
+    np.ndarray
+        Projected bank point coordinates.
+    """
+    p_up = np.asarray(p_up, dtype=float)
+    p = np.asarray(p, dtype=float)
+    p_dn = np.asarray(p_dn, dtype=float)
+
+    # unit tangent of upstream segment pointing into p
+    d1 = p - p_up
+    d1 /= np.linalg.norm(d1)
+
+    # unit tangent of downstream segment pointing away from p
+    d2 = p_dn - p
+    d2 /= np.linalg.norm(d2)
+
+    # right-hand perpendiculars of each segment at p
+    perp1 = np.array([d1[1], -d1[0]])
+    perp2 = np.array([d2[1], -d2[0]])
+
+    # bisector of the two perpendiculars
+    bisector = perp1 + perp2
+    bisector_norm = np.linalg.norm(bisector)
+
+    if bisector_norm < 1e-10:
+        # antiparallel segments (straight reach): fall back to upstream perpendicular
+        if debug:
+            logging.info(f"bisector degenerate (straight reach), falling back to projectOne")
+        return projectOne(p_up, p, width)
+
+    bisector /= bisector_norm
+
+    result = p + width * bisector
+    if debug:
+        logging.info(f"bisector = {bisector}, result = {result}")
+    return result
 
 
 def projectJunction(reach: River,
@@ -729,17 +912,17 @@ def projectJunction(reach: River,
         Junction point coordinates.
     """
     if child_idx == 0:
-        return projectTwo(reach.children[0].linestring.coords[-2], reach.linestring.coords[0],
+        return projectTwoClampedMiter(reach.children[0].linestring.coords[-2], reach.linestring.coords[0],
                           reach.linestring.coords[1],
                           computeWidth(reach.children[0]) / 2.,
                           computeWidth(reach) / 2., debug)
     elif child_idx == len(reach.children):
-        return projectTwo(reach.linestring.coords[1], reach.linestring.coords[0],
+        return projectTwoClampedMiter(reach.linestring.coords[1], reach.linestring.coords[0],
                           reach.children[-1].linestring.coords[-2],
                           computeWidth(reach) / 2.,
                           computeWidth(reach.children[-1]) / 2., debug)
     else:
-        return projectTwo(reach.children[child_idx].linestring.coords[-2],
+        return projectTwoClampedMiter(reach.children[child_idx].linestring.coords[-2],
                           reach.linestring.coords[0],
                           reach.children[child_idx - 1].linestring.coords[-2],
                           computeWidth(reach.children[child_idx]) / 2.,

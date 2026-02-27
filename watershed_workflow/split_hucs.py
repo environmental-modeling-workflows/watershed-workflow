@@ -19,6 +19,7 @@ import shapely.errors
 import watershed_workflow.utils
 import watershed_workflow.crs
 import watershed_workflow.plot
+import watershed_workflow.colors
 import watershed_workflow.sources.standard_names as names
 
 _abs_tol = 1

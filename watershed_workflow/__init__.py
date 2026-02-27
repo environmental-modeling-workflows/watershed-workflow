@@ -606,7 +606,9 @@ def tessalateRiverAligned(hucs : SplitHUCs,
                           internal_boundaries : Optional[List[River | shapely.geometry.base.BaseGeometry]] = None,
                           hole_points : Optional[List[Tuple[float, float]]] = None,
                           additional_vertices : Optional[List[Tuple[float, float]]] = None,
+                          plot : bool = False,
                           debug : bool = False,
+                          triangulate : bool = True,
                           **kwargs) -> \
                        watershed_workflow.mesh.Mesh2D | \
                        Tuple[watershed_workflow.mesh.Mesh2D, np.ndarray, np.ndarray]:
@@ -658,24 +660,25 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     # generate the quads
     logging.info('Creating stream-aligned mesh...')
     assert callable(river_width), "river_width must be a callable"
-    computeWidth = river_width
 
-    if debug:
-        fig, ax = plt.subplots(1,1)
+    if debug or plot:
+        fig, ax = plt.subplots(1,1, figsize=(8,12))
     else:
         ax = None
 
     river_coords, river_elems, river_corridors, river_corridor_hole_points, intersections = \
-        watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, computeWidth, ax=ax)
+        watershed_workflow.river_mesh.createRiversMesh(hucs, rivers, river_width, ax=ax, plot=plot)
+    
     if hole_points is not None:
         hole_points = river_corridor_hole_points + hole_points
     else:
         hole_points = river_corridor_hole_points
     if debug:
         plt.show()
-    if intersections is not None:
-        return river_coords, river_elems, intersections
 
+    if intersections is not None or not triangulate:
+        return river_coords, river_elems, intersections
+        
     # triangulate the rest
     if internal_boundaries is None:
         internal_boundaries = river_corridors

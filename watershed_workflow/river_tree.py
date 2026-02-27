@@ -231,7 +231,7 @@ class River(watershed_workflow.tinytree.Tree):
             pname for pname in [
                 names.NAME, 'gnis_name', 'ftype', names.ORDER, names.DIVERGENCE, names.HYDROSEQ,
                 names.DOWNSTREAM_HYDROSEQ, names.UPSTREAM_HYDROSEQ, names.LENGTH,
-                names.CATCHMENT_AREA,
+                names.CATCHMENT_AREA, names.BANKFULL_WIDTH, names.BANKFULL_DEPTH,
             ] if pname in self.df
         ]
         for p in self.df.keys():
