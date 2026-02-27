@@ -2268,14 +2268,15 @@ def refineCorridorTriangles(m2 : Mesh2D,
     if len(m2.labeled_sets) != 0:
         raise ValueError("This algorithm does not correctly deal with labeled sets.")
 
-    river_buffer = shapely.ops.unary_union(river_corrs).buffer(0.1)
+    river_buffer = shapely.ops.unary_union(river_corrs).buffer(0.01)
 
     def _isStreamPoint(coord):
         return river_buffer.contains(shapely.geometry.Point(*coord))
 
 
-    new_coords = list(m2.coords)
+    new_coords = list(copy.deepcopy(m2.coords[:,0:2]))
     new_conns = copy.deepcopy(m2.conn)
+
     def _splitTri(c,i,p):
         """Split tri c on edge conn[i],conn[i+1] at point p"""
         old_conn = [v for v in m2.conn[c]]
@@ -2283,7 +2284,13 @@ def refineCorridorTriangles(m2 : Mesh2D,
         new_conns.append([p, old_conn[(i+1)%3], old_conn[(i+2)%3]])
     
     count = 0
+    previously_split = []
+    spanning_tris = []
     for c in range(m2.num_cells):
+        if c in previously_split:
+            # could have been already split if c is a neighbor of a split tri
+            continue
+        
         # is a triangle, all 3 points on the corridor
         if len(m2.conn[c]) == 3 and all(_isStreamPoint(m2.coords[v]) for v in m2.conn[c]):
             # find a midpoint NOT on the corridor
@@ -2297,6 +2304,7 @@ def refineCorridorTriangles(m2 : Mesh2D,
                 # likely this is a beginning-of-the-stream triangle
                 continue
             elif len(midps) == 1:
+                # triangle in a junction -- split the edge that is not in the corridor
                 count = count + 1
                 
                 # split c along this edge
@@ -2315,16 +2323,54 @@ def refineCorridorTriangles(m2 : Mesh2D,
                 except StopIteration:
                     pass
                 else:
+                    previously_split.extend([c, other_c])
                     other_i = m2.cell_edges[other_c].index(e)
                     _splitTri(other_c, other_i, new_v)
-                    
 
+            # elif len(midps) == 2:
+            # it's a bit unclear if this is logically possible.  This
+            # code should be correct, and may be uncommented if this
+            # assertion throws at a later point.
+            #     # triangle spanning upstream a junction -- split the longer of the two edges
+            #     count = count + 1
+
+            #     # split c along the long edge
+            #     spanning_edges = list(sorted(midps, key=lambda midp : watershed_workflow.utils.computeDistance(m2.coords[midp[1][0]],
+            #                                                                                                    m2.coords[midp[1][1]])))
+            #     i,e,new_p = midps[-1]
+
+            #     # add the new coordinate
+            #     new_v = len(new_coords)
+            #     new_coords.append(new_p)
+
+            #     # replace and add a new triangle
+            #     _splitTri(c, i, new_v)
+
+            #     # find the neighbor and split it too
+            #     try:
+            #         other_c = next(cc for cc in m2.edge_cells[e] if cc != c)
+            #     except StopIteration:
+            #         pass
+            #     else:
+            #         previously_split.extend([c, other_c])
+            #         other_i = m2.cell_edges[other_c].index(e)
+            #         _splitTri(other_c, other_i, new_v)
+                
             else:
-                raise RuntimeError('This should not be possible, something went wrong!')
+                # hope this gets dealt with later?
+                spanning_tris.append(c)
+                # raise RuntimeError(f'Found a triangle at centroid {m2.centroids[c]} with 3 nodes on the corridor and '
+                #                    f'{len(midps)} edge midpoints not on the corridor -- this should not be possible!')
+
+    for c in spanning_tris:
+        if c not in previously_split:
+            raise RuntimeError(f'Found a triangle {c} at centroid {m2.centroids[c]} with 3 nodes on the corridor and '
+                               'more than one edge midpoints not on the corridor -- this should not be possible!')
+                
 
     if count == 0:
         return m2
     else:
-        return watershed_workflow.mesh.Mesh2D(new_coords, new_conns, crs=m2.crs)
+        return watershed_workflow.mesh.Mesh2D(np.array(new_coords), new_conns, crs=m2.crs)
 
     

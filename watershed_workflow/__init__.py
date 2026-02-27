@@ -747,6 +747,7 @@ def elevate(m2 : watershed_workflow.mesh.Mesh2D,
         new_points[:, 0:2] = mesh_points
         new_points[:, 2] = elev.values
         m2.coords = new_points
+        m2.clearGeometryCache()
 
 
 

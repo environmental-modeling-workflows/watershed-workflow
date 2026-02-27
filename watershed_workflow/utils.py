@@ -168,7 +168,7 @@ def computeCentroid(points : Iterable[Point]) -> Point:
         points = np.array(points)
         bary_c = points.mean(axis=0)
         area = 0
-        centroid = np.array([0.,0.,0.])
+        centroid = np.zeros((len(points[0]),), 'd')
 
         for i in range(len(points)):
             tri_points = [points[i],

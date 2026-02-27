@@ -1532,6 +1532,9 @@ def conditionMesh(m2 : Mesh2D,
     m2, res1 = fillPits(m2, 'marching', *args, max_iterations=3)
     pits = res1['pits_final']
 
+    if len(pits) == 0:
+        return m2, [res1,]
+
     # find all triangular, interior pits with nonoverlapping neighbors
     nonoverlapping = []
     affected = []
@@ -1546,7 +1549,10 @@ def conditionMesh(m2 : Mesh2D,
                     nonoverlapping.append(p[0])
                     affected.extend(local_affected)    
     # refine
-    m2_r, removed_cells = watershed_workflow.mesh.refineTriangles(m2, nonoverlapping)
+    if len(nonoverlapping) > 0:
+        m2_r, removed_cells = watershed_workflow.mesh.refineTriangles(m2, nonoverlapping)
+    else:
+        m2_r, removed_cells = m, list()
 
     # remap preserved_pits.  Note that edges are fine
     #
@@ -1564,6 +1570,8 @@ def conditionMesh(m2 : Mesh2D,
 
     # marching
     m2_r, res2 = fillPits(m2_r, 'marching', *args, max_iterations=3)
+    if len(res2) == 0:
+        return m2_r, [res1, res2]
 
     # global iterative
     m2_r, res3 = fillPits(m2_r, 'global', *args, max_iterations=200, increase_ok=True)
