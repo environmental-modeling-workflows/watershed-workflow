@@ -21,6 +21,9 @@ DIVERGENCE = 'divergence'
 CATCHMENT = 'catchment'
 CATCHMENT_AREA = 'catchment_area'
 LENGTH = 'length'
+BANKFULL_WIDTH = 'bankfull_width'
+BANKFULL_DEPTH = 'bankfull_depth'
+BANKFULL_AREA = 'bankfull_area'
 
 # reach property names used in conditioning
 PROFILE_ELEVATION = 'elev_profile'

@@ -412,11 +412,19 @@ def smoothUpstreamSharpAngles(hucs : SplitHUCs | None,
     except AssertionError:
         fig, ax = plt.subplots(1, 1)
         hucs.plot(color='k', ax=ax)
+        mls = [reach.linestring,]
         watershed_workflow.plot.linestringWithCoords(reach.linestring, marker='x', color='grey', ax=ax)
 
         for child, color in zip(reach.children, watershed_workflow.colors.enumerated_palettes[1]):
+            mls.append(child.linestring)
             watershed_workflow.plot.linestringWithCoords(child.linestring, marker='x', color=color, ax=ax)
+
+        lss = shapely.geometry.MultiLineString(mls)
+        bounds = lss.buffer(1000).bounds
+        ax.set_xlim(bounds[0], bounds[2])
+        ax.set_ylim(bounds[1], bounds[3])
         plt.show()
+        
         raise RuntimeError(f'smoothUpstreamSharpAngles input data is bad -- angles upstream of reach {reach[names.ID]} are invalid')
 
     if len(angles) > 4:

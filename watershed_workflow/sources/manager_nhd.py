@@ -2,6 +2,7 @@ from typing import List, Optional
 from shapely.geometry.base import BaseGeometry
 import geopandas as gpd
 import pandas as pd
+import importlib.resources
 
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
@@ -24,6 +25,9 @@ waterdata_renames = {'gnis_name' : names.NAME,
                      'uphydroseq' : names.UPSTREAM_HYDROSEQ,
                      'dnhydroseq' : names.DOWNSTREAM_HYDROSEQ,
                      'divergence' : names.DIVERGENCE,
+                     'BANKFULL_WIDTH' : names.BANKFULL_WIDTH,
+                     'BANKFULL_DEPTH' : names.BANKFULL_DEPTH,
+                     'BANKFULL_XSEC_AREA' : names.BANKFULL_AREA,
                      }
 
 hr_ids = {'flowline' : 'nhdplusid',
@@ -51,6 +55,9 @@ mr_renames = { 'GNIS_NAME' : names.NAME,
                'UpHydroseq' : names.UPSTREAM_HYDROSEQ,
                'DnHydroseq' : names.DOWNSTREAM_HYDROSEQ,
                'Divergence' : names.DIVERGENCE,
+               'BANKFULL_WIDTH' : names.BANKFULL_WIDTH,
+               'BANKFULL_DEPTH' : names.BANKFULL_DEPTH,
+               'BANKFULL_XSEC_AREA' : names.BANKFULL_AREA,
               }
 
 
@@ -232,6 +239,14 @@ class ManagerNHD(manager_hyriver.ManagerHyRiver):
         # Add catchments if requested
         if self._catchments:
             df = self.getCatchments(df)
+
+        # if NHDv2.1, get bankfull properties
+        if self.name == 'NHDPlus MR v2.1':
+            bankfull_df = pd.read_parquet(importlib.resources.files("watershed_workflow") / "data" / "nhd_v21_bankfull_properties.parquet")
+
+            # merge on comid (lowercase in WaterData df, uppercase in bankfull file)
+            df = pd.merge(df, bankfull_df, left_on='comid', right_on='COMID')
+            df = df.drop(columns='COMID')
         
         return df
     

@@ -44,9 +44,9 @@ def writeDatasetToHDF5(filename: str,
         
     Notes
     -----
-    The function writes time as seconds since time0, with y coordinates in reverse order
-    to match typical geospatial conventions. Data arrays are also flipped vertically
-    to match the y coordinate ordering.
+    The function writes time as seconds since time0, with y coordinates stored in
+    strictly increasing order (flipping if necessary). Data arrays are also flipped
+    vertically to match the y coordinate ordering.
     """
     try:
         os.remove(filename)
@@ -81,9 +81,13 @@ def writeDatasetToHDF5(filename: str,
     with h5py.File(filename, 'w') as fid:
         fid.create_dataset('time [s]', data=times)
 
-        # make y increasing order
-        rev_y = y[::-1]
-        fid.create_dataset('y [m]', data=rev_y)
+        # ensure y is stored in increasing order
+        if y[-1] < y[0]:
+            y = y[::-1]
+            flip_y = True
+        else:
+            flip_y = False
+        fid.create_dataset('y [m]', data=y)
         fid.create_dataset('x [m]', data=x)
 
         for key in keys:
@@ -96,9 +100,9 @@ def writeDatasetToHDF5(filename: str,
             grp = fid.create_group(key)
             for i in range(len(times)):
                 idat = data[i, :, :]
-                # flip rows to match the order of y
-                rev_idat = np.flip(idat, axis=0)
-                grp.create_dataset(str(i), data=rev_idat)
+                if flip_y:
+                    idat = np.flip(idat, axis=0)
+                grp.create_dataset(str(i), data=idat)
 
         if attributes is not None:
             for key, val in attributes.items():

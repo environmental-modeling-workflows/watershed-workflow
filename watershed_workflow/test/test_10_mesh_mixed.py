@@ -6,6 +6,7 @@ import geopandas
 from matplotlib import pyplot as plt
 
 from watershed_workflow.river_mesh import *
+from watershed_workflow.river_mesh import _projectTwoMiter
 from watershed_workflow.test.shapes import *
 
 _plot = False
@@ -51,25 +52,25 @@ def test_projectOne():
     p = projectOne((3.,4), (4,3), np.sqrt(2))
     assert np.allclose(p, (3,2))
 
-def test_projectTwo_parallel():
-    p = projectTwo((0.,0), (1.,0), (2.,0), 1, 1)
+def test_projectTwoMiter_parallel():
+    p = _projectTwoMiter((0.,0), (1.,0), (2.,0), 1, 1)
     assert np.allclose(p, (1.,-1))
 
-def test_projectTwo_parallel_mixedwidth():
-    p = projectTwo((0.,0), (1.,0), (2.,0), 0.5, 1.5)
+def test_projectTwoMiter_parallel_mixedwidth():
+    p = _projectTwoMiter((0.,0), (1.,0), (2.,0), 0.5, 1.5)
     assert np.allclose(p, (1.,-1))
 
 
-def test_projectTwo():
-    p = projectTwo((0.,0), (1.,0), (1.,1), 1., 1.)
+def test_projectTwoMiter():
+    p = _projectTwoMiter((0.,0), (1.,0), (1.,1), 1., 1.)
     assert np.allclose(p, (2., -1))
 
-def test_projectTwo_mixed():
-    p = projectTwo((0.,0), (1.,0), (1.,1), 2., 1.)
+def test_projectTwoMiter_mixed():
+    p = _projectTwoMiter((0.,0), (1.,0), (1.,1), 2., 1.)
     assert np.allclose(p, (2., -2))
     
-def test_projectTwo_jagged():
-    p = projectTwo((0,0), (2,1), (4,0), 1, 1)
+def test_projectTwoMiter_jagged():
+    p = _projectTwoMiter((0,0), (2,1), (4,0), 1, 1)
     new_p = (2, 1 - 1./np.cos(np.arctan(0.5)))
     assert np.allclose(p, new_p)
     

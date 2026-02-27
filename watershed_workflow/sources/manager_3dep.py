@@ -64,8 +64,10 @@ class Manager3DEP(manager_dataset.ManagerDataset):
         
         # Use instance resolution and native CRS
         logging.info(f'Getting DEM with map of area = {request.geometry.area}')
-        result = py3dep.get_map(request.variables, request.geometry, self._resolution, 
-                               geo_crs=self.native_crs_in, crs=self.native_crs_out)
+        bounds = request.geometry.bounds
+        bbox = shapely.geometry.box(*bounds)
+        result = py3dep.get_map(request.variables, bbox, self._resolution, 
+                                geo_crs=self.native_crs_in, crs=self.native_crs_out)
         
         # py3dep returns DataArray for single layer, Dataset for multiple layers
         if isinstance(result, xr.DataArray):

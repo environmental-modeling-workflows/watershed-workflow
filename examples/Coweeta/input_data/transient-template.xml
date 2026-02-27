@@ -393,7 +393,7 @@
         <Parameter name="surface albedos key" type="string" value="surface-albedos"/>
         <Parameter name="surface emissivities key" type="string" value="surface-emissivities"/>
         <Parameter name="surface temperature key" type="string" value="surface-temperature"/>
-        <Parameter name="snow temperature key" type="string" value="snow-temperature"/>
+        <Parameter name="snow temperature key" type="string" value="surface-temperature"/>
         <Parameter name="canopy temperature key" type="string" value="canopy-temperature"/>
         <Parameter name="incoming shortwave radiation key" type="string" value="surface-incident_shortwave_radiation"/>
         <Parameter name="incoming longwave radiation key" type="string" value="surface-incoming_longwave_radiation"/>
@@ -425,7 +425,7 @@
         <Parameter name="limiter number of dofs" type="int" value="2"/>
         <Parameter name="limiter dof" type="int" value="1"/>
         <Parameter name="air temperature key" type="string" value="surface-air_temperature"/>
-        <Parameter name="surface temperature key" type="string" value="snow-temperature"/>
+        <Parameter name="surface temperature key" type="string" value="surface-temperature"/>
         <Parameter name="elevation key" type="string" value="surface-elevation"/>
         <Parameter name="net radiation key" type="string" value="snow-radiation_balance"/>
         <Parameter name="limiter key" type="string" value="surface-area_fractions"/>

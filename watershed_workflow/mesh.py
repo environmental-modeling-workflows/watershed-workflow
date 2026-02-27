@@ -28,6 +28,7 @@ import functools
 import pandas
 import geopandas as gpd
 from matplotlib import collections as mpc
+import copy
 
 import watershed_workflow.crs
 import watershed_workflow.utils
@@ -72,6 +73,58 @@ def cache(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
         return self.__getattribute__(cname)
 
     return cache_func
+
+
+@functools.total_ordering
+class Edge:
+    """A pair of vertex indices forming a mesh edge.
+
+    Edges are order-independent: ``Edge(i, j) == Edge(j, i)``.
+
+    Parameters
+    ----------
+    *args : int or Tuple[int, int]
+        Either two ints ``Edge(i, j)`` or a single tuple ``Edge((i, j))``.
+    """
+
+    def __init__(self, *args):
+        if len(args) == 1:
+            i, j = args[0]
+        elif len(args) == 2:
+            i, j = args
+        else:
+            raise ValueError(f"Edge accepts 1 tuple or 2 ints, got {len(args)} arguments")
+        self._nodes: Tuple[int, int] = (min(i, j), max(i, j))
+
+    def __repr__(self) -> str:
+        return f"Edge({self._nodes[0]}, {self._nodes[1]})"
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Edge):
+            return NotImplemented
+        return self._nodes == other._nodes
+
+    def __hash__(self) -> int:
+        return hash(self._nodes)
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, Edge):
+            return NotImplemented
+        return self._nodes < other._nodes
+
+    def __contains__(self, v: int) -> bool:
+        return v in self._nodes
+
+    def __getitem__(self, i: int) -> int:
+        if i not in (0, 1):
+            raise IndexError(f"Edge index must be 0 or 1, got {i}")
+        return self._nodes[i]
+
+    def __iter__(self):
+        yield from self._nodes
+
+    def __len__(self) -> int:
+        return 2
 
 
 @attr.define
@@ -292,65 +345,34 @@ class Mesh2D:
 
     @property
     def edges(self):
-        return self.edges_to_cells.keys()
-
-    @staticmethod
-    def edge_hash(i: int, j: int) -> Tuple[int, int]:
-        """Hashes edges in a direction-independent way.
-
-        Parameters
-        ----------
-        i : int
-            First vertex index.
-        j : int
-            Second vertex index.
-
-        Returns
-        -------
-        Tuple[int, int]
-            Sorted tuple of vertex indices.
-        """
-        return (i,j) if i < j else (j,i)
+        return self.edge_cells.keys()
 
     @property
     @cache
-    def edge_counts(self):
-        """A dictionary where keys are edges and values are the number of cells that edge touches."""
-        items = self.edges_to_cells.items()
-        return dict((e, len(v)) for (e, v) in items)
-
-    @property
-    @cache
-    def edges_to_cells(self):
-        """A dictionary from edge to lists of cells that edge touches."""
+    def edge_cells(self):
+        """A map from edge to lists of cells that edge touches."""
         e2c = collections.defaultdict(list)
-        for i, c in enumerate(self.conn):
-            for e in self.cell_edges(c):
+        for i in range(self.num_cells):
+            for e in self.cell_edges[i]:
                 e2c[e].append(i)
         return e2c
 
-    def cell_edges(self, conn: List[int]):
-        """Generator for edges of a cell.
+    @property
+    @cache
+    def cell_edges(self):
+        """A map from cell to list of edges."""
+        def ce(c):
+            conn = self.conn[c]
+            return [Edge(conn[i], conn[(i+1)%len(conn)]) for i in range(len(conn))]
+        return { c : ce(c) for c in range(self.num_cells) }
 
-        Parameters
-        ----------
-        conn : List[int]
-            Cell connectivity (vertex indices).
-
-        Yields
-        ------
-        Tuple[int, int]
-            Edge as a tuple of vertex indices.
-        """
-        for i in range(len(conn)):
-            yield self.edge_hash(conn[i], conn[(i+1) % len(conn)])
 
     @property
     @cache
     def cell_to_cells(self):
         """A list of length ncells, each entry is a list of neighboring cells."""
         c2c = [list() for c in range(len(self.conn))]
-        for e, clist in self.edges_to_cells.items():
+        for e, clist in self.edge_cells.items():
             if len(clist) == 2:
                 c2c[clist[0]].append(clist[1])
                 c2c[clist[1]].append(clist[0])
@@ -360,30 +382,30 @@ class Mesh2D:
     @cache
     def boundary_edges(self):
         """Return edges in the boundary of the mesh, ordered around the boundary."""
-        be = sorted([k for (k, count) in self.edge_counts.items() if count == 1],
-                    key=lambda a: a[0])
-        seed = be.pop(0)
-        be_ordered = [seed, ]
+        be = sorted([e for (e, cells) in self.edge_cells.items() if len(cells) == 1])
+        be_ordered = [be.pop(0)]
+        # tip is the vertex at the forward end of the last ordered edge.
+        # Initialise to whichever end is shared with fewer remaining edges,
+        # so we walk consistently; a simple heuristic is to start at edge[1].
+        tip = be_ordered[0][1]
 
-        done = False
-        while not done:
+        while len(be) > 0:
             try:
-                new_e = next(e for e in be if e[0] == be_ordered[-1][1])
-                be.remove(new_e)
+                next_i = next(i for (i, e) in enumerate(be) if tip in e)
             except StopIteration:
-                new_e = next(e for e in be if e[1] == be_ordered[-1][1])
-                be.remove(new_e)
-                new_e = tuple(reversed(new_e))
+                raise RuntimeError("Invalid set of boundary edges on mesh -- is the mesh domain simply connected?")
 
-            be_ordered.append(new_e)
-            done = len(be) == 0
-        assert (be_ordered[-1][-1] == be_ordered[0][0])
+            next_e = be.pop(next_i)
+            be_ordered.append(next_e)
+            # advance tip to the other vertex of the newly appended edge
+            tip = next_e[0] if next_e[1] == tip else next_e[1]
+
         return be_ordered
 
     @property
     @cache
     def boundary_vertices(self):
-        return [e[0] for e in self.boundary_edges]
+        return list(set(v for e in self.boundary_edges for v in e))
 
     @property
     def cell_data(self):
@@ -391,9 +413,12 @@ class Mesh2D:
             self._cell_data = pandas.DataFrame(index=range(len(self.conn)))
         return self._cell_data
 
-    def checkHandedness(self) -> None:
+    def checkHandedness(self, conn=None) -> List[int] | None:
         """Ensures all cells are oriented via the right-hand-rule, i.e. in the +z direction."""
-        for conn in self._conn:
+        if conn is None:
+            self._conn = [self.checkHandedness(conn) for conn in self.conn]
+
+        else:
             points = np.array([self.coords[c] for c in conn])
             cross = 0
             for i in range(len(points)):
@@ -407,6 +432,7 @@ class Mesh2D:
                 cross = cross + p[1] * m[0] - p[0] * m[1]
             if cross < 0:
                 conn.reverse()
+            return conn
 
     def validate(self) -> None:
         # validate coords
@@ -444,15 +470,25 @@ class Mesh2D:
 
         Note this ALWAYS recomputes the value, not using the cache.
         """
-        points = np.array([self.coords[i] for i in self.conn[c]])
-        return points.mean(axis=0)
+        return watershed_workflow.utils.computeCentroid([self.coords[v]
+                                                         for v in self.conn[c]])
 
     @property
     @cache
     def centroids(self):
-        """Calculate surface mesh centroids."""
+        """Cell centroids."""
         return np.array([self.computeCentroid(c) for c in range(self.num_cells)])
 
+
+    @property
+    @cache
+    def edge_centroids(self):
+        """Edge centroids."""
+        return {e: watershed_workflow.utils.computeMidpoint(self.coords[e[0]],
+                                                           self.coords[e[1]])
+                for e in self.edges}
+
+    
     def clearGeometryCache(self) -> None:
         """If coordinates are changed, any computed, cached geometry must be
         recomputed.  It is the USER's responsibility to call this
@@ -461,6 +497,8 @@ class Mesh2D:
         # toss geometry cache
         if hasattr(self, '_centroids'):
             del self._centroids
+        if hasattr(self, '_edge_centroids'):
+            del self._edge_centroids
             
 
     def to_dataframe(self, include_labeled_sets : bool = False) -> gpd.GeoDataFrame:
@@ -530,6 +568,85 @@ class Mesh2D:
             plt.colorbar(gons, ax=ax)
 
         return gons
+
+    def plotVertices(self,
+                     vertex_values,
+                     ax=None,
+                     cmap=None,
+                     vmin=None,
+                     vmax=None,
+                     norm=None,
+                     s=None,
+                     colorbar=True,
+                     label=None,
+                     **kwargs):
+        """Plot vertex-based data as a scatter plot.
+
+        Parameters
+        ----------
+        vertex_values : array-like
+            Values at each vertex (length must equal num_vertices)
+        ax : matplotlib.Axes, optional
+            Axes to plot on. If None, creates new figure/axes.
+        cmap : str or matplotlib.colors.Colormap, optional
+            Colormap for mapping values to colors. Default is 'viridis'.
+        vmin, vmax : float, optional
+            Min and max values for color mapping. If None, uses data range.
+        norm : matplotlib.colors.Normalize, optional
+            Normalization for color mapping. If None, uses linear normalization.
+        s : float, optional
+            Marker size. If None, automatically computed based on mesh size.
+        colorbar : bool, optional
+            If True, adds colorbar. Default is True.
+        label : str, optional
+            Label for colorbar.
+        **kwargs : dict
+            Additional keyword arguments passed to scatter()
+
+        Returns
+        -------
+        PathCollection
+            The scatter plot collection
+        """
+        from matplotlib import pyplot as plt
+
+        # Validate input
+        if len(vertex_values) != self.num_vertices:
+            raise ValueError(f"vertex_values length ({len(vertex_values)}) must match "
+                           f"num_vertices ({self.num_vertices})")
+
+        # Set defaults
+        if cmap is None:
+            cmap = 'viridis'
+        if norm is None:
+            norm = plt.Normalize(vmin=vmin, vmax=vmax)
+        if isinstance(cmap, str):
+            cmap = plt.colormaps[cmap]
+
+        # Determine marker size based on mesh size
+        # Make markers bigger for small meshes
+        if s is None:
+            s = max(10, min(100, 5000 / self.num_vertices))
+
+        # Create axes if needed
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        # Create scatter plot
+        scatter = ax.scatter(self.coords[:, 0], self.coords[:, 1],
+                            c=vertex_values, cmap=cmap, norm=norm, s=s, **kwargs)
+
+        # ax.set_aspect('equal')
+        # ax.autoscale_view()
+
+        # Add colorbar if requested
+        if colorbar:
+            cbar = plt.colorbar(scatter, ax=ax)
+            if label:
+                cbar.set_label(label)
+
+        return scatter
+
 
     def partition(self, nparts : int, reorder : bool = True) -> Mesh2D:
         """Partitions the mesh, adding a cell_data column for partition number.
@@ -621,7 +738,7 @@ class Mesh2D:
                 new_ids = list(sorted(forward_cell_map[c] for c in ls.ent_ids))
             elif ls.entity == 'FACE':
                 new_ids = list(sorted(
-                    self.edge_hash(forward_vertex_map[e[0]], forward_vertex_map[e[1]])
+                    Edge(forward_vertex_map[e[0]], forward_vertex_map[e[1]])
                     for e in ls.ent_ids))
             elif ls.entity == 'VERTEX':
                 new_ids = list(sorted(forward_vertex_map[v] for v in ls.ent_ids))
@@ -1706,7 +1823,7 @@ class Mesh3D:
         for col in range(mesh2D.num_cells):
             vertices_2 = mesh2D.conn[col]
             for i in range(len(vertices_2)):
-                edge = mesh2D.edge_hash(vertices_2[i], vertices_2[(i+1) % len(vertices_2)])
+                edge = Edge(vertices_2[i], vertices_2[(i+1) % len(vertices_2)])
                 try:
                     i_e = added[edge]
                 except KeyError:
@@ -1728,7 +1845,7 @@ class Mesh3D:
                         cells[face_cell].append(i_f)
 
                         # check if this is an external
-                        if mesh2D.edge_counts[edge] == 1:
+                        if len(mesh2D.edge_cells[edge]) == 1:
                             vertical_side_cells.append(face_cell)
                             vertical_side_indices.append(len(cells[face_cell]) - 1)
 
@@ -1750,7 +1867,7 @@ class Mesh3D:
         assert len(bottom) == mesh2D.num_cells
 
         # -- len of vertical sides sideset is number of external edges * number of cells, no pinchouts here
-        num_sides = ncells_tall * sum(1 for e, c in mesh2D.edge_counts.items() if c == 1)
+        num_sides = ncells_tall * sum(1 for e, c in mesh2D.edge_cells.items() if len(c) == 1)
         assert num_sides == len(vertical_side_cells)
         assert num_sides == len(vertical_side_indices)
 
@@ -1787,21 +1904,20 @@ class Mesh3D:
                 # mesh, as they will extract correctly for surface BCs/observations
                 outlet_ids_names = []
 
-                # given a 2D edge, find the 2D cell it touches
-                col_ids = [
-                    mesh2D.edges_to_cells[mesh2D.edge_hash(e[0], e[1])][0] for e in ls.ent_ids
-                ]
+                # given a 2D edge, find a 2D cell it touches
+                ls_edges = [Edge(e) for e in ls.ent_ids]
+                col_ids = [mesh2D.edge_cells[e][0] for e in ls_edges]
                 if hasattr(ls, 'to_extrude') and ls.to_extrude:
                     elem_list = [eh.col_to_id(c, i) for c in col_ids for i in range(ncells_tall)]
                     face_list = [
-                        eh.edge_to_id(added[mesh2D.edge_hash(e[0], e[1])], i) for e in ls.ent_ids
+                        eh.edge_to_id(added[e], i) for e in ls_edges
                         for i in range(ncells_tall)
                     ]
                     side_list = [cells[c].index(f) for (f, c) in zip(face_list, elem_list)]
                 else:
                     elem_list = [eh.col_to_id(c, 0) for c in col_ids]
                     face_list = [
-                        eh.edge_to_id(added[mesh2D.edge_hash(e[0], e[1])], 0) for e in ls.ent_ids
+                        eh.edge_to_id(added[e], 0) for e in ls_edges
                     ]
                     side_list = [cells[c].index(f) for (f, c) in zip(face_list, elem_list)]
                 side_sets.append(SideSet(ls.name, ls.setid, elem_list, side_list))
@@ -2042,3 +2158,219 @@ def mergeTwoMeshes(mesh1: Mesh2D, mesh2: Mesh2D) -> Mesh2D:
     #     m2_combined.labeled_sets = m2_combined.labeled_sets + mesh2.labeled_sets
 
     return m2_combined
+
+
+def refineTriangle(m2 : Mesh2D, c : int) -> Mesh2D:
+    """Make a new mesh by refining a triangular cell.
+
+    Note that cell c must be:
+    - a triangle
+    - that is not on the boundary
+    - whose neighboring cells are also triangles
+
+    """
+    if len(m2.labeled_sets) != 0:
+        raise ValueError("This algorithm does not correctly deal with labeled sets.")
+    if len(m2.conn[c]) != 3:
+        raise ValueError("Only triangles may be refined.")
+    if any(e in m2.boundary_edges for e in m2.cell_edges(m2.conn[c])):
+        raise ValueError("Only non-boundary triangles may be refined.")
+    if not all(len(m2.conn[n]) == 3 for n in m2.cell_to_cells[c]):
+        raise ValueError("Only triangles whose neighbors are also triangles may be refined.")
+
+    old_edges = list(m2.cell_edges(m2.conn[c]))
+    
+    new_coords = np.array([(m2.coords[e[0]] + m2.coords[e[1]])/ 2. for e in old_edges])
+    assert len(new_coords) == 3 # only triangles please!
+    all_coords = np.concatenate([m2.coords, new_coords])
+   
+    # this triangle gets split into 4
+    new_conn = []
+    # the center triangle...
+    new_conn.append(list(range(len(m2.coords), len(m2.coords)+3)))
+    
+    # the three external ones, one per vertex
+    for i,e1 in enumerate(old_edges):
+        e2 = old_edges[(i+1)%3]
+        v1 = len(m2.coords) + i
+        v2 = len(m2.coords) + (i + 1)%3
+        v3 = e1[0] if e1[0] in e2 else e1[1]
+        assert v3 in e2
+        new_conn.append([v1, v2, v3])        
+
+    # refine neighboring cells -- each a triangle that gets split in 2
+    neighbors = m2.cell_to_cells[c]
+    for i, e in enumerate(old_edges):
+        # find the neighbor through edge e
+        ecells = m2.edge_cells[e]
+        assert len(ecells) == 2
+        n = ecells[0] if ecells[1] == c else ecells[1]
+
+        # find the node NOT in e
+        for v in m2.conn[n]:
+            if v not in e:
+                # add the two new conn
+                new_conn.append([e[0], len(m2.coords) + i, v])
+                new_conn.append([e[1], len(m2.coords) + i, v])
+
+    # remove the old cells
+    all_conn = copy.copy(m2.conn)
+    removed_cells = [c,] + neighbors
+    for cc in reversed(sorted(removed_cells)):
+        all_conn.pop(cc)
+    all_conn.extend(new_conn)
+
+    logging.debug(f' ... removing {len(removed_cells)}, adding {len(new_conn)} cells')
+    logging.debug(f' ... adding {len(new_coords)} vertices')
+    return watershed_workflow.mesh.Mesh2D(all_coords, all_conn, crs=m2.crs)
+        
+
+def refineTriangles(m2 : Mesh2D, to_refine : List[int]) -> Mesh2D:
+    """Refine a set of triangles, making a new mesh.
+
+    Note that cell in to_refine must be:
+    - a triangle
+    - that is not on the boundary
+    - whose neighboring cells are also triangles
+    - distinct -- for each pair of cells c1,c2 in to_refine, the set
+      of c1 and its neighbors must not overlap with the set of c2 and
+      its neighbors.
+
+    """
+    logging.info(f'Refining {len(to_refine)} triangles -- topology will change!')
+    # make sure they are nonoverlapping
+    affected = []
+    for c in to_refine:
+        affected.append(c)
+        affected.extend(list(m2.cell_to_cells[c]))
+        
+    if len(set(affected)) != 4 * len(to_refine):
+        raise ValueError('Cells in to_refine plus their neighbors are not distinct.')
+    
+    to_refine_conn = [m2.conn[c] for c in to_refine]
+    m2r = m2
+    for conn in to_refine_conn:
+        c = next(i for (i, test_conn) in enumerate(m2r.conn) if len(conn) == len(test_conn) and all( j == k for (j,k) in zip(conn, test_conn)))   
+        m2r = refineTriangle(m2r, c)
+
+    return m2r, affected
+
+
+def refineCorridorTriangles(m2 : Mesh2D,
+                            river_corrs : List[shapely.geometry.Polygon]
+                            ) -> Mesh2D:
+    """Given a mesh, refine all triangles where all three vertices are
+    on the river corridor.
+
+    This deals with both interior junction triangles and sharp-angle
+    reach triangles.
+    """
+    if len(m2.labeled_sets) != 0:
+        raise ValueError("This algorithm does not correctly deal with labeled sets.")
+
+    river_buffer = shapely.ops.unary_union(river_corrs).buffer(0.01)
+
+    def _isStreamPoint(coord):
+        return river_buffer.contains(shapely.geometry.Point(*coord))
+
+
+    new_coords = list(copy.deepcopy(m2.coords[:,0:2]))
+    new_conns = copy.deepcopy(m2.conn)
+
+    def _splitTri(c,i,p):
+        """Split tri c on edge conn[i],conn[i+1] at point p"""
+        old_conn = [v for v in m2.conn[c]]
+        new_conns[c] = [old_conn[(i-1)%3], old_conn[i], p]
+        new_conns.append([p, old_conn[(i+1)%3], old_conn[(i+2)%3]])
+    
+    count = 0
+    previously_split = []
+    spanning_tris = []
+    for c in range(m2.num_cells):
+        if c in previously_split:
+            # could have been already split if c is a neighbor of a split tri
+            continue
+        
+        # is a triangle, all 3 points on the corridor
+        if len(m2.conn[c]) == 3 and all(_isStreamPoint(m2.coords[v]) for v in m2.conn[c]):
+            # find a midpoint NOT on the corridor
+            midps = []
+            for (i,e) in enumerate(m2.cell_edges[c]):
+                midp = m2.edge_centroids[e]
+                if not _isStreamPoint(midp):
+                    midps.append((i,e,midp))
+
+            if len(midps) == 0:
+                # likely this is a beginning-of-the-stream triangle
+                continue
+            elif len(midps) == 1:
+                # triangle in a junction -- split the edge that is not in the corridor
+                count = count + 1
+                
+                # split c along this edge
+                i,e,new_p = midps[0]
+
+                # add the new coordinate
+                new_v = len(new_coords)
+                new_coords.append(new_p)
+
+                # replace and add a new triangle
+                _splitTri(c, i, new_v)
+
+                # find the neighbor and split it too
+                try:
+                    other_c = next(cc for cc in m2.edge_cells[e] if cc != c)
+                except StopIteration:
+                    pass
+                else:
+                    previously_split.extend([c, other_c])
+                    other_i = m2.cell_edges[other_c].index(e)
+                    _splitTri(other_c, other_i, new_v)
+
+            # elif len(midps) == 2:
+            # it's a bit unclear if this is logically possible.  This
+            # code should be correct, and may be uncommented if this
+            # assertion throws at a later point.
+            #     # triangle spanning upstream a junction -- split the longer of the two edges
+            #     count = count + 1
+
+            #     # split c along the long edge
+            #     spanning_edges = list(sorted(midps, key=lambda midp : watershed_workflow.utils.computeDistance(m2.coords[midp[1][0]],
+            #                                                                                                    m2.coords[midp[1][1]])))
+            #     i,e,new_p = midps[-1]
+
+            #     # add the new coordinate
+            #     new_v = len(new_coords)
+            #     new_coords.append(new_p)
+
+            #     # replace and add a new triangle
+            #     _splitTri(c, i, new_v)
+
+            #     # find the neighbor and split it too
+            #     try:
+            #         other_c = next(cc for cc in m2.edge_cells[e] if cc != c)
+            #     except StopIteration:
+            #         pass
+            #     else:
+            #         previously_split.extend([c, other_c])
+            #         other_i = m2.cell_edges[other_c].index(e)
+            #         _splitTri(other_c, other_i, new_v)
+                
+            else:
+                # hope this gets dealt with later?
+                spanning_tris.append(c)
+                # raise RuntimeError(f'Found a triangle at centroid {m2.centroids[c]} with 3 nodes on the corridor and '
+                #                    f'{len(midps)} edge midpoints not on the corridor -- this should not be possible!')
+
+    for c in spanning_tris:
+        if c not in previously_split:
+            raise RuntimeError(f'Found a triangle {c} at centroid {m2.centroids[c]} with 3 nodes on the corridor and '
+                               'more than one edge midpoints not on the corridor -- this should not be possible!')
+                
+
+    if count == 0:
+        return m2
+    else:
+        return watershed_workflow.mesh.Mesh2D(np.array(new_coords), new_conns, crs=m2.crs)
+
+    
