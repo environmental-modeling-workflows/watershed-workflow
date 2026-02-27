@@ -1480,7 +1480,9 @@ def _smooth2D_Array(data: np.ndarray,
     ----------
     data : numpy.ndarray
         3D or higher array where the last two dimensions are spatial.
-        Must not contain NaN values.
+        NaN values are treated as missing: smoothing is performed only over
+        valid neighbors (normalized convolution), so NaNs do not propagate
+        into the valid domain.
     method : {'uniform', 'gaussian', 'box'}
         Smoothing method to use.
     **kwargs : dict
@@ -1508,64 +1510,88 @@ def _smooth2D_Array(data: np.ndarray,
     Raises
     ------
     ValueError
-        If method is not recognized or data contains NaN.
+        If method is not recognized or data is less than 2D.
     """
-    # Check for NaN values
-    # if np.any(np.isnan(data)):
-    #     raise ValueError("Data contains NaN values")
-
     # Ensure we have at least 2D data
     if data.ndim < 2:
         raise ValueError("Data must be at least 2D for spatial smoothing")
 
+    has_nans = np.any(np.isnan(data))
+
     if method == 'uniform':
-        # Uniform filter (moving average)
         size = kwargs.get('size', 3)
         if isinstance(size, int):
             size = (size, size)
-
-        # Apply uniform filter to last two dimensions
         axes = (-2, -1)
-        return scipy.ndimage.uniform_filter(data, size=size, axes=axes, mode='reflect')
+
+        if not has_nans:
+            return scipy.ndimage.uniform_filter(data, size=size, axes=axes, mode='reflect')
+
+        # Normalized convolution: average only over valid (non-NaN) neighbors
+        valid = (~np.isnan(data)).astype(float)
+        filled = np.where(np.isnan(data), 0.0, data)
+        num = scipy.ndimage.uniform_filter(filled, size=size, axes=axes, mode='reflect')
+        den = scipy.ndimage.uniform_filter(valid, size=size, axes=axes, mode='reflect')
+        result = np.where(valid.astype(bool), num / np.where(den > 0, den, 1.0), np.nan)
+        return result
 
     elif method == 'gaussian':
-        # Gaussian filter
         sigma = kwargs.get('sigma', 1.0)
         truncate = kwargs.get('truncate', 4.0)
-
         if isinstance(sigma, (int, float)):
             sigma = (sigma, sigma)
-
-        # Apply Gaussian filter to last two dimensions
         axes = (-2, -1)
-        return scipy.ndimage.gaussian_filter(data,
-                                             sigma=sigma,
-                                             axes=axes,
-                                             mode='reflect',
-                                             truncate=truncate)
+
+        if not has_nans:
+            return scipy.ndimage.gaussian_filter(data,
+                                                 sigma=sigma,
+                                                 axes=axes,
+                                                 mode='reflect',
+                                                 truncate=truncate)
+
+        # Normalized convolution: weight only valid neighbors by the Gaussian kernel
+        valid = (~np.isnan(data)).astype(float)
+        filled = np.where(np.isnan(data), 0.0, data)
+        num = scipy.ndimage.gaussian_filter(filled, sigma=sigma, axes=axes,
+                                            mode='reflect', truncate=truncate)
+        den = scipy.ndimage.gaussian_filter(valid, sigma=sigma, axes=axes,
+                                            mode='reflect', truncate=truncate)
+        result = np.where(valid.astype(bool), num / np.where(den > 0, den, 1.0), np.nan)
+        return result
 
     elif method == 'box':
-        # Box filter (simple averaging)
         kernel_size = kwargs.get('kernel_size', 3)
         if isinstance(kernel_size, int):
             kernel_size = (kernel_size, kernel_size)
-
-        # Create box kernel
         kernel = np.ones(kernel_size) / np.prod(kernel_size)
 
-        # For higher dimensional data, we need to apply 2D convolution along last two axes
-        if data.ndim == 2:
-            return scipy.signal.convolve2d(data, kernel, mode='same', boundary='symm')
-        else:
-            # Process along last two dimensions for each slice
+        def _convolve2d_slice(arr):
+            return scipy.signal.convolve2d(arr, kernel, mode='same', boundary='symm')
+
+        if not has_nans:
+            if data.ndim == 2:
+                return _convolve2d_slice(data)
             result = np.empty_like(data)
-            # Iterate over all but the last two dimensions
             for idx in np.ndindex(data.shape[:-2]):
-                result[idx] = scipy.signal.convolve2d(data[idx],
-                                                      kernel,
-                                                      mode='same',
-                                                      boundary='symm')
+                result[idx] = _convolve2d_slice(data[idx])
             return result
+
+        # Normalized convolution per 2D slice
+        valid = (~np.isnan(data)).astype(float)
+        filled = np.where(np.isnan(data), 0.0, data)
+        if data.ndim == 2:
+            num = _convolve2d_slice(filled)
+            den = _convolve2d_slice(valid)
+            return np.where(valid.astype(bool), num / np.where(den > 0, den, 1.0), np.nan)
+
+        result = np.empty_like(data)
+        for idx in np.ndindex(data.shape[:-2]):
+            num = _convolve2d_slice(filled[idx])
+            den = _convolve2d_slice(valid[idx])
+            result[idx] = np.where(valid[idx].astype(bool),
+                                   num / np.where(den > 0, den, 1.0),
+                                   np.nan)
+        return result
 
     else:
         raise ValueError(f"Unknown smoothing method: {method}")
@@ -1936,47 +1962,82 @@ def interpolateValues(points: np.ndarray,
     return interpolated.as_numpy()
 
 
-def imputeHoles2D(arr: xr.DataArray, nodata: Any = np.nan, method: str = 'cubic') -> xr.DataArray:
+def imputeHoles2D(arr: xr.DataArray, nodata: Any = None, method: str = 'linear') -> xr.DataArray:
     """
     Interpolate values for missing data in rasters using scipy griddata.
-    
+
     Parameters
     ----------
     arr : xarray.DataArray
         Input raster data with missing values to interpolate.
     nodata : Any, optional
-        Value representing missing data. Default is numpy.nan.
+        Value representing missing data. If None, inferred from ``arr.attrs``
+        (``_FillValue``, then ``missing_value``) or ``arr.rio.nodata`` and
+        ``arr.rio.encoded_nodata`` if rioxarray is available. Defaults to
+        ``numpy.nan`` if no nodata value is found.
     method : str, optional
         Interpolation method for scipy.interpolate.griddata.
-        Valid options: 'linear', 'nearest', 'cubic'. Default is 'cubic'.
-        
+        Valid options: 'linear', 'nearest', 'cubic'. Default is 'linear',
+        which does not introduce values outside the range of the input data.
+
     Returns
     -------
-    numpy.ndarray
-        Interpolated array with missing values filled.
-        
+    xarray.DataArray
+        Interpolated DataArray with missing values filled, preserving the
+        coordinates, dimensions, attributes, and CRS of the input.
+
     Notes
     -----
-    This function may raise an error if there are holes on the boundary.
-    The interpolation is performed using scipy.interpolate.griddata with
-    the specified method.
+    Interpolation uses a two-pass strategy: a nearest-neighbor pass fills the
+    entire domain (no convex-hull restriction), then the requested ``method``
+    overwrites those values where it succeeds (inside the convex hull of valid
+    points). This avoids the scipy.interpolate.griddata behavior of returning
+    NaN for points outside the convex hull when using 'cubic' or 'linear'.
     """
-    if nodata is np.nan:
-        mask = np.isnan(arr)
-    else:
-        mask = (arr == nodata)
+    if nodata is None:
+        nodata = arr.attrs.get('_FillValue',
+                 arr.attrs.get('missing_value', None))
+    if nodata is None and hasattr(arr, 'rio'):
+        nodata = arr.rio.nodata
+    if nodata is None and hasattr(arr, 'rio'):
+        nodata = arr.rio.encoded_nodata
+    if nodata is None:
+        nodata = np.nan
 
-    x = np.arange(0, arr.shape[1])
-    y = np.arange(0, arr.shape[0])
+    arr_np = np.asarray(arr)
+    # Always treat NaN as missing, regardless of the nodata sentinel, since the array
+    # may have already had its sentinel replaced with NaN (e.g. by _fetchDataset).
+    mask = np.isnan(arr_np)
+    if nodata is not None and not (isinstance(nodata, float) and np.isnan(nodata)):
+        mask = mask | (arr_np == nodata)
+
+    x = np.arange(0, arr_np.shape[1])
+    y = np.arange(0, arr_np.shape[0])
     xx, yy = np.meshgrid(x, y)
 
-    #get only the valid values
+    # get only the valid values
     x1 = xx[~mask]
     y1 = yy[~mask]
-    newarr = arr[~mask]
+    newarr = arr_np[~mask]
 
-    res = scipy.interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method=method)
-    return res
+    # First pass: nearest-neighbor fills the entire domain (no convex-hull limitation).
+    # This ensures holes that lie outside the convex hull of valid points (which causes
+    # cubic/linear griddata to return NaN for those pixels) are still filled.
+    res_nearest = scipy.interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy),
+                                             method='nearest')
+
+    if method == 'nearest':
+        res = res_nearest
+    else:
+        # Second pass: higher-quality interpolation inside the convex hull.
+        res_hq = scipy.interpolate.griddata((x1, y1), newarr.ravel(), (xx, yy), method=method)
+        # Use higher-quality result where it succeeded; fall back to nearest elsewhere.
+        res = np.where(np.isnan(res_hq), res_nearest, res_hq)
+
+    result = xr.DataArray(res, coords=arr.coords, dims=arr.dims, attrs=arr.attrs)
+    if hasattr(arr, 'rio') and arr.rio.crs is not None:
+        result = result.rio.write_crs(arr.rio.crs)
+    return result
 
 
 def rasterizeGeoDataFrame(gdf: gpd.GeoDataFrame,

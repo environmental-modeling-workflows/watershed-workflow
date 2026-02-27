@@ -57,7 +57,10 @@ class ManagerPelletierDTB(manager_raster.ManagerRaster):
 
     def _download(self, force : bool = False):
         """Validate the files exist, returning the filename."""
-        filename = self.names.file_name()
+        if self.names is not None:
+            filename = self.names.file_name()
+        else:
+            filename = self.filename
         logging.info('  from file: {}'.format(filename))
         if not os.path.exists(filename):
             logging.error(f'PelletierDTB download file {filename} not found.')
@@ -71,9 +74,12 @@ class ManagerPelletierDTB(manager_raster.ManagerRaster):
         """Fetch the data."""
         dset = super(ManagerPelletierDTB, self)._fetchDataset(request)
 
-        # DTB in pelletier is an int with -1 indicating nodata
+        # DTB in pelletier is an int with -1 indicating nodata; convert to float with NaN
         dset['band_1'] = dset['band_1'].astype("float32")
+        dset['band_1'] = dset['band_1'].where(dset['band_1'] >= 0)
+        dset['band_1'].attrs['_FillValue'] = np.nan
         dset['band_1'].encoding["_FillValue"] = np.nan
         dset.encoding["_FillValue"] = np.nan
-        dset['band_1'].where(dset['band_1'] < 0)
+        if hasattr(dset['band_1'], 'rio'):
+            dset['band_1'].rio.write_nodata(np.nan, inplace=True)
         return dset
