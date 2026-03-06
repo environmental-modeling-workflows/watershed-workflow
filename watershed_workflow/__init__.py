@@ -685,6 +685,7 @@ def tessalateRiverAligned(hucs : SplitHUCs,
     else:
         internal_boundaries = river_corridors + internal_boundaries
         
+    logging.info('Building the remaining triangular mesh...')
     tri_res = watershed_workflow._triangulate(hucs, rivers, internal_boundaries,
                                               hole_points, additional_vertices,  
                                               **kwargs)
@@ -704,6 +705,8 @@ def tessalateRiverAligned(hucs : SplitHUCs,
 
     # We could now recover the polygon linestrings in SplitHUCs, but don't... TBD --ETC
     m2 = watershed_workflow.mesh.Mesh2D(coords, elems, crs=hucs.crs)
+
+    logging.info('Fixing corridor-spanning triangles...')
     m2 = watershed_workflow.mesh.refineCorridorTriangles(m2, river_corridors)
 
     if len(tri_res) > 2:
