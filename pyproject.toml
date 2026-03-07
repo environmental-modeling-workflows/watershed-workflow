@@ -1,6 +1,10 @@
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "INFO"
+markers = [
+    "network: marks tests that require live network access (deselect with -m 'not network')",
+]
+addopts = "-m 'not network'"
 
 [tool.yapf]
 based_on_style = "pep8"

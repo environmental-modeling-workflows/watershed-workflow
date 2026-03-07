@@ -506,7 +506,7 @@ class Mesh2D:
         vert_sets = [[self.coords[i, 0:2] for i in conn] for conn in self.conn]
         polygons = [shapely.geometry.Polygon(verts) for verts in vert_sets]
 
-        gdf = gpd.GeoDataFrame(self.cell_data, geometry=polygons, crs=self.crs)
+        df = gpd.GeoDataFrame(self.cell_data, geometry=polygons, crs=self.crs)
 
         if include_labeled_sets:
             for ls in self.labeled_sets:
@@ -2173,12 +2173,12 @@ def refineTriangle(m2 : Mesh2D, c : int) -> Mesh2D:
         raise ValueError("This algorithm does not correctly deal with labeled sets.")
     if len(m2.conn[c]) != 3:
         raise ValueError("Only triangles may be refined.")
-    if any(e in m2.boundary_edges for e in m2.cell_edges(m2.conn[c])):
+    if any(e in m2.boundary_edges for e in m2.cell_edges[c]):
         raise ValueError("Only non-boundary triangles may be refined.")
     if not all(len(m2.conn[n]) == 3 for n in m2.cell_to_cells[c]):
         raise ValueError("Only triangles whose neighbors are also triangles may be refined.")
 
-    old_edges = list(m2.cell_edges(m2.conn[c]))
+    old_edges = list(m2.cell_edges[c])
     
     new_coords = np.array([(m2.coords[e[0]] + m2.coords[e[1]])/ 2. for e in old_edges])
     assert len(new_coords) == 3 # only triangles please!
@@ -2283,17 +2283,14 @@ def refineCorridorTriangles(m2 : Mesh2D,
         new_conns[c] = [old_conn[(i-1)%3], old_conn[i], p]
         new_conns.append([p, old_conn[(i+1)%3], old_conn[(i+2)%3]])
     
-    count = 0
-    previously_split = []
-    spanning_tris = []
+    # three-pass algorithm -- first find all that need to be dealt with,
+    # and classify by how many of their edge midpoints are in the
+    # corridor
+    to_split = dict()
     for c in range(m2.num_cells):
-        if c in previously_split:
-            # could have been already split if c is a neighbor of a split tri
-            continue
-        
-        # is a triangle, all 3 points on the corridor
+        # is a triangle and all 3 points on the corridor
         if len(m2.conn[c]) == 3 and all(_isStreamPoint(m2.coords[v]) for v in m2.conn[c]):
-            # find a midpoint NOT on the corridor
+            # find all midpoints NOT on the corridor
             midps = []
             for (i,e) in enumerate(m2.cell_edges[c]):
                 midp = m2.edge_centroids[e]
@@ -2301,73 +2298,114 @@ def refineCorridorTriangles(m2 : Mesh2D,
                     midps.append((i,e,midp))
 
             if len(midps) == 0:
-                # likely this is a beginning-of-the-stream triangle
-                continue
-            elif len(midps) == 1:
-                # triangle in a junction -- split the edge that is not in the corridor
-                count = count + 1
+                # triangles with 3 vertices and 3 edge midpoints in
+                # the corridor are part of the corridor -- the initial
+                # triangle in the headwater reach.  No need to fix
+                # these.
+                pass
+            else:
+                to_split[c] = midps
+
+    # second pass: fix all triangles that have only one midpoint not
+    # on the corridor.  These are likely the junction triangles.  They
+    # also split their neighbor, which is likely a spanning triangle.
+    count = 0
+    done = list()
+    for c, midps in list(to_split.items()):
+        if len(midps) == 1:
+            # triangle in a junction -- split the edge that is not in the corridor
+            count = count + 1
                 
-                # split c along this edge
-                i,e,new_p = midps[0]
+            # split c along this edge
+            i,e,new_p = midps[0]
 
-                # add the new coordinate
-                new_v = len(new_coords)
-                new_coords.append(new_p)
+            # add the new coordinate
+            new_v = len(new_coords)
+            new_coords.append(new_p)
 
-                # replace and add a new triangle
-                _splitTri(c, i, new_v)
+            # replace and add a new triangle
+            _splitTri(c, i, new_v)
+            done.append(c)
+            to_split.pop(c)
 
-                # find the neighbor and split it too
+            # find the neighbor and split it too
+            try:
+                other_c = next(cc for cc in m2.edge_cells[e] if cc != c)
+            except StopIteration:
+                logging.debug(f'... split junction tri {c} with no neighbor')
+                #pass
+            else:
+                other_i = m2.cell_edges[other_c].index(e)
+                _splitTri(other_c, other_i, new_v)
+                done.append(other_c)
+                if other_c in to_split:
+                    to_split.pop(other_c)
+                logging.debug(f'... split junction tri {c} and neighbor {other_c}')
+                
+    # third pass: fix any remaining spanning triangles (triangles that
+    # have 3 vertices but only 1 edge midpoint on the corridor.
+    for c, midps in list(to_split.items()):
+        if len(midps) == 2:
+            if c not in to_split:
+                # it's possible that removing one spanning triangle
+                # removes another spanning triangle as other_c
+                continue
+            
+            # split c along the long edge
+            spanning_edges = list(sorted(midps, key=lambda midp : watershed_workflow.utils.computeDistance(m2.coords[midp[1][0]],
+                                                                                                           m2.coords[midp[1][1]])))
+
+            # make sure we can find an edge to split over
+            while len(spanning_edges) > 0:
+                logging.debug(f'... splitting spanning tri {c} on edge {e}...')
+                i,e,new_p = spanning_edges.pop(-1)
+
+                # check if the shared edge has already be split
                 try:
                     other_c = next(cc for cc in m2.edge_cells[e] if cc != c)
                 except StopIteration:
-                    pass
+                    other_c = None
+                    logging.debug(f'... ... with no neighbor')
                 else:
-                    previously_split.extend([c, other_c])
-                    other_i = m2.cell_edges[other_c].index(e)
-                    _splitTri(other_c, other_i, new_v)
-
-            # elif len(midps) == 2:
-            # it's a bit unclear if this is logically possible.  This
-            # code should be correct, and may be uncommented if this
-            # assertion throws at a later point.
-            #     # triangle spanning upstream a junction -- split the longer of the two edges
-            #     count = count + 1
-
-            #     # split c along the long edge
-            #     spanning_edges = list(sorted(midps, key=lambda midp : watershed_workflow.utils.computeDistance(m2.coords[midp[1][0]],
-            #                                                                                                    m2.coords[midp[1][1]])))
-            #     i,e,new_p = midps[-1]
-
-            #     # add the new coordinate
-            #     new_v = len(new_coords)
-            #     new_coords.append(new_p)
-
-            #     # replace and add a new triangle
-            #     _splitTri(c, i, new_v)
-
-            #     # find the neighbor and split it too
-            #     try:
-            #         other_c = next(cc for cc in m2.edge_cells[e] if cc != c)
-            #     except StopIteration:
-            #         pass
-            #     else:
-            #         previously_split.extend([c, other_c])
-            #         other_i = m2.cell_edges[other_c].index(e)
-            #         _splitTri(other_c, other_i, new_v)
-                
+                    if other_c in done:
+                        # cannot split on this edge!
+                        logging.debug(f'... ... neighbor {other_c} already split')
+                        continue
+                    else:
+                        # found a valid edge to split
+                        logging.debug(f'... ... and neighbor {other_c}')
+                        break
             else:
-                # hope this gets dealt with later?
-                spanning_tris.append(c)
-                # raise RuntimeError(f'Found a triangle at centroid {m2.centroids[c]} with 3 nodes on the corridor and '
-                #                    f'{len(midps)} edge midpoints not on the corridor -- this should not be possible!')
+                logging.info(f'... found a spanning triangle {c} at {m2.centroids[c]} whose neighbors have already been split -- '
+                                'you may need to run this algorithm more than once to fix this problem.')
+                continue
 
-    for c in spanning_tris:
-        if c not in previously_split:
-            raise RuntimeError(f'Found a triangle {c} at centroid {m2.centroids[c]} with 3 nodes on the corridor and '
-                               'more than one edge midpoints not on the corridor -- this should not be possible!')
+            # triangle spanning upstream a junction -- split the longest edge
+            count = count + 1
                 
+            # add the new coordinate
+            new_v = len(new_coords)
+            new_coords.append(new_p)
 
+            # replace and add a new triangle
+            _splitTri(c, i, new_v)
+            done.append(c)
+            to_split.pop(c)
+
+            # also split the neighbor that shares the edge
+            other_i = m2.cell_edges[other_c].index(e)
+            _splitTri(other_c, other_i, new_v)
+            done.append(other_c)
+            if other_c in to_split:
+                to_split.pop(other_c)
+
+    if len(to_split) > 0:
+        logging.info('The following triangles may still need attention:')
+        for c, midps in to_split.items():
+            logging.info(f'   tri {c} at {m2.centroids[c]}')
+                
+    # create and return the mesh
+    logging.info(f' ... split {count} spanning or junction triangles')
     if count == 0:
         return m2
     else:
