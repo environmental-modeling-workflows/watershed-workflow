@@ -19,6 +19,7 @@ def get_shapes(filename):
     return gdf
 
 
+@pytest.mark.network
 def test_find12(datadir):
     nhd = ManagerWBD()
 
@@ -34,6 +35,7 @@ def test_find12(datadir):
         assert '060102020103' == found
 
 
+@pytest.mark.network
 def test_find12_exact(datadir):
     nhd = ManagerWBD()
 
@@ -50,6 +52,7 @@ def test_find12_exact(datadir):
         assert '060102020103' == found
 
 
+@pytest.mark.network
 def test_find12_raises(datadir):
     """This throws because the shape is not in this huc"""
     nhd = ManagerWBD()
@@ -63,6 +66,7 @@ def test_find12_raises(datadir):
         watershed_workflow.findHUC(nhd, shp.geometry[0], shp.crs, '060101080204')
 
 
+@pytest.mark.network
 def test_find8(datadir):
     nhd = ManagerWBD()
 
@@ -77,6 +81,7 @@ def test_find8(datadir):
         assert '06010202' == found
 
 
+@pytest.mark.network
 def test_find8_exact(datadir):
     nhd = ManagerWBD()
 
@@ -91,6 +96,7 @@ def test_find8_exact(datadir):
         assert '06010202' == found
 
 
+@pytest.mark.network
 def test_find8_raises(datadir):
     nhd = ManagerWBD()
 
