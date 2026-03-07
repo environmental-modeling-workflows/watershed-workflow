@@ -1,0 +1,46 @@
+# CONUS2 subsurface indicator property lookup table.
+# Source: Extracted from HydroFrame hf_hydrodata conus2_domain dataset via
+# get_gridded_data() across five geologically diverse CONUS regions
+# (Tennessee, Great Plains, Southwest, Northwest, Northeast).
+# Verified that each indicator maps to exactly one set of property values
+# (piecewise-constant parameterization) and that values are consistent
+# across all regions.
+# Indicators 14-18 were not observed in any sampled region.
+# Indicator 0 is a no-data/mask value (outside active domain).
+#
+# Units:
+#   porosity              [-]       volumetric porosity
+#   permeability_x        [m/h]     horizontal permeability (x-direction)
+#   permeability_y        [m/h]     horizontal permeability (y-direction; == permeability_x for all indicators)
+#   permeability_z        [m/h]     vertical permeability
+#   vg_alpha              [1/m]     van Genuchten alpha parameter
+#   vg_n                  [-]       van Genuchten n parameter
+#   sres                  [-]       residual saturation
+#   specific_storage      [1/m]     specific storage
+#
+# Indicators 1-12 correspond to sedimentary/alluvial hydrogeologic units.
+# Indicators 19-28 correspond to bedrock/deeper geologic units.
+indicator,porosity,permeability_x,permeability_y,permeability_z,vg_alpha,vg_n,sres,specific_storage
+1,0.375,0.269023,0.269023,0.269023,3.548,4.162,0.0001,0.0001
+2,0.390,0.043630,0.043630,0.043630,3.467,2.738,0.0001,0.0001
+3,0.387,0.015841,0.015841,0.015841,2.692,2.445,0.0001,0.0001
+4,0.439,0.007582,0.007582,0.007582,0.501,2.659,0.0001,0.0001
+5,0.489,0.018188,0.018188,0.018188,0.661,2.659,0.0001,0.0001
+6,0.399,0.005009,0.005009,0.005009,1.122,2.479,0.0001,0.0001
+7,0.384,0.005493,0.005493,0.005493,2.089,2.318,0.0001,0.0001
+8,0.482,0.004675,0.004675,0.004675,0.832,2.514,0.0001,0.0001
+9,0.442,0.003387,0.003387,0.003387,1.585,2.413,0.0001,0.0001
+10,0.385,0.004784,0.004784,0.004784,3.311,2.202,0.0001,0.0001
+11,0.481,0.003979,0.003979,0.003979,1.622,2.318,0.0001,0.0001
+12,0.459,0.006163,0.006163,0.006163,1.514,2.259,0.0001,0.0001
+13,0.399,0.005009,0.005009,0.005009,1.122,2.479,0.0001,0.0001
+19,0.050,0.005000,0.005000,0.000500,0.500,2.500,0.00001,0.0001
+20,0.100,0.010000,0.010000,0.001000,0.500,2.500,0.00001,0.0001
+21,0.120,0.020000,0.020000,0.002000,0.500,2.500,0.00001,0.0001
+22,0.300,0.030000,0.030000,0.003000,0.500,2.500,0.00001,0.0001
+23,0.010,0.040000,0.040000,0.040000,0.500,2.500,0.00001,0.0001
+24,0.150,0.050000,0.050000,0.005000,0.500,2.500,0.00001,0.0001
+25,0.220,0.060000,0.060000,0.006000,0.500,2.500,0.00001,0.0001
+26,0.270,0.080000,0.080000,0.008000,0.500,2.500,0.00001,0.0001
+27,0.060,0.100000,0.100000,0.010000,0.500,2.500,0.00001,0.0001
+28,0.300,0.200000,0.200000,0.200000,0.500,2.500,0.00001,0.0001

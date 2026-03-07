@@ -4,7 +4,7 @@ Author: Ethan Coon (coonet@ornl.gov)
 Author: Pin Shuai (pin.shuai@pnnl.gov)
 
 """
-from typing import Optional, List, Tuple
+from typing import Optional, List
 
 import os
 import logging
@@ -15,6 +15,7 @@ import geopandas as gpd
 import collections
 import shapely.wkt
 import shapely.geometry
+import shapely.ops
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
@@ -22,7 +23,6 @@ import watershed_workflow.warp
 import watershed_workflow.utils
 import watershed_workflow.soil_properties
 
-from . import filenames
 from . import utils as source_utils
 from . import standard_names as names
 from . import manager_shapes
@@ -275,32 +275,24 @@ class ManagerNRCS(manager_shapes.ManagerShapes):
     def __init__(self, force_download : bool=False):
         self.force_download = force_download
 
-        # NRCS data is in lat/lon coordinates
-        native_crs_in = watershed_workflow.crs.from_epsg('4326')
-        # Resolution estimate for degree-based data
-        native_resolution = 0.001  # ~100m at mid-latitudes
-        # Native ID field is MUKEY
-        native_id_field = 'mukey'
-        
         # Initialize base class
         super().__init__(
             name='National Resources Conservation Service Soil Survey (NRCS Soils)',
-            source='USDA NRCS SSURGO Database', 
-            native_crs_in=native_crs_in,
-            native_resolution=native_resolution,
-            native_id_field=native_id_field
+            source='USDA NRCS SSURGO Database',
+            native_crs_in=watershed_workflow.crs.from_epsg('4326'),
+            native_resolution=0.001,  # ~100m at mid-latitudes in degrees
+            native_id_field='mukey',
+            cache_category='soil_structure',
+            cache_extension='gpkg',
+            short_name='SSURGO',
         )
-        
-        # NRCS-specific setup
-        self.fstring = '{:.4f}_{:.4f}_{:.4f}_{:.4f}'
-        self.qstring = self.fstring.replace('_', ',')
-        self.name_manager = filenames.Names(
-            self.name, os.path.join('soil_structure', 'SSURGO'), '', 'SSURGO_%s.shp' % self.fstring)
 
         #self.url_spatial = 'https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs'
         #self.url_spatial = 'https://SDMDataAccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs'
         self.url_spatial = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
         self.url_data = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
+
+        os.makedirs(self._cacheFolder(), exist_ok=True)
 
         
     def _getShapes(self):
@@ -327,39 +319,37 @@ class ManagerNRCS(manager_shapes.ManagerShapes):
         gpd.GeoDataFrame
             GeoDataFrame with native column names including soil properties.
         """
-        # Try with union first, fall back to individual geometries if that fails
-        union_geometry = geometry_gdf.union_all()
-        
-        try:
-            # Try with the union geometry first
-            shapes = self._download(union_geometry)
-        except requests.HTTPError as e:
-            if '500 Server Error' in str(e):
-                # If union fails, try with each geometry individually
-                shape_dfs = []
-                for _, row in geometry_gdf.iterrows():
-                    individual_shapes = self._download(row.geometry)
-                    shape_dfs.append(individual_shapes[['mukey', 'geometry']])
-                shapes = pd.concat(shape_dfs)
-            else:
-                raise e
+        snapped_bounds = tuple(geometry_gdf.total_bounds)
+        filename = self._cacheFilename(snapped_bounds)
 
-        # Group by ID and union geometries
-        shapes_no_crs = shapes.groupby('mukey')['geometry'].apply(
-            lambda x: shapely.ops.unary_union(x.tolist()) if len(x) > 1 else x.iloc[0]
-        ).reset_index()
-        shapes = shapes_no_crs.set_crs(shapes.crs)
-        assert shapes.crs is not None
+        if not os.path.exists(filename) or self.force_download:
+            union_geometry = geometry_gdf.union_all()
+            try:
+                shapes = self._download(union_geometry)
+            except requests.HTTPError as e:
+                if '500 Server Error' in str(e):
+                    # If union fails, try with each geometry individually
+                    shape_dfs = []
+                    for _, row in geometry_gdf.iterrows():
+                        shape_dfs.append(self._download(row.geometry)[['mukey', 'geometry']])
+                    shapes = pd.concat(shape_dfs)
+                else:
+                    raise e
 
-        # Get properties - use bounds for filename generation
-        bounds = self._cleanBounds(union_geometry)
-        filename = self.name_manager.file_name(*bounds)
-        data_filename = filename[:-4] + "_properties.csv"
-        props = self._getProperties(shapes['mukey'], data_filename)
+            # Group by mukey and union geometries
+            shapes_no_crs = shapes.groupby('mukey')['geometry'].apply(
+                lambda x: shapely.ops.unary_union(x.tolist()) if len(x) > 1 else x.iloc[0]
+            ).reset_index()
+            shapes = shapes_no_crs.set_crs(shapes.crs)
+            assert shapes.crs is not None
 
-        # Merge properties and shapes dfs
-        df = shapes.merge(props, on='mukey')
-        return df
+            # Fetch and merge properties
+            data_filename = filename[:-5] + '_properties.csv'
+            props = self._getProperties(shapes['mukey'], data_filename)
+            df = shapes.merge(props, on='mukey')
+            df.to_file(filename, driver='GPKG')
+
+        return gpd.read_file(filename)
 
     
     def _getShapesByID(self, ids: List[str]) -> gpd.GeoDataFrame:
@@ -403,51 +393,35 @@ class ManagerNRCS(manager_shapes.ManagerShapes):
 
     
     def _download(self,
-                  geometry : shapely.geometry.base.BaseGeometry
+                  query_geometry: shapely.geometry.base.BaseGeometry
                   ) -> gpd.GeoDataFrame:
-        """Downloads and reads soil shapefiles.
-
-        This accepts only a bounding box.
+        """Query the NRCS REST API and return raw shapes (unsaved).
 
         Parameters
         ----------
-        geometry : shapely.geometry.base.BaseGeometry
-            Bounding box to filter shapes.
-        crs : CRS
-            Coordinate system of the bounding box.
+        query_geometry : shapely.geometry.base.BaseGeometry
+            Geometry used for the NRCS API query.
 
         Returns
         -------
         gpd.GeoDataFrame
         """
-        bounds = self._cleanBounds(geometry)
-        os.makedirs(self.name_manager.data_dir(), exist_ok=True)
-        filename = self.name_manager.file_name(*bounds)
+        logging.info(f'  Downloading spatial data from: {self.url_spatial}')
 
-        logging.info("Attempting to download source for target '%s'" % filename)
-        if not os.path.exists(filename) or self.force_download:
-            logging.info('  Downloading spatial data via request:')
-            logging.info(f'    to file: {filename}')
-            logging.info(f'       from: {self.url_spatial}')
+        query = _query_template_shapes.format(query_geometry.wkt)
+        data = { 'FORMAT': 'JSON', 'QUERY': query }
+        r = requests.post(self.url_data, data=data, verify=source_utils.getVerifyOption())
+        logging.info(f'  full URL: {r.url}')
+        r.raise_for_status()
 
-            box = shapely.geometry.box(*bounds)
-            query = _query_template_shapes.format(box.wkt)
-            data = { 'FORMAT': 'JSON', 'QUERY': query }
-            r = requests.post(self.url_data, data=data, verify=source_utils.getVerifyOption())
-            logging.info(f'  full URL: {r.url}')
-            r.raise_for_status()
+        logging.info(f'  Converting to shapely')
+        table = r.json()['Table']
 
-            logging.info(f'  Converting to shapely')
-            table = r.json()['Table']
-
-            shps = [shapely.wkt.loads(ent[3]) for ent in table]
-            df = gpd.GeoDataFrame({'mukey':[int(t[1]) for t in table]},
-                                         geometry=shps, crs=self.native_crs_in)
-            df.to_file(filename)
-
-        shapes = gpd.read_file(filename)
-        logging.info('  Found {} shapes.'.format(len(shapes)))
-        return shapes
+        shps = [shapely.wkt.loads(ent[3]) for ent in table]
+        df = gpd.GeoDataFrame({'mukey': [int(t[1]) for t in table]},
+                              geometry=shps, crs=self.native_crs_in)
+        logging.info('  Found {} shapes.'.format(len(df)))
+        return df
 
     
     def _downloadProperties(self, mukeys, filename=None):
@@ -527,8 +501,4 @@ class ManagerNRCS(manager_shapes.ManagerShapes):
         df_ats.reset_index(inplace=True)
         return df_ats
 
-    
-    def _cleanBounds(self, geometry : shapely.geometry.base.BaseGeometry
-                     ) -> Tuple[float,float,float,float]:
-        return tuple(np.round(b, 4) for b in geometry.bounds)
     

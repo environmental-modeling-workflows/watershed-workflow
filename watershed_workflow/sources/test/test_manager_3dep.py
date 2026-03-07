@@ -3,7 +3,6 @@ import numpy as np
 import xarray as xr
 import shapely.geometry
 
-from watershed_workflow.sources.test.fixtures import coweeta
 import watershed_workflow.crs
 import watershed_workflow.warp
 from watershed_workflow.crs import CRS
@@ -23,6 +22,7 @@ def small_test_crs():
     return CRS.from_epsg(4326)  # WGS84
 
 
+@pytest.mark.network
 def test_getDataset_single_variable(small_test_geometry, small_test_crs):
     """Test getDataset with single variable returns proper Dataset."""
     mgr = Manager3DEP(resolution=60)
@@ -36,6 +36,7 @@ def test_getDataset_single_variable(small_test_geometry, small_test_crs):
     assert result.rio.crs == CRS.from_epsg(5070)
 
 
+@pytest.mark.network
 def test_getDataset_multiple_variables(small_test_geometry, small_test_crs):
     """Test getDataset with multiple variables returns Dataset."""
     mgr = Manager3DEP(resolution=60)
@@ -52,6 +53,7 @@ def test_getDataset_multiple_variables(small_test_geometry, small_test_crs):
     assert result.rio.crs == CRS.from_epsg(5070)
 
 
+@pytest.mark.network
 def test_getDataset_resolution_consistency(small_test_geometry, small_test_crs):
     """Test that different resolution managers produce appropriately sized data."""
     mgr_30m = Manager3DEP(resolution=30)
@@ -69,6 +71,7 @@ def test_getDataset_resolution_consistency(small_test_geometry, small_test_crs):
     assert not np.all(np.isnan(result_60m['dem'].values))
 
 
+@pytest.mark.network
 def test_getDataset_native_crs_usage(small_test_geometry, small_test_crs):
     """Test that getDataset correctly uses native CRS."""
     mgr = Manager3DEP(resolution=60)
@@ -82,6 +85,7 @@ def test_getDataset_native_crs_usage(small_test_geometry, small_test_crs):
     assert result.rio.crs == mgr.native_crs_out
 
 
+@pytest.mark.network
 def test_getDataset_aspect_and_slope_variables(small_test_geometry, small_test_crs):
     """Test specific 3DEP variables like aspect and slope."""
     mgr = Manager3DEP(resolution=60)
@@ -105,6 +109,7 @@ def test_getDataset_aspect_and_slope_variables(small_test_geometry, small_test_c
     assert 'aspect_degrees' in multi_result.data_vars
 
 
+@pytest.mark.network
 def test_getDataset_coweeta_backward_compatibility(coweeta):
     """Test that getDataset works with existing coweeta fixture."""
     mgr = Manager3DEP(60)
@@ -117,12 +122,13 @@ def test_getDataset_coweeta_backward_compatibility(coweeta):
     
     # Extract DEM data for comparison
     dem_data = result['dem']
-    # Shape may vary slightly due to different processing in new API
-    assert dem_data.shape[0] > 90 and dem_data.shape[0] < 110
-    assert dem_data.shape[1] > 90 and dem_data.shape[1] < 110
+    # Shape may vary slightly due to buffering + snapping expanding the query bounds
+    assert dem_data.shape[0] > 90 and dem_data.shape[0] < 150
+    assert dem_data.shape[1] > 90 and dem_data.shape[1] < 150
     assert abs(np.nanmean(dem_data.values) - 993) < 50  # Expected elevation range
 
 
+@pytest.mark.network
 def test_requestDataset_pattern(small_test_geometry, small_test_crs):
     """Test the non-blocking request/wait pattern."""
     mgr = Manager3DEP(resolution=60)
@@ -141,6 +147,7 @@ def test_requestDataset_pattern(small_test_geometry, small_test_crs):
     assert result.rio.crs == CRS.from_epsg(5070)
 
 
+@pytest.mark.network
 def test_waitForDataset_pattern(small_test_geometry, small_test_crs):
     """Test the request/wait pattern."""
     mgr = Manager3DEP(resolution=60)
@@ -156,6 +163,7 @@ def test_waitForDataset_pattern(small_test_geometry, small_test_crs):
     assert result.rio.crs == CRS.from_epsg(5070)
 
 
+@pytest.mark.network
 def test_default_variables(small_test_geometry, small_test_crs):
     """Test that default variables work when none specified."""
     mgr = Manager3DEP(resolution=60)

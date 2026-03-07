@@ -22,6 +22,8 @@ from .manager_3dep import Manager3DEP
 from .manager_nrcs import ManagerNRCS
 from .manager_glhymps import ManagerGLHYMPS
 from .manager_soilgrids_2017 import ManagerSoilGrids2017
+from .manager_soilgrids import ManagerSoilGrids
+from .manager_polaris import ManagerPOLARIS
 from .manager_pelletier_dtb import ManagerPelletierDTB
 from .manager_nlcd import ManagerNLCD
 
@@ -30,6 +32,7 @@ from .manager_daymet import ManagerDaymet
 from .manager_aorc import ManagerAORC
 
 from .manager_modis_appeears import ManagerMODISAppEEARS
+from .manager_hf_hydrodata import ManagerHFHydrodata
 
 
 # available and default water boundary datasets
@@ -59,7 +62,10 @@ structure_sources : Dict[str,Any] = {
     'NRCS SSURGO': ManagerNRCS(),
     'GLHYMPS': ManagerGLHYMPS(),
     # 'SoilGrids2017': ManagerSoilGrids2017(),
+    'SoilGrids': ManagerSoilGrids(),
+    'POLARIS': ManagerPOLARIS(),
     'Pelletier DTB': ManagerPelletierDTB(),
+    'HFHydrodata CONUS2': ManagerHFHydrodata(),
 }
 default_structure_source = 'NRCS SSURGO'
 

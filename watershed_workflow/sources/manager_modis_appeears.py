@@ -18,7 +18,6 @@ from watershed_workflow.crs import CRS
 import watershed_workflow.crs
 
 from . import utils as source_utils
-from . import filenames
 from . import manager_dataset
 
 _colors = {
@@ -66,9 +65,9 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
     AppEEARs data portal at:
 
     .. [AppEEARs](https://appeears.earthdatacloud.nasa.gov/)
-    
+
     Currently the variables supported here include LAI and estimated
-    ET.  
+    ET.
 
     All data returned includes a time variable, which is in units of
     [days past Jan 1, 2000, 0:00:00.
@@ -84,11 +83,11 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         def __init__(self,
                      request : manager_dataset.ManagerDataset.Request,
                      task_id : str = "",
-                     filenames : Optional[Dict[str, str]] = None,
+                     cache_filenames : Optional[Dict[str, str]] = None,
                      urls : Optional[Dict[str, str]] = None):
             super().copyFromExisting(request)
             self.task_id = task_id
-            self.filenames = filenames
+            self.cache_filenames = cache_filenames
             self.urls = urls
 
 
@@ -96,9 +95,6 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
     _TASK_URL = "https://appeears.earthdatacloud.nasa.gov/api/task"
     _STATUS_URL = "https://appeears.earthdatacloud.nasa.gov/api/status/"
     _BUNDLE_URL_TEMPLATE = "https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}"
-
-    _START = datetime.date(2002, 7, 1)
-    _END = datetime.date(2021, 1, 1)
 
     _PRODUCTS = {
         'LAI': {
@@ -116,17 +112,15 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
 
     def __init__(self, login_token : Optional[str] = None):
         """Create a new manager for MODIS data."""
-        
-        # Native MODIS properties for base class
+
         import cftime
-        native_resolution = 500.0 * 9.e-6 # in native_crs
-        native_start = cftime.datetime(2002, 7, 1, calendar='standard')  
+        native_resolution = 500.0 * 9.e-6  # in native_crs (degrees)
+        native_start = cftime.datetime(2002, 7, 1, calendar='standard')
         native_end = cftime.datetime(2024, 1, 1, calendar='standard')
         native_crs = CRS.from_epsg(4269)  # WGS84 Geographic
         valid_variables = ['LAI', 'LULC']
         default_variables = ['LAI', 'LULC']
-        
-        # Initialize base class with correct parameter order
+
         super().__init__(
             name='MODIS',
             source='AppEEARS',
@@ -136,15 +130,15 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             native_start=native_start,
             native_end=native_end,
             valid_variables=valid_variables,
-            default_variables=default_variables
+            default_variables=default_variables,
+            cache_category='land_cover',
+            cache_extension='nc',
+            has_varname=True,
+            short_name='MODIS',
         )
-        
-        # AppEEARS-specific initialization
-        self.names = filenames.Names(self.name, 'land_cover', 'MODIS',
-                                     'modis_{var}_{start}_{end}_{ymax}x{xmin}_{ymin}x{xmax}.nc')
+
         self.login_token = login_token
-        if not os.path.isdir(self.names.folder_name()):
-            os.makedirs(self.names.folder_name())
+        os.makedirs(self._cacheFolder(), exist_ok=True)
 
     def _authenticate(self,
                       username : Optional[str] = None,
@@ -158,7 +152,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
           conf['AppEEARS']['username']
         password : string, optional
           Username, defaults to value from watershed_workflowrc,
-          conf['AppEEARS']['password'].  
+          conf['AppEEARS']['password'].
 
         FIXME: Can we make this more secure? --etc
         """
@@ -180,46 +174,35 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             logging.info('Message: {err}')
             return None
 
-    def _filename(self, bounds_ll, start, end, variable):
-        (xmin, ymin, xmax, ymax) = tuple(bounds_ll)
-        filename = self.names.file_name(var=variable,
-                                        start=start,
-                                        end=end,
-                                        xmin=xmin,
-                                        xmax=xmax,
-                                        ymin=ymin,
-                                        ymax=ymax)
-        return filename
-
-    
     def _constructRequest(self,
-                          bounds_ll : Tuple[str,str,str,str],
-                          start : str,
-                          end : str,
+                          snapped_bounds : tuple,
+                          start_year : int,
+                          end_year : int,
                           variables : List[str]) -> str:
-        """Create an AppEEARS request to download the variable from start to
-        finish.  Note that this does not do the download -- it only creates
-        the request.
+        """Create an AppEEARS request to download the variable for whole years.
 
         Parameters
         ----------
-        start : str
-          Start date string in MM-DD-YYYY format
-        end : str
-          End date string in MM-DD-YYYY format
-        variables : list
-          List of variables to collect.
-        
+        snapped_bounds : tuple of float
+            ``(xmin, ymin, xmax, ymax)`` snapped bounds.
+        start_year : int
+            Start year (inclusive).
+        end_year : int
+            End year (inclusive).
+        variables : list of str
+            Variables to collect.
+
         Returns
         -------
         str
-          Task ID for the AppEEARS request.
-
+            Task ID for the AppEEARS request.
         """
         if self.login_token is None:
             self.login_token = self._authenticate()
 
-        (xmin, ymin, xmax, ymax) = tuple(bounds_ll)
+        xmin, ymin, xmax, ymax = snapped_bounds
+        start_str = f'01-01-{start_year}'
+        end_str = f'12-31-{end_year}'
         json_vars = [self._PRODUCTS[var] for var in variables]
 
         task_data = {
@@ -227,8 +210,8 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             "task_name": "Area LAI",
             "params": {
                 "dates": [{
-                    "startDate": start,
-                    "endDate": end
+                    "startDate": start_str,
+                    "endDate": end_str
                 }],
                 "layers": json_vars,
                 "output": {
@@ -256,14 +239,13 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             }
         }
 
-        # submit the task request
         r = requests.post(self._TASK_URL,
                           json=task_data,
                           headers={ 'Authorization': f'Bearer {self.login_token}'})
         r.raise_for_status()
 
         task_id = r.json()['task_id']
-        logging.info(f'Requested AppEEARS MODIS dataset on {bounds_ll} yielded task_id {task_id}')
+        logging.info(f'Requested AppEEARS MODIS dataset on {snapped_bounds} yielded task_id {task_id}')
         return task_id
 
     def _checkStatus(self, request: manager_dataset.ManagerDataset.Request) -> str | bool:
@@ -337,8 +319,8 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             return True
 
     def _download(self, request: manager_dataset.ManagerDataset.Request) -> bool:
-        """Downloads the data for the provided request."""
-        os.makedirs(self.names.folder_name(), exist_ok=True)
+        """Download the data files for the provided request to cache filenames."""
+        os.makedirs(self._cacheFolder(), exist_ok=True)
 
         if len(request.urls) == 0:
             ready = self._checkBundleURL(request)
@@ -346,11 +328,11 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             ready = True
 
         if ready:
-            assert (len(request.filenames) == len(request.urls))
+            assert (len(request.cache_filenames) == len(request.urls))
             assert (len(request.variables) == len(request.urls))
             for var in request.variables:
                 url = request.urls[var]
-                filename = request.filenames[var]
+                filename = request.cache_filenames[var]
                 logging.info("  Downloading: {}".format(url))
                 logging.info("      to file: {}".format(filename))
                 good = source_utils.download(
@@ -360,23 +342,23 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         else:
             return False
 
-        
+
     def _readData(self, request) -> xr.Dataset:
         """Read all files for a request, returning the data as a Dataset."""
-        darrays = dict((var, self._readFile(request.filenames[var], var)) for var in request.variables)
+        darrays = dict((var, self._readFile(request.cache_filenames[var], var))
+                       for var in request.variables)
 
         # keep independent times for LAI (which is every 3-6 days) and
         # LULC (which is once a yearish)
         for k,v in darrays.items():
             darrays[k] = darrays[k].rename({'time': f'time_{k}'})
 
-        # Convert to Dataset
         dataset = xr.Dataset(darrays)
         return dataset
 
-    
+
     def _readFile(self, filename : str, variable : str) -> xr.DataArray:
-        """Open the file and get the data -- currently these reads it all, which may not be necessary."""
+        """Open the file and get the data."""
         with xr.open_dataset(filename) as fid:
             layer = self._PRODUCTS[variable]['layer']
             data = fid[layer]
@@ -384,72 +366,78 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         data.name = variable
         return data
 
-    
+
     def _requestDataset(self,
                         request: manager_dataset.ManagerDataset.Request,
                         task_id : Optional[str] = None
                         ) -> manager_dataset.ManagerDataset.Request:
         """Request MODIS data from AppEEARS - may not be ready immediately.
-        
+
         Parameters
         ----------
         request : ManagerDataset.Request
             Request object containing geometry, dates, and variables.
-            
+        task_id : str, optional
+            Existing AppEEARS task ID to resume, if any.
+
         Returns
         -------
         ManagerDataset.Request
             MODIS request object with AppEEARS task information.
         """
-        # Geometry is already in native_crs_in (WGS84), get bounds directly
-        appeears_bounds = [np.round(b,4) for b in request.geometry.bounds]
-        appeears_bounds_str = [f'{b:.4f}' for b in appeears_bounds]
-        logging.info(f'Building request for bounds: {appeears_bounds}')
-        
-        # Convert dates to strings for AppEEARS API
-        start_str = request.start.strftime('%m-%d-%Y')
-        end_str = request.end.strftime('%m-%d-%Y')
-        
-        # Create filenames for caching
-        filenames = dict((v, self._filename(appeears_bounds_str, start_str, end_str, v)) 
-                        for v in request.variables)
-        logging.info('... requires files:')
-        for fname in filenames.values():
-            logging.info(f' ... {fname}')
+        # Snap dates to whole years for cache stability
+        start_year = request.start.year
+        end_year = request.end.year
+        snapped_bounds = request.snapped_bounds
+        geometry_bounds = request.geometry.bounds
 
-        
-        # Check for existing files
-        if all(os.path.isfile(filename) for filename in filenames.values()):
-            logging.info('... files exist locally.')
-            # Data already exists locally
+        logging.info(f'Building MODIS request for bounds: {snapped_bounds}, years {start_year}-{end_year}')
+
+        # Build standard cache filenames for each variable
+        var_filenames = {}
+        for var in request.variables:
+            # Check for a spatial+temporal superset in the cache
+            superset = self._checkCache(geometry_bounds, snapped_bounds,
+                                        var=var, start_year=start_year, end_year=end_year)
+            if superset is not None:
+                logging.info(f'  Using superset cache for {var}: {superset}')
+                var_filenames[var] = superset
+            else:
+                var_filenames[var] = self._cacheFilename(
+                    snapped_bounds, var=var, start_year=start_year, end_year=end_year)
+
+        logging.info('  Cache filenames:')
+        for fname in var_filenames.values():
+            logging.info(f'    {fname}')
+
+        # Check whether all files are already present
+        if all(os.path.isfile(f) for f in var_filenames.values()):
+            logging.info('  All files exist locally.')
             modis_request = self.Request(
                 request,
-                task_id="",  # No remote task needed
-                filenames=filenames,
+                task_id="",
+                cache_filenames=var_filenames,
                 urls={}
             )
             modis_request.is_ready = True
-
         else:
-            logging.info('... building request.')
-
+            logging.info('  Building AppEEARS request.')
             if task_id is None:
-                # Need to create AppEEARS request
-                task_id = self._constructRequest(appeears_bounds, start_str, end_str, request.variables)
-        
-            # Create MODIS-specific request with AppEEARS task info
+                task_id = self._constructRequest(
+                    snapped_bounds, start_year, end_year, request.variables)
+
             modis_request = self.Request(
                 request,
                 task_id=task_id,
-                filenames=filenames,
-                urls={}  # Will be populated when ready
+                cache_filenames=var_filenames,
+                urls={}
             )
-        
+
         return modis_request
 
 
     def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
-        """Implementation of abstract method to fetch MODIS data.
+        """Fetch MODIS data from cache or AppEEARS.
 
         Parameters
         ----------
@@ -461,11 +449,9 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         xr.Dataset
             Dataset containing the requested MODIS data.
         """
-        # If data exists locally, read it directly
-        if all(os.path.isfile(filename) for filename in request.filenames.values()):
+        if all(os.path.isfile(f) for f in request.cache_filenames.values()):
             return self._readData(request)
-        
-        # Otherwise, download from AppEEARS
+
         if self._download(request):
             return self._readData(request)
         else:
@@ -474,14 +460,14 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
 
     def isReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
         """Check if MODIS data request is ready for download.
-        
+
         Overrides base class to check AppEEARS processing status and bundle availability.
-        
+
         Parameters
         ----------
         request : ManagerDataset.Request
             MODIS request object with AppEEARS task information.
-            
+
         Returns
         -------
         bool
@@ -489,8 +475,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         """
         if request.is_ready:
             return True
-        
-        # Check AppEEARS status
+
         status = self._checkStatus(request)
         if status != False:  # note this matches True or UNKNOWN
             ready = self._checkBundleURL(request)
@@ -499,6 +484,3 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             return ready
         else:
             return False
-
-
-

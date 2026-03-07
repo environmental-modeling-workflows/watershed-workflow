@@ -5,7 +5,6 @@ import shapely.geometry
 import cftime
 import datetime
 
-from watershed_workflow.sources.test.fixtures import coweeta
 import watershed_workflow.crs
 import watershed_workflow.warp
 from watershed_workflow.crs import CRS

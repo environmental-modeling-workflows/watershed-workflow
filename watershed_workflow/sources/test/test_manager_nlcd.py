@@ -3,7 +3,6 @@ import numpy as np
 import xarray as xr
 import shapely.geometry
 
-from watershed_workflow.sources.test.fixtures import coweeta
 import watershed_workflow.crs
 import watershed_workflow.warp
 from watershed_workflow.crs import CRS
@@ -18,6 +17,7 @@ def small_test_geometry():
     return shapely.geometry.box(-83.0, 35.0, -82.9, 35.1)
 
 
+@pytest.mark.network
 def test_getDataset_single_variable(small_test_geometry):
     """Test getDataset with single variable returns proper Dataset."""
     mgr = ManagerNLCD(location='L48', year=2019)
@@ -38,6 +38,7 @@ def test_getDataset_single_variable(small_test_geometry):
     assert result.attrs['source'] == 'pygeohydro'
 
 
+@pytest.mark.network
 def test_getDataset_multiple_variables(small_test_geometry):
     """Test getDataset with multiple variables returns Dataset."""
     mgr = ManagerNLCD(location='L48', year=2019)
@@ -54,6 +55,7 @@ def test_getDataset_multiple_variables(small_test_geometry):
     assert result.rio.crs == CRS.from_epsg(4326)
 
 
+@pytest.mark.network
 def test_getDataset_all_variables(small_test_geometry):
     """Test getDataset with all NLCD variables."""
     mgr = ManagerNLCD(location='L48', year=2019)
@@ -68,6 +70,7 @@ def test_getDataset_all_variables(small_test_geometry):
         assert var in result.data_vars
 
 
+@pytest.mark.network
 def test_different_years_and_locations():
     """Test different year and location combinations."""
     small_geom = shapely.geometry.box(-83.0, 35.0, -82.9, 35.1)
@@ -148,6 +151,7 @@ def test_native_properties():
     assert mgr.default_variables == expected_default
 
 
+@pytest.mark.network
 def test_getDataset_coweeta_integration(coweeta):
     """Test that getDataset works with existing coweeta fixture."""
     mgr = ManagerNLCD(location='L48', year=2019)
@@ -170,6 +174,7 @@ def test_getDataset_coweeta_integration(coweeta):
     assert np.all((valid_data >= 0) & (valid_data <= 127))  # Allow for water/no-data values
 
 
+@pytest.mark.network
 def test_non_temporal_behavior(small_test_geometry):
     """Test that NLCD correctly handles non-temporal data."""
     mgr = ManagerNLCD(location='L48', year=2019)
@@ -187,6 +192,7 @@ def test_non_temporal_behavior(small_test_geometry):
     assert 'y' in result.dims or 'latitude' in result.dims
 
 
+@pytest.mark.network
 def test_async_interface(small_test_geometry):
     """Test the async interface methods."""
     mgr = ManagerNLCD(location='L48', year=2019)
@@ -209,6 +215,7 @@ def test_async_interface(small_test_geometry):
     assert result.attrs['nlcd_year'] == 2019
 
 
+@pytest.mark.network
 def test_default_variables(small_test_geometry):
     """Test that default variables work correctly."""
     mgr = ManagerNLCD(location='L48', year=2019)

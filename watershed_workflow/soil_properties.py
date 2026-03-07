@@ -14,6 +14,7 @@ import numpy as np
 import logging
 import pandas as pd
 import geopandas as gpd
+import xarray as xr
 import rosetta
 
 import watershed_workflow.config
@@ -110,6 +111,90 @@ def computeVanGenuchtenModelFromSSURGO(df: pd.DataFrame) -> pd.DataFrame:
     merged = pd.merge(vgm, df, how='outer', left_on='mukey', right_on='mukey')
     assert (len(merged) == len(df))
     return merged
+
+
+def computeVanGenuchtenModelFromRasters(ds: xr.Dataset) -> xr.Dataset:
+    """Apply Rosetta pixel-by-pixel to gridded sand/silt/clay/bdod and add VG parameters.
+
+    Expects ``ds`` to contain variables ``sand`` (%), ``silt`` (%), ``clay`` (%), and
+    ``bdod`` (kg/dm³, equivalent to g/cm³) with dimensions ``(depth, y, x)``.  Runs
+    Rosetta v3 on every pixel at every depth layer and appends the resulting van
+    Genuchten parameters as new variables in the same dataset.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset with ``sand``, ``silt``, ``clay``, ``bdod`` variables, each shaped
+        ``(depth, y, x)``.
+
+    Returns
+    -------
+    xr.Dataset
+        Input dataset with five new variables added, each shaped ``(depth, y, x)``:
+
+        - ``residual saturation [-]``
+        - ``porosity [-]``
+        - ``van Genuchten alpha [Pa^-1]``
+        - ``van Genuchten n [-]``
+        - ``permeability [m^2]``
+
+    Notes
+    -----
+    Pixels where any of the four input variables is NaN are passed to Rosetta as NaN
+    and Rosetta propagates NaN to all output columns, which are preserved in the
+    output arrays.
+    """
+    required = ['sand', 'silt', 'clay', 'bdod']
+    for v in required:
+        if v not in ds:
+            raise ValueError(f"computeVanGenuchtenModelFromRasters: dataset missing variable '{v}'")
+
+    # Reference shape from sand; all four must share the same dims.
+    ref = ds['sand']
+    shape = ref.shape   # (depth, y, x)
+    dims = ref.dims
+    coords = ref.coords
+
+    # Flatten to (npixels,) per variable across all depths at once.
+    sand_flat = ds['sand'].values.ravel()
+    silt_flat = ds['silt'].values.ravel()
+    clay_flat = ds['clay'].values.ravel()
+    bdod_flat = ds['bdod'].values.ravel()   # kg/dm³ == g/cm³ — correct units for Rosetta
+
+    # data shape expected by computeVanGenuchtenModel_Rosetta: (nvar, nsamples)
+    data = np.array([sand_flat, silt_flat, clay_flat, bdod_flat])
+    rosetta_df = computeVanGenuchtenModel_Rosetta(data)
+
+    # Convert Rosetta log-space outputs to ATS units, working directly on the
+    # flat arrays to avoid the DataFrame overhead of convertRosettaToATS.
+    theta_r = rosetta_df['Rosetta residual volumetric water content [cm^3 cm^-3]'].values
+    theta_s = rosetta_df['Rosetta saturated volumetric water content [cm^3 cm^-3]'].values
+    log_alpha = rosetta_df['Rosetta log van Genuchten alpha [cm^-1]'].values
+    log_n     = rosetta_df['Rosetta log van Genuchten n [-]'].values
+    log_ksat  = rosetta_df['Rosetta log Ksat [um s^-1]'].values
+
+    sres  = theta_r / theta_s                      # residual saturation [-]
+    poro  = theta_s                                # porosity == sat. vol. water content [-]
+    alpha = 10**log_alpha * 100 / 1000 / 10        # cm^-1 → Pa^-1
+    n     = 10**log_n                              # [-]
+    perm  = 10**log_ksat * 1.e-13                  # um/s → m^2
+
+    def _make_da(flat_arr, name, units):
+        return xr.DataArray(
+            flat_arr.reshape(shape).astype(np.float32),
+            dims=dims,
+            coords=coords,
+            attrs={'long_name': name, 'units': units},
+        )
+
+    ds = ds.assign({
+        'residual saturation [-]':      _make_da(sres,  'Residual saturation',          '-'),
+        'porosity [-]':                 _make_da(poro,  'Porosity',                     '-'),
+        'van Genuchten alpha [Pa^-1]':  _make_da(alpha, 'van Genuchten alpha',           'Pa^-1'),
+        'van Genuchten n [-]':          _make_da(n,     'van Genuchten n',               '-'),
+        'permeability [m^2]':           _make_da(perm,  'Saturated hydraulic conductivity as permeability', 'm^2'),
+    })
+    return ds
 
 
 def convertRosettaToATS(df: pd.DataFrame) -> pd.DataFrame:
@@ -293,7 +378,7 @@ def getDefaultBedrockProperties() -> pd.DataFrame:
     df['permeability [m^2]'] = [perm, ]
     df['van Genuchten alpha [Pa^-1]'] = computeVGAlphaFromPermeability(np.array([perm,]),
                                                                        np.array([poro,]))
-    df['van Genuchten n [-]'] = 3.0
+    df['van Genuchten n [-]'] = 1.5
     df['residual saturation [-]'] = 0.01
     df['source'] = 'n/a'
     df.set_index('ats_id', drop=True, inplace=True)
@@ -334,9 +419,20 @@ def mangleGLHYMPSProperties(shapes: gpd.GeoDataFrame,
     Ksat = np.minimum(Ksat, max_permeability)
     Ksat_std = shapes['K_stdev_x1'].to_numpy(dtype=float)
     Ksat_std = Ksat_std / 100  # division by 100 is per GLHYMPS readme
-    poro = shapes['Porosity_x'].to_numpy(dtype=float)
-    poro = poro / 100  # division by 100 is per GLHYMPS readme
-    poro = np.maximum(poro, min_porosity)  # some values are 0?
+    poro = shapes['Porosity_x'].to_numpy(dtype=float) / 100.0 # division by 100 is per GLHYMPS readme
+
+    # GLHYMPs punts on Alluvial sediments, setting their porosity to 0
+    # Here we set it to 0.4, which is a bit arbitrary, but in the reasonable
+    # range for silty alluvial sediments.
+    poro = np.where(np.bitwise_and(poro == 0.0, shapes['XX'] == 'Au'),
+                    0.4, poro)
+
+    # set a floor on non-zero porosity
+    poro = np.where(np.bitwise_and(poro < min_porosity, poro > 0.0),
+                    min_porosity, poro)
+
+    # finally, set 0 to nan
+    poro = np.where(poro == 0.0, np.nan, poro)
 
     # derived properties
     # - this scaling law has trouble for really small porosity,
