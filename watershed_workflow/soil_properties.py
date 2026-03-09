@@ -421,10 +421,11 @@ def mangleGLHYMPSProperties(shapes: gpd.GeoDataFrame,
     Ksat_std = Ksat_std / 100  # division by 100 is per GLHYMPS readme
     poro = shapes['Porosity_x'].to_numpy(dtype=float) / 100.0 # division by 100 is per GLHYMPS readme
 
-    # GLHYMPs punts on Alluvial sediments, setting their porosity to 0
-    # Here we set it to 0.4, which is a bit arbitrary, but in the reasonable
-    # range for silty alluvial sediments.
-    poro = np.where(np.bitwise_and(poro == 0.0, shapes['XX'] == 'Au'),
+    # GLHYMPs punts on Alluvial & Colluvial sediments, setting their
+    # porosity to 0? Here we set it to 0.4, which is a bit arbitrary,
+    # but in the reasonable range for silty alluvial sediments.
+    all_coll = shapes['XX'].isin(['Au', 'Cu'])
+    poro = np.where(np.bitwise_and(poro == 0.0, all_coll),
                     0.4, poro)
 
     # set a floor on non-zero porosity
