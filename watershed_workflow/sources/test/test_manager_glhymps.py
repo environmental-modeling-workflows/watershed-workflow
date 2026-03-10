@@ -9,8 +9,6 @@ import watershed_workflow.utils
 import watershed_workflow.sources.manager_glhymps
 import watershed_workflow.sources.standard_names as names
 
-from fixtures import coweeta
-
 
 def test_glhymps_coweeta(coweeta):
     """Test GLHYMPS manager using Coweeta example data."""

@@ -13,8 +13,6 @@ import attr
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
-from . import manager_raster
-from . import filenames
 from . import manager_dataset
 
 
@@ -62,7 +60,7 @@ class ManagerAORC(manager_dataset.ManagerDataset):
     **Precipitation and Temperature**
 
     The gridded AORC precipitation dataset contains one-hour
-    Accumulated Surface Precipitation (APCP) ending at the “top” of
+    Accumulated Surface Precipitation (APCP) ending at the "top" of
     each hour, in liquid water-equivalent units (kg m-2 to the nearest
     0.1 kg m-2), while the gridded AORC temperature dataset is
     comprised of instantaneous, 2 m above-ground-level (AGL)
@@ -77,18 +75,18 @@ class ManagerAORC(manager_dataset.ManagerDataset):
     surface (W m-2); terrain-level pressure (Pa); and west-east and
     south-north wind components at 10 m above ground (m s-1)] has two
     distinct periods, based on datasets and methodology applied:
-    1979–2015 and 2016–present.
+    1979-2015 and 2016-present.
 
     """
 
     class Request(manager_dataset.ManagerDataset.Request):
         """AORC-specific request that includes filename for cached data."""
         def __init__(self,
-                     request : manager_dataset.ManagerDataset.Request,
-                     filename : str = ''):
+                     request: manager_dataset.ManagerDataset.Request,
+                     filename: str = ''):
             super().copyFromExisting(request)
             self.filename = filename
-    
+
     # AORC constants
     VALID_VARIABLES = ['APCP_surface', 'DLWRF_surface',
                        'DSWRF_surface', 'PRES_surface', 'SPFH_2maboveground',
@@ -99,13 +97,11 @@ class ManagerAORC(manager_dataset.ManagerDataset):
     URL = 's3://noaa-nws-aorc-v1-1-1km'
 
     def __init__(self):
-        # AORC native data properties
         native_start = cftime.datetime(1980, 1, 1, calendar='standard')
         native_end = cftime.datetime(2024, 12, 31, calendar='standard')
-        native_crs = CRS.from_epsg(4326)  # WGS84 Geographic
+        native_crs = CRS.from_epsg(4326)
         native_resolution = 0.00833333  # 30 arc-second resolution
-        
-        # Initialize base class with correct parameter order
+
         super().__init__(
             name='AORC v1.1',
             source='NOAA AWS S3 Zarr',
@@ -115,151 +111,136 @@ class ManagerAORC(manager_dataset.ManagerDataset):
             native_start=native_start,
             native_end=native_end,
             valid_variables=self.VALID_VARIABLES,
-            default_variables=self.DEFAULT_VARIABLES
+            default_variables=self.DEFAULT_VARIABLES,
+            cache_category='meteorology',
+            cache_extension='nc',
+            has_varname=False,      # all variables in one file
+            has_resampling=True,    # filename encodes temporal resampling rate
+            short_name='AORC',
         )
-        
-        # File naming for cached downloads
-        self.names = filenames.Names(self.name, 'meteorology', 'aorc',
-                                     'aorc_{start_year}-{end_year}_{north}x{west}-{south}x{east}{temporal_resampling}.nc')
 
-        # Check directory structure
-        os.makedirs(self.names.folder_name(), exist_ok=True)
+        os.makedirs(self._cacheFolder(), exist_ok=True)
 
-    def _cleanBounds(self, geometry : shapely.geometry.Polygon) -> list[float]:
-        """Extract bounds from geometry already in native CRS and buffered by base class."""
-        bounds = geometry.bounds
-        return [np.round(b, 4) for b in bounds]
-        
 
     def _download(self,
-                  geometry : shapely.geometry.Polygon,
-                  start_year : int,
-                  end_year : int,
-                  temporal_resampling : Optional[str] = None,
-                  force : bool = False) -> str:
+                  snapped_bounds: tuple,
+                  start_year: int,
+                  end_year: int,
+                  temporal_resampling: Optional[str] = None,
+                  force: bool = False,
+                  geometry_bounds: Optional[tuple] = None) -> str:
         """Download AORC data for geometry and time range from S3 Zarr.
 
         Parameters
         ----------
-        geometry : shapely.geometry.Polygon
-            Geometry in native CRS already transformed and buffered by base class.
+        snapped_bounds : tuple of float
+            (xmin, ymin, xmax, ymax) snapped, from request.snapped_bounds.
         start_year : int
             Starting year for data download.
         end_year : int
             Ending year for data download.
+        temporal_resampling : str, optional
+            Resample in time according to this time string, e.g. ``'1D'``.
         force : bool, optional
             If true, re-download even if a file already exists.
+        geometry_bounds : tuple of float, optional
+            Buffered un-snapped bounds for superset cache detection.
 
         Returns
         -------
         str
             The filename of the cached dataset.
         """
-        # check directory structure
-        os.makedirs(self.names.folder_name(), exist_ok=True)
+        os.makedirs(self._cacheFolder(), exist_ok=True)
 
-        dataset_years = list(range(start_year, end_year+1))
+        filename = self._cacheFilename(snapped_bounds,
+                                       start_year=start_year,
+                                       end_year=end_year,
+                                       temporal_resampling=temporal_resampling)
 
-        # Get bounds from geometry (already in native CRS and buffered)
-        bounds = self._cleanBounds(geometry)
-        
-        # get the subset filename
-        if temporal_resampling is None:
-            temporal_resampling_str = ''
-        else:
-            temporal_resampling_str = f'_{temporal_resampling}'
-        
-        filename = self.names.file_name(start_year=start_year,
-                                        end_year=end_year,
-                                        east=bounds[0],
-                                        south=bounds[1],
-                                        west=bounds[2],
-                                        north=bounds[3],
-                                        temporal_resampling=temporal_resampling_str,
-                                        )
-
+        # Superset check before downloading
+        if not os.path.exists(filename) and not force:
+            if geometry_bounds is not None:
+                superset = self._checkCache(geometry_bounds, snapped_bounds,
+                                            start_year=start_year, end_year=end_year,
+                                            temporal_resampling=temporal_resampling)
+                if superset is not None:
+                    logging.info(f'  Using superset cache: {superset}')
+                    return superset
 
         if (not os.path.exists(filename)) or force:
+            dataset_years = list(range(start_year, end_year + 1))
             s3_out = s3fs.S3FileSystem(anon=True)
-            fileset = [s3fs.S3Map(
-                root=f"{self.URL}/{dataset_year}.zarr", s3=s3_out, check=False
-            ) for dataset_year in dataset_years]
-            
+            fileset = [s3fs.S3Map(root=f"{self.URL}/{y}.zarr", s3=s3_out, check=False)
+                       for y in dataset_years]
+
             ds_multi_year = xr.open_mfdataset(fileset, engine='zarr')
             logging.info(f'Full dataset size: {ds_multi_year.nbytes/1e12:.1f} TB')
-            logging.info(ds_multi_year)
-            logging.info('')
 
-            # Subset the dataset to the bounding box
-            logging.info('Subsetting:')
-            logging.info(f'  lon: {bounds[0], bounds[2]}')
-            logging.info(f'  lat: {bounds[1], bounds[3]}')
-            ds_subset = ds_multi_year.sel(longitude=slice(bounds[0], bounds[2]),
-                                          latitude=slice(bounds[1], bounds[3]))
-            logging.info(f'Spatial subset dataset size: {ds_subset.nbytes/1e9:.3f} GB')
-            logging.info(ds_subset)
-            logging.info('')
+            xmin, ymin, xmax, ymax = snapped_bounds
+            logging.info(f'Subsetting: lon {xmin, xmax}  lat {ymin, ymax}')
+            ds_subset = ds_multi_year.sel(longitude=slice(xmin, xmax),
+                                          latitude=slice(ymin, ymax))
+            logging.info(f'Spatial subset size: {ds_subset.nbytes/1e9:.3f} GB')
 
             if temporal_resampling is not None:
                 ds_temporal = ds_subset.resample(time=temporal_resampling).mean()
                 logging.info(f'Resampling in time: {temporal_resampling}')
-                logging.info(f'Temporal resampled dataset size: {ds_temporal.nbytes/1e9:.3f} GB')
-                logging.info(ds_temporal)
-                logging.info('')
             else:
                 ds_temporal = ds_subset
 
             ds_temporal.to_netcdf(filename)
             logging.info(f"Write to file: {filename}")
-        
+
         else:
             logging.info(f"  Using existing: {filename}")
 
         return filename
 
-    
+
     def _requestDataset(self,
-                        request : manager_dataset.ManagerDataset.Request,
-                        temporal_resampling : Optional[str] = None, 
+                        request: manager_dataset.ManagerDataset.Request,
+                        temporal_resampling: Optional[str] = None,
                         ) -> manager_dataset.ManagerDataset.Request:
         """Request AORC data - ready upon download completion.
-        
+
         Parameters
         ----------
         request : ManagerDataset.Request
             Request object containing geometry, dates, and variables.
-        temporal_resampling : Optional[str]
-            Resample in time according to this time string, e.g. '1D',
-            taking the mean
-            
+        temporal_resampling : str, optional
+            Resample in time according to this time string, e.g. ``'1D'``,
+            taking the mean.
+
         Returns
         -------
         ManagerDataset.Request
             New AORC request object with filename and is_ready flag set.
-
         """
         assert request.start is not None
         assert request.end is not None
         assert request.variables is not None
 
-        # Convert dates to years
         start_year = request.start.year
         end_year = request.end.year
         if start_year > end_year:
             raise RuntimeError(
                 f"Provided start year {start_year} is after provided end year {end_year}")
 
-        # Download data to cache (this may take time)
-        filename = self._download(request.geometry, start_year, end_year, temporal_resampling=temporal_resampling, force=False)
-        
-        # Create new AORC-specific request with filename
+        filename = self._download(
+            request.snapped_bounds, start_year, end_year,
+            temporal_resampling=temporal_resampling,
+            force=False,
+            geometry_bounds=request.geometry.bounds)
+
         aorc_request = self.Request(request, filename)
         aorc_request.is_ready = True
         return aorc_request
 
 
-    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request, chunk_time=None) -> xr.Dataset:
-        """Implementation of abstract method to fetch AORC data.
+    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request,
+                      chunk_time=None) -> xr.Dataset:
+        """Fetch AORC data.
 
         Parameters
         ----------
@@ -271,15 +252,12 @@ class ManagerAORC(manager_dataset.ManagerDataset):
         xr.Dataset
             Dataset containing the requested AORC data.
         """
-        # Open cached dataset
         if chunk_time:
-            dataset = xr.open_dataset(request.filename, chunks={"time" : chunk_time})
+            dataset = xr.open_dataset(request.filename, chunks={"time": chunk_time})
         else:
             dataset = xr.open_dataset(request.filename)
-        
-        # Filter to requested variables only
+
         if request.variables != self.valid_variables:
-            # Only keep requested variables
             dataset = dataset[request.variables]
-        
+
         return dataset

@@ -12,6 +12,7 @@ import shapely.geometry
 import xarray as xr
 import cftime
 import geopandas as gpd
+import pandas as pd
 import attr
 import logging
 import time
@@ -21,7 +22,10 @@ import watershed_workflow.crs
 import watershed_workflow.warp
 import watershed_workflow.data
 
-class ManagerDataset(abc.ABC):
+from . import manager
+
+
+class ManagerDataset(manager.Manager):
     """Managers that provide xarray Datasets should inherit from this class.
 
     There are three possible use patterns for this class:
@@ -57,7 +61,7 @@ class ManagerDataset(abc.ABC):
 
        # it's ready!
        data = mgr.fetchRequest(request)
-    
+
     Developer notes: derived classes must implement:
 
     - __init__() : Constructor that supplies native data properties as
@@ -79,13 +83,17 @@ class ManagerDataset(abc.ABC):
         manager : 'ManagerDataset'
         is_ready : bool
 
-        # parameters to the original request
+        # Buffered (un-snapped) polygon — used for clipping fetched data
         geometry: shapely.geometry.Polygon
+
         start: cftime._cftime.datetime
         end: cftime._cftime.datetime
         variables: List
         out_crs : Optional[CRS] = None
         resampling : Optional[str] = None
+
+        # Snapped bounding box — used for cache filenames and download API calls
+        snapped_bounds : Optional[tuple] = None
 
         def copyFromExisting(self, other):
             self.manager = other.manager
@@ -96,9 +104,10 @@ class ManagerDataset(abc.ABC):
             self.variables = other.variables
             self.out_crs = other.out_crs
             self.resampling = other.resampling
+            self.snapped_bounds = other.snapped_bounds
 
 
-    def __init__(self, 
+    def __init__(self,
                  name: str,
                  source: str,
                  native_resolution: float,
@@ -107,9 +116,14 @@ class ManagerDataset(abc.ABC):
                  native_start: cftime._cftime.datetime | None,
                  native_end: cftime._cftime.datetime | None,
                  valid_variables: List[str] | None,
-                 default_variables: List[str] | None):
+                 default_variables: List[str] | None,
+                 cache_category: str | None = None,
+                 cache_extension: str = 'nc',
+                 has_varname: bool = False,
+                 has_resampling: bool = False,
+                 short_name: str | None = None):
         """Initialize dataset manager with native data properties.
-        
+
         Parameters
         ----------
         name : str
@@ -118,23 +132,45 @@ class ManagerDataset(abc.ABC):
             Data source or API used to retrieve the data.
         native_resolution : float
             Inherent resolution of the data in native_crs_in units.
-        native_crs_in : CRS
+        native_crs_in : CRS or None
             Expected CRS of the incoming geometry.
-        native_crs_out : CRS
+        native_crs_out : CRS or None
             CRS of the data fetched.
-        native_start : cftime._cftime.datetime | None
+        native_start : cftime._cftime.datetime or None
             Earliest start date of the data, None for non-temporal data.
-        native_end : cftime._cftime.datetime | None
+        native_end : cftime._cftime.datetime or None
             Latest end date of the data, None for non-temporal data.
-        valid_variables : List[str] | None
+        valid_variables : list of str or None
             Valid variable names, None for single-variable datasets.
-        default_variables : List[str] | None
+        default_variables : list of str or None
             Default variables to retrieve, None for single-variable datasets.
+        cache_category : str or None, optional
+            Top-level cache folder group, e.g. ``'meteorology'``.  Pass
+            ``None`` (default) to opt out of the standard cache system.
+        cache_extension : str, optional
+            File extension for cache files.  Default ``'nc'``.
+        has_varname : bool, optional
+            ``True`` when one cache file is written per variable.
+        has_resampling : bool, optional
+            ``True`` when the cache filename encodes a temporal resampling
+            rate (e.g. AORC).  Default ``False``.
+        short_name : str, optional
+            Short, filesystem-safe name used as the leaf cache directory and
+            filename prefix (e.g. ``'DayMet'``).
         """
-        self.name = name
-        self.source = source
-        self.native_resolution = native_resolution
-        self.native_crs_in = native_crs_in
+        is_temporal = (native_start is not None)
+        super().__init__(
+            name=name,
+            source=source,
+            native_crs_in=native_crs_in,
+            native_resolution=native_resolution,
+            cache_category=cache_category,
+            cache_extension=cache_extension,
+            has_varname=has_varname,
+            is_temporal=is_temporal,
+            has_resampling=has_resampling,
+            short_name=short_name,
+        )
         self.native_crs_out = native_crs_out
         self.native_start = native_start
         self.native_end = native_end
@@ -161,7 +197,7 @@ class ManagerDataset(abc.ABC):
             Start date.
         end : str | int | cftime._cftime.datetime | None, optional
             End date.
-        variables : List[str], optional
+        variables : list of str, optional
             Variables to retrieve. For multi-variable datasets, defaults to
             default_variables if None. Ignored for single-variable datasets.
         out_crs : CRS, optional
@@ -176,8 +212,8 @@ class ManagerDataset(abc.ABC):
 
         Returns
         -------
-        xr.Dataset
-            Dataset for the requested geometry and time range.
+        Request
+            Request object for this dataset.
 
         """
         # pre-request allows downloading files, etc
@@ -192,7 +228,7 @@ class ManagerDataset(abc.ABC):
         request = self._requestDataset(request, **kwargs)
         return request
 
-    
+
     def isReady(self, request : Request) -> bool:
         """Is the request ready for fetching?"""
         return request.is_ready
@@ -210,7 +246,7 @@ class ManagerDataset(abc.ABC):
                        interval: int = 120,
                        tries: int = 100) -> xr.Dataset:
         """Block until task is complete and return Dataset.
-        
+
         Parameters
         ----------
         request : Request
@@ -219,7 +255,7 @@ class ManagerDataset(abc.ABC):
             Sleep interval in seconds between checks.
         tries : int, optional
             Maximum number of tries before giving up.
-            
+
         Returns
         -------
         xr.Dataset
@@ -261,7 +297,7 @@ class ManagerDataset(abc.ABC):
             Start date.
         end : str | int | cftime._cftime.datetime | None, optional
             End date.
-        variables : List[str], optional
+        variables : list of str, optional
             Variables to retrieve. For multi-variable datasets, defaults to
             default_variables if None. Ignored for single-variable datasets.
 
@@ -275,22 +311,13 @@ class ManagerDataset(abc.ABC):
         return data
 
 
-    def _prerequestDataset(self) -> None:
-        """Managers should overload this method to do stuff prior to processing.
-
-        This can be used to update native variables if they cannot be
-        known on construction (e.g. downloaded files).
-        """
-        pass
-
-
     @abc.abstractmethod
     def _requestDataset(self, request : Request) -> Request:
         """Managers should overload this method to request the data.
 
         Parameters
         ----------
-        Request
+        request : Request
             Dataset request storing the input parameters.
 
         Returns
@@ -307,7 +334,7 @@ class ManagerDataset(abc.ABC):
 
         Parameters
         ----------
-        Request
+        request : Request
             Dataset request storing the input parameters.
 
         Returns
@@ -317,21 +344,18 @@ class ManagerDataset(abc.ABC):
         """
         pass
 
-        
+
     def _detectCalendar(self) -> str:
         """Detect the calendar type from native start/end dates.
-        
+
         Returns
         -------
         str
             Calendar type ('noleap', 'standard', etc.) or 'standard' as default.
         """
-        # Check native_start first, then native_end
         for date in [self.native_start, self.native_end]:
             if date is not None and hasattr(date, 'calendar'):
                 return date.calendar
-        
-        # Default to standard calendar if no dates or no calendar info
         return 'standard'
 
     def _parseDate(self, date: str | int | cftime._cftime.datetime | None, is_start: bool) -> cftime._cftime.datetime | None:
@@ -347,7 +371,7 @@ class ManagerDataset(abc.ABC):
 
         Returns
         -------
-        cftime._cftime.datetime | None
+        cftime._cftime.datetime or None
             Parsed datetime or None.
         """
         if date is None:
@@ -373,9 +397,9 @@ class ManagerDataset(abc.ABC):
 
         Parameters
         ----------
-        date : cftime._cftime.datetime | None
+        date : cftime._cftime.datetime or None
             Date to validate.
-        bound : cftime._cftime.datetime | None
+        bound : cftime._cftime.datetime or None
             Bound to check against.
         is_start : bool
             True if validating start date, False for end date.
@@ -387,7 +411,7 @@ class ManagerDataset(abc.ABC):
                 raise ValueError(f"End date {date} is after dataset end {bound}")
 
 
-    def _preprocessParameters(self, 
+    def _preprocessParameters(self,
                               geometry: shapely.geometry.Polygon | gpd.GeoDataFrame,
                               geometry_crs: CRS | None,
                               start: str | int | cftime._cftime.datetime | None,
@@ -395,7 +419,7 @@ class ManagerDataset(abc.ABC):
                               variables: List[str] | None
                               ) -> Request:
         """Process and validate parameters for getDataset calls.
-        
+
         Parameters
         ----------
         geometry : shapely.geometry.Polygon | gpd.GeoDataFrame
@@ -406,14 +430,14 @@ class ManagerDataset(abc.ABC):
             Start date.
         end : str | int | cftime._cftime.datetime | None, optional
             End date.
-        variables : Optional[List[str]], optional
+        variables : list of str or None, optional
             Variables to retrieve.
-            
+
         Returns
         -------
         Request
             The "future" object storing the metadata for the data request.
-        
+
         """
         # Process geometry
         if isinstance(geometry, gpd.GeoDataFrame):
@@ -421,7 +445,7 @@ class ManagerDataset(abc.ABC):
                 raise ValueError("geometry_crs should not be provided with GeoDataFrame")
             geometry_crs = geometry.crs
             polygon = geometry.union_all()
-        elif isinstance(geometry, shapely.geometry.Polygon):
+        elif isinstance(geometry, shapely.geometry.base.BaseGeometry):
             if geometry_crs is None:
                 raise ValueError("geometry_crs is required when geometry is a Polygon")
             polygon = geometry
@@ -431,9 +455,15 @@ class ManagerDataset(abc.ABC):
         # Transform to native input CRS and buffer
         polygon = watershed_workflow.warp.shply(polygon, geometry_crs, self.native_crs_in)
         logging.info(f'Incoming shape area = {polygon.area}')
-        logging.info(f'... buffering incoming shape by three times the native resolution = {3 * self.native_resolution}')
+        logging.info(f'... buffering incoming shape by 3x native resolution = {3 * self.native_resolution}')
         polygon = polygon.buffer(3 * self.native_resolution)
         logging.info(f'... buffered shape area = {polygon.area}')
+
+        # Snap bounding box outward by up to 1x native_resolution for cache stability.
+        # The buffered polygon is kept as request.geometry for clipping;
+        # snapped_bounds is used only for filenames and download API calls.
+        snapped_bounds = self._snapBounds(polygon.bounds)
+        logging.info(f'... snapped bounding box = {snapped_bounds}')
 
         # Parse and validate dates
         parsed_start = self._parseDate(start, True)
@@ -448,19 +478,19 @@ class ManagerDataset(abc.ABC):
         elif self.valid_variables is None:
             raise ValueError("This dataset does not support variable selection")
         else:
-            # Validate each variable
             for var in variables:
                 if var not in self.valid_variables:
                     raise ValueError(f"Invalid variable '{var}'. Valid variables: {', '.join(self.valid_variables)}")
 
-        return ManagerDataset.Request(self, False, polygon, parsed_start, parsed_end, variables)
+        return ManagerDataset.Request(self, False, polygon, parsed_start, parsed_end, variables,
+                                      snapped_bounds=snapped_bounds)
 
 
     def _postprocessDataset(self,
                             request : Request,
                             dataset : xr.Dataset,
                             ):
-        """Time dtype converions and clipping, check CRS is applied, and check post conditions."""
+        """Time dtype conversions and clipping, check CRS is applied, and check post conditions."""
         # check the CRS out
         assert hasattr(dataset, 'rio')
         if dataset.rio.crs is None:
@@ -469,16 +499,21 @@ class ManagerDataset(abc.ABC):
             assert watershed_workflow.crs.isEqual(watershed_workflow.crs.from_rasterio(dataset.rio.crs),
                                            self.native_crs_out)
 
-        # make sure the time dimension is in the right calendar and dtype, and clip if needed
-        if 'time' in dataset.dims:
-            if not isinstance(dataset['time'][0], cftime._cftime.datetime):
-                new_time = watershed_workflow.data.convertTimesToCFTime(dataset['time'].values)
+        # Convert and clip all time dimensions.
+        # Detect by index type (CFTimeIndex or DatetimeIndex) rather than by
+        # name: more robust and handles per-variable dims like 'time_LAI'.
+        # Float-encoded time is decoded automatically by xarray on open, so
+        # by this point all time dims will have a CFTimeIndex or DatetimeIndex.
+        for dim in [d for d in dataset.dims
+                    if isinstance(dataset.indexes.get(d),
+                                  (xr.CFTimeIndex, pd.DatetimeIndex))]:
+            if isinstance(dataset.indexes[dim], pd.DatetimeIndex):
+                new_time = watershed_workflow.data.convertTimesToCFTime(dataset[dim].values)
                 if self.native_calendar == 'noleap':
                     new_time = watershed_workflow.data.convertTimesToCFTimeNoleap(new_time)
-                dataset['time'] = new_time
+                dataset[dim] = new_time
 
-            # Clip in time if temporal data
-            dataset = dataset.sel(time=slice(request.start, request.end))
+            dataset = dataset.sel({dim: slice(request.start, request.end)})
 
         # change coordinate system if requested
         if request.out_crs is not None:
@@ -489,16 +524,11 @@ class ManagerDataset(abc.ABC):
                 dataset = dataset.rename({'lon' : 'x', 'lat' : 'y'})
             elif 'longitude' in dataset.coords and 'latitude' in dataset.coords:
                 dataset = dataset.rename({'longitude' : 'x', 'latitude' : 'y'})
-            
+
             dataset = watershed_workflow.warp.dataset(dataset, request.out_crs, request.resampling)
-            
+
         # Add name and source to dataset attributes
         dataset.attrs['name'] = self.name
         dataset.attrs['source'] = self.source
 
         return dataset
-        
-    
-        
-
-    

@@ -32,6 +32,10 @@ def getDefaultConfig() -> configparser.ConfigParser:
     rcParams.add_section('AppEEARS')
     rcParams['AppEEARS']['username'] = 'NOT_PROVIDED'
     rcParams['AppEEARS']['password'] = 'NOT_PROVIDED'
+
+    rcParams.add_section('HFHydrodata')
+    rcParams['HFHydrodata']['email'] = 'NOT_PROVIDED'
+    rcParams['HFHydrodata']['pin'] = 'NOT_PROVIDED'
     return rcParams
 
 

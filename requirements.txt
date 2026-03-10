@@ -6,3 +6,4 @@
 # conda, but CAN be provided via pip, so we get those here...
 rosetta-soil
 meshpy
+hf-hydrodata

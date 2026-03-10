@@ -5,7 +5,6 @@ import shapely.geometry
 import cftime
 import datetime
 
-from watershed_workflow.sources.test.fixtures import coweeta
 import watershed_workflow.crs
 import watershed_workflow.warp
 from watershed_workflow.crs import CRS
@@ -40,6 +39,7 @@ def short_time_range():
     return start, end
 
 
+@pytest.mark.network
 def test_getDataset_single_meteorological_variable(small_aorc_geometry, aorc_crs, aorc_manager, short_time_range):
     """Test getDataset with single meteorological variable."""
     start, end = short_time_range
@@ -60,6 +60,7 @@ def test_getDataset_single_meteorological_variable(small_aorc_geometry, aorc_crs
     assert 'DatetimeGregorian' in str(type(result.time.values[0]))
 
 
+@pytest.mark.network
 def test_getDataset_multiple_meteorological_variables(small_aorc_geometry, aorc_crs, aorc_manager, short_time_range):
     """Test getDataset with multiple meteorological variables."""
     start, end = short_time_range
@@ -77,6 +78,7 @@ def test_getDataset_multiple_meteorological_variables(small_aorc_geometry, aorc_
     assert result.attrs['source'] == 'NOAA AWS S3 Zarr'
 
 
+@pytest.mark.network
 def test_getDataset_all_variables(small_aorc_geometry, aorc_crs, aorc_manager, short_time_range):
     """Test getDataset with all AORC variables."""
     start, end = short_time_range
@@ -91,6 +93,7 @@ def test_getDataset_all_variables(small_aorc_geometry, aorc_crs, aorc_manager, s
         assert var in result.data_vars
 
 
+@pytest.mark.network
 def test_getDataset_multi_year_request(small_aorc_geometry, aorc_crs, aorc_manager):
     """Test getDataset spanning multiple years."""
     start = cftime.datetime(2019, 12, 30, calendar='standard')
@@ -110,6 +113,7 @@ def test_getDataset_multi_year_request(small_aorc_geometry, aorc_crs, aorc_manag
     assert 2019 in years or 2020 in years  # At least one should be present
 
 
+@pytest.mark.network
 def test_standard_calendar_handling(small_aorc_geometry, aorc_crs, aorc_manager):
     """Test that AORC properly handles standard calendar."""
     start = cftime.datetime(2020, 2, 28, calendar='standard')
@@ -126,6 +130,7 @@ def test_standard_calendar_handling(small_aorc_geometry, aorc_crs, aorc_manager)
     assert len(feb29_times) > 0, "Feb 29, 2020 should be present in leap year data"
 
 
+@pytest.mark.network
 def test_leap_year_handling(small_aorc_geometry, aorc_crs, aorc_manager):
     """Test specific leap year handling for Feb 29."""
     # Test leap year 2020
@@ -150,6 +155,7 @@ def test_native_crs_properties(aorc_manager):
     assert aorc_manager.native_resolution == 0.00833333  # ~1km in degrees
 
 
+@pytest.mark.network
 def test_coordinate_system(small_aorc_geometry, aorc_crs, aorc_manager, short_time_range):
     """Test that coordinates are in degrees (lat/lon), not meters."""
     start, end = short_time_range
@@ -186,6 +192,7 @@ def test_invalid_year_range_error(small_aorc_geometry, aorc_crs, aorc_manager):
         aorc_manager.getDataset(small_aorc_geometry, aorc_crs, start=start, end=end, variables=['APCP_surface'])
 
 
+@pytest.mark.network
 def test_getDataset_coweeta_compatibility(coweeta):
     """Test AORC works with existing coweeta fixture."""
     aorc_manager = ManagerAORC()
@@ -211,6 +218,7 @@ def test_getDataset_coweeta_compatibility(coweeta):
     assert 280 < temp_mean < 310  # Reasonable July temperature in Kelvin (~7-37°C)
 
 
+@pytest.mark.network
 def test_variable_filtering(small_aorc_geometry, aorc_crs, aorc_manager, short_time_range):
     """Test that dataset returns only requested variables."""
     start, end = short_time_range
@@ -230,6 +238,7 @@ def test_variable_filtering(small_aorc_geometry, aorc_crs, aorc_manager, short_t
         assert var not in result.data_vars
 
 
+@pytest.mark.network
 def test_hourly_temporal_resolution(small_aorc_geometry, aorc_crs, aorc_manager):
     """Test that data has hourly timestamps."""
     start = cftime.datetime(2020, 6, 1, 0, calendar='standard')  # Start at midnight
@@ -255,6 +264,7 @@ def test_hourly_temporal_resolution(small_aorc_geometry, aorc_crs, aorc_manager)
         assert len(june1_times) <= 24, "Should have at most 24 hours for June 1"
 
 
+@pytest.mark.network
 def test_requestDataset_pattern(small_aorc_geometry, aorc_crs, aorc_manager, short_time_range):
     """Test the non-blocking request/fetch pattern."""
     start, end = short_time_range
@@ -276,6 +286,7 @@ def test_requestDataset_pattern(small_aorc_geometry, aorc_crs, aorc_manager, sho
     assert result.attrs['source'] == 'NOAA AWS S3 Zarr'
 
 
+@pytest.mark.network
 def test_waitForDataset_pattern(small_aorc_geometry, aorc_crs, aorc_manager, short_time_range):
     """Test the request/wait pattern."""
     start, end = short_time_range
@@ -294,6 +305,7 @@ def test_waitForDataset_pattern(small_aorc_geometry, aorc_crs, aorc_manager, sho
     assert result.attrs['source'] == 'NOAA AWS S3 Zarr'
 
 
+@pytest.mark.network
 def test_default_variables(small_aorc_geometry, aorc_crs, aorc_manager, short_time_range):
     """Test that default variables work when none specified."""
     start, end = short_time_range
@@ -320,12 +332,12 @@ def test_invalid_variable_error(small_aorc_geometry, aorc_crs, aorc_manager, sho
 
 def test_date_validation_errors(small_aorc_geometry, aorc_crs, aorc_manager):
     """Test date validation against AORC bounds."""
-    # Test start date before AORC start (2007)
+    # Test start date before AORC start (1980)
     with pytest.raises(ValueError, match="Start date .* is before dataset start"):
-        aorc_manager.getDataset(small_aorc_geometry, aorc_crs, 
-                               start='2005-01-01', end='2007-01-02', variables=['APCP_surface'])
-    
+        aorc_manager.getDataset(small_aorc_geometry, aorc_crs,
+                               start='1970-01-01', end='1970-12-31', variables=['APCP_surface'])
+
     # Test end date after AORC end (2024)
     with pytest.raises(ValueError, match="End date .* is after dataset end"):
-        aorc_manager.getDataset(small_aorc_geometry, aorc_crs, 
+        aorc_manager.getDataset(small_aorc_geometry, aorc_crs,
                                start='2024-01-01', end='2025-01-01', variables=['APCP_surface'])

@@ -14,12 +14,14 @@ import watershed_workflow.sources.standard_names as names
 bounds4_ll = np.array([-76.3955534, 36.8008194, -73.9026218, 42.4624454])
 bounds8_ll = np.array([-75.5722117, 41.487746, -74.5581047, 42.4624454])
 
+@pytest.mark.network
 def test_wbd_get() -> None:
     wbd = ManagerWBD()
     huc = wbd.getShapesByID('02040101')
     bounds = huc[huc.ID=='02040101'].geometry.bounds
     assert (np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
+@pytest.mark.network
 def test_wbd_get_many() -> None:
     wbd = ManagerWBD()
     wbd.setLevel(12)
@@ -29,6 +31,7 @@ def test_wbd_get_many() -> None:
     assert all(l.startswith('02040101') for l in huc.ID) # all in the HUC8
     assert (len(huc) == 38) # right number
 
+@pytest.mark.network
 def test_wbd_get_geometry() -> None:
     wbd = ManagerWBD()
     wbd.setLevel(8)
@@ -40,12 +43,14 @@ def test_wbd_get_geometry() -> None:
     
 
 
+@pytest.mark.network
 def test_wbd_waterdata_get() -> None:
     wbd = ManagerWBD(protocol_name='WaterData')
     huc = wbd.getShapesByID('02040101')
     bounds = huc[huc.ID=='02040101'].geometry.bounds
     assert (np.allclose(bounds8_ll, np.array(bounds), 1.e-6))
 
+@pytest.mark.network
 def test_wbd_waterdata_get_many() -> None:
     wbd = ManagerWBD(protocol_name='WaterData')
     wbd.setLevel(12)
@@ -55,6 +60,7 @@ def test_wbd_waterdata_get_many() -> None:
     assert all(l.startswith('02040101') for l in huc.ID) # all in the HUC8
     assert (len(huc) == 38) # right number
 
+@pytest.mark.network
 def test_wbd_waterdata_get_geometry() -> None:
     wbd = ManagerWBD(protocol_name='WaterData')
     wbd.setLevel(8)
@@ -82,6 +88,7 @@ def test_constructor_waterdata_properties() -> None:
     assert wbd._protocol_name == 'WaterData'
     assert wbd._protocol.__name__ == 'WaterData'
 
+@pytest.mark.network
 def test_standard_naming_applied() -> None:
     """Test that standard naming is properly applied"""
     wbd = ManagerWBD()
@@ -100,6 +107,7 @@ def test_standard_naming_applied() -> None:
     assert huc.attrs['name'] == wbd.name
     assert huc.attrs['source'] == wbd.source
 
+@pytest.mark.network
 def test_geodataframe_input() -> None:
     """Test getShapesByGeometry with GeoDataFrame input"""
     wbd = ManagerWBD()

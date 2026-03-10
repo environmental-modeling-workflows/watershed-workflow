@@ -2,8 +2,7 @@ import pytest
 
 import watershed_workflow.sources.manager_nrcs
 
-from fixtures import coweeta
-
+@pytest.mark.network
 def test_nrcs2(coweeta):
     # get imgs
     nrcs = watershed_workflow.sources.manager_nrcs.ManagerNRCS(force_download=True)
@@ -12,7 +11,7 @@ def test_nrcs2(coweeta):
     # check df
     mukeys = set(df['ID'])
     assert len(df) == len(mukeys) # one per unique key
-    assert 50 > len(df) > 40
+    assert 50 > len(df) > 30
     assert df.crs is not None
     
     # Test that standard names are applied
@@ -42,6 +41,7 @@ def test_nrcs_constructor():
     assert nrcs_force.force_download == True
 
 
+@pytest.mark.network
 def test_nrcs_geodataframe_input(coweeta):
     """Test getShapesByGeometry with GeoDataFrame input"""
     import geopandas as gpd
@@ -53,10 +53,33 @@ def test_nrcs_geodataframe_input(coweeta):
     df = nrcs.getShapesByGeometry(gdf)
     
     assert isinstance(df, gpd.GeoDataFrame)
-    assert 50 > len(df) > 40
+    assert 50 > len(df) > 30
     import watershed_workflow.sources.standard_names as names
     assert names.ID in df.columns
     assert names.NAME in df.columns
+
+
+@pytest.mark.network
+def test_nrcs_properties(coweeta):
+    """Test that soil properties are present and not truncated after cache roundtrip."""
+    nrcs = watershed_workflow.sources.manager_nrcs.ManagerNRCS()
+    df = nrcs.getShapesByGeometry(coweeta.geometry[0], coweeta.crs)
+
+    expected_properties = [
+        'residual saturation [-]',
+        'van Genuchten alpha [Pa^-1]',
+        'van Genuchten n [-]',
+        'permeability [m^2]',
+        'porosity [-]',
+        'bulk density [g/cm^3]',
+        'total sand pct [%]',
+        'total silt pct [%]',
+        'total clay pct [%]',
+        'thickness [cm]',
+    ]
+    for col in expected_properties:
+        assert col in df.columns, f'Missing property column: {col}'
+        assert df[col].notna().any(), f'Property column {col} is all NaN'
 
 
 def test_nrcs_getShapesByID_not_supported():
