@@ -6,25 +6,24 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 import watershed_workflow
-import watershed_workflow.ui
+import watershed_workflow.io.ui
 import watershed_workflow.sources
-import watershed_workflow.bin_utils
-import watershed_workflow.plot
+import _plot_utils
 
 def get_args():
     # set up parser
-    parser = watershed_workflow.ui.get_basic_argparse(__doc__+'\n\n'+watershed_workflow.sources.__doc__)
-    watershed_workflow.ui.projection(parser)
-    watershed_workflow.ui.inshape_args(parser)
-    watershed_workflow.ui.huc_hint_options(parser)
+    parser = watershed_workflow.io.ui.get_basic_argparse(__doc__+'\n\n'+watershed_workflow.sources.__doc__)
+    watershed_workflow.io.ui.projection(parser)
+    watershed_workflow.io.ui.inshape_args(parser)
+    watershed_workflow.io.ui.huc_hint_options(parser)
 
-    watershed_workflow.ui.simplify_options(parser)
-    watershed_workflow.ui.plot_options(parser)
+    watershed_workflow.io.ui.simplify_options(parser)
+    watershed_workflow.io.ui.plot_options(parser)
 
     data_ui = parser.add_argument_group('Data Sources')
-    watershed_workflow.ui.huc_source_options(data_ui)
-    watershed_workflow.ui.hydro_source_options(data_ui)
-    watershed_workflow.ui.dem_source_options(data_ui)
+    watershed_workflow.io.ui.huc_source_options(data_ui)
+    watershed_workflow.io.ui.hydro_source_options(data_ui)
+    watershed_workflow.io.ui.dem_source_options(data_ui)
 
     # parse args, log
     return parser.parse_args()
@@ -64,13 +63,13 @@ def plot_shape(args):
 
 if __name__ == '__main__':
     args = get_args()
-    watershed_workflow.ui.setup_logging(args.verbosity, args.logfile)
+    watershed_workflow.io.setupLogging(args.verbosity, args.logfile)
 
     # get objects
     shapes, huc, reaches, dem, dem_profile = plot_shape(args)
 
     # plot
-    fig, ax = watershed_workflow.bin_utils.plot_with_dem(args, shapes, reaches, dem, dem_profile, river_color='white')
+    fig, ax = _plot_utils.plot_with_dem(args, shapes, reaches, dem, dem_profile, river_color='white')
     # watershed_workflow.plot.shply([huc,], args.projection, color='k', ax=ax)
 
     logging.info("SUCESS")

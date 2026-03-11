@@ -132,9 +132,9 @@ def test_get_dataset_porosity(coweeta):
 @pytest.mark.network
 def test_cache_reuse(coweeta, tmp_path, monkeypatch):
     """Second call with same bounds should reuse the cache, not re-download."""
-    import watershed_workflow.config
+    import watershed_workflow.utils.config
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'],
+        watershed_workflow.utils.config.rcParams['DEFAULT'],
         'data_directory', str(tmp_path))
 
     mgr = ManagerHFHydrodata(force_download=False)

@@ -130,9 +130,9 @@ def test_dataset_crs(coweeta):
 @pytest.mark.network
 def test_cache_reuse(coweeta, tmp_path, monkeypatch):
     """Second call with the same bounds must reuse the cache, not re-download."""
-    import watershed_workflow.config
+    import watershed_workflow.utils.config
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'],
+        watershed_workflow.utils.config.rcParams['DEFAULT'],
         'data_directory', str(tmp_path),
     )
 

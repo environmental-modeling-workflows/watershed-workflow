@@ -5,7 +5,7 @@ import rasterio.crs
 import numpy as np
 
 import watershed_workflow
-import watershed_workflow.config
+import watershed_workflow.utils.config
 
 
 @pytest.fixture

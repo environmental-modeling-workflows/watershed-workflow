@@ -46,7 +46,7 @@ def test_depth_labels_and_centres_consistent():
 def test_rosetta_raster_unit():
     """computeVanGenuchtenModelFromRasters returns correct variables and shapes."""
     import xarray as xr
-    import watershed_workflow.soil_properties as sp
+    import watershed_workflow.properties.soil as sp
 
     depth = np.array([0.025, 0.10], dtype=np.float32)
     y     = np.array([35.1, 35.2], dtype=np.float64)
@@ -87,7 +87,7 @@ def test_rosetta_raster_unit():
 def test_rosetta_raster_nan_propagation():
     """NaN pixels must propagate through Rosetta without crashing."""
     import xarray as xr
-    import watershed_workflow.soil_properties as sp
+    import watershed_workflow.properties.soil as sp
 
     depth = np.array([0.025], dtype=np.float32)
     y     = np.array([35.0, 35.1], dtype=np.float64)
@@ -183,9 +183,9 @@ def test_rosetta_variables_present(coweeta):
 @pytest.mark.network
 def test_cache_reuse(coweeta, tmp_path, monkeypatch):
     """Second call with the same bounds must reuse the cache, not re-download."""
-    import watershed_workflow.config
+    import watershed_workflow.utils.config
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'],
+        watershed_workflow.utils.config.rcParams['DEFAULT'],
         'data_directory', str(tmp_path))
 
     mgr = ManagerSoilGrids(force_download=False)

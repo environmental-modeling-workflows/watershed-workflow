@@ -4,7 +4,7 @@ import xarray as xr
 import shapely.geometry
 
 import watershed_workflow.crs
-import watershed_workflow.warp
+import watershed_workflow.utils.warp
 from watershed_workflow.crs import CRS
 
 from watershed_workflow.sources.manager_nlcd import ManagerNLCD

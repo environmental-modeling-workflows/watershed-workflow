@@ -16,8 +16,8 @@ from watershed_workflow.sources.manager_modis_appeears import ManagerMODISAppEEA
 @pytest.fixture
 def modis_manager():
     """Create MODIS manager without authentication for testing."""
-    import watershed_workflow.config
-    watershed_workflow.config.setDataDirectory(os.path.join('examples', 'Coweeta', 'input_data'))
+    import watershed_workflow.utils.config
+    watershed_workflow.utils.config.setDataDirectory(os.path.join('examples', 'Coweeta', 'input_data'))
     return ManagerMODISAppEEARS()
 
 

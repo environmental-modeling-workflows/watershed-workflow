@@ -5,11 +5,11 @@ import shapely.geometry
 import geopandas
 from matplotlib import pyplot as plt
 
-import watershed_workflow.river_tree
-import watershed_workflow.river_mesh
-import watershed_workflow.utils
+import watershed_workflow.hydro.river
+import watershed_workflow.mesh.river_mesh
+import watershed_workflow.utils.utils
 import watershed_workflow.sources.standard_names as names
-from watershed_workflow.river_mesh import createRiverMesh
+from watershed_workflow.mesh.river_mesh import createRiverMesh
 
 
 def _meshYJunction(trunk_coords, left_coords, right_coords,
@@ -57,7 +57,7 @@ def _meshYJunction(trunk_coords, left_coords, right_coords,
     right = shapely.geometry.LineString(right_coords)
 
     reaches = geopandas.GeoDataFrame(geometry=[trunk, left, right])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+    rivers = watershed_workflow.hydro.river.createRivers(reaches, method='geometry')
     assert len(rivers) == 1, "Expected a single connected river tree"
     river = rivers[0]
 
@@ -91,7 +91,7 @@ def _plot_junction(request, river, coords, elems, title=''):
 def _assertConvex(coords, elems):
     """Assert that every element polygon is convex."""
     for i, e in enumerate(elems):
-        assert watershed_workflow.utils.isConvex(coords[e]), \
+        assert watershed_workflow.utils.utils.isConvex(coords[e]), \
             f"Element {i} is not convex: coords = {coords[e]}"
 
 
@@ -138,7 +138,7 @@ def _meshTwoReaches(upstream_coords, downstream_coords,
     downstream = shapely.geometry.LineString(downstream_coords)
 
     reaches = geopandas.GeoDataFrame(geometry=[upstream, downstream])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+    rivers = watershed_workflow.hydro.river.createRivers(reaches, method='geometry')
     assert len(rivers) == 1, "Expected a single connected river tree"
     river = rivers[0]
 

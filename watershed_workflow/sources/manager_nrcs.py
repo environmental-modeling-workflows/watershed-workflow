@@ -19,9 +19,9 @@ import shapely.ops
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
-import watershed_workflow.warp
+import watershed_workflow.utils.warp
 import watershed_workflow.utils
-import watershed_workflow.soil_properties
+import watershed_workflow.properties.soil
 
 from . import utils as source_utils
 from . import standard_names as names
@@ -482,10 +482,10 @@ class ManagerNRCS(manager_shapes.ManagerShapes):
         df_agg = aggregateMukeyValues(df)
 
         # get dataframe with van genuchten models
-        df_vgm = watershed_workflow.soil_properties.computeVanGenuchtenModelFromSSURGO(df_agg)
+        df_vgm = watershed_workflow.properties.soil.computeVanGenuchtenModelFromSSURGO(df_agg)
 
         # fix units
-        df_ats = watershed_workflow.soil_properties.convertRosettaToATS(df_vgm)
+        df_ats = watershed_workflow.properties.soil.convertRosettaToATS(df_vgm)
         # -- convert thickness to [m]
         df_ats['thickness [cm]'] = df_ats['thickness [cm]'] / 100.
         df_ats.rename(columns={'thickness [cm]' : 'thickness [m]'}, inplace=True)

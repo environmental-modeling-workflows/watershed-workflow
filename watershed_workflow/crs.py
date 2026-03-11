@@ -48,6 +48,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
+
 def isNative(crs: CRS) -> bool:
     """Check if CRS is in the native format.
     

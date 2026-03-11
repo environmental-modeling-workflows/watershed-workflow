@@ -5,14 +5,14 @@
 import argparse
 import logging
 
-import watershed_workflow.ui
+import watershed_workflow.io.ui
 import watershed_workflow.condition
 import watershed_workflow.extrude
 
 def get_args():
-    parser = watershed_workflow.ui.get_basic_argparse(__doc__)
+    parser = watershed_workflow.io.ui.get_basic_argparse(__doc__)
     parser.add_argument('input_file',
-                        type=watershed_workflow.ui.vtkfile, help='Input VTK file')
+                        type=watershed_workflow.io.ui.vtkfile, help='Input VTK file')
     parser.add_argument('output_file',
                         type=str, help='Output VTK file')
     parser.add_argument('--outlet_node', type=int,
@@ -23,7 +23,7 @@ def get_args():
 
 if __name__ == '__main__':
     args = get_args()
-    watershed_workflow.ui.setup_logging(args.verbosity, args.logfile)
+    watershed_workflow.io.setupLogging(args.verbosity, args.logfile)
 
     logging.info("Reading file: {}".format(args.input_file))
     m2 = watershed_workflow.extrude.Mesh2D.read_VTK(args.input_file)

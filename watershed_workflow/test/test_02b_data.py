@@ -10,7 +10,7 @@ import warnings
 import shapely.geometry
 import shapely.wkt
 
-import watershed_workflow.data as wwd
+import watershed_workflow.utils.data as wwd
 
 
 class TestConvertTimesToCFTimeNoleap:

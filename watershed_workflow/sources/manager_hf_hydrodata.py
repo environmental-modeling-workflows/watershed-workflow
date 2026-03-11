@@ -30,7 +30,7 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 
-import watershed_workflow.config
+import watershed_workflow.utils.config
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
@@ -134,8 +134,8 @@ class ManagerHFHydrodata(manager_dataset.ManagerDataset):
 
     def _prerequestDataset(self) -> None:
         """Register PIN with hf_hydrodata if credentials are configured."""
-        email = watershed_workflow.config.rcParams['HFHydrodata']['email']
-        pin = watershed_workflow.config.rcParams['HFHydrodata']['pin']
+        email = watershed_workflow.utils.config.rcParams['HFHydrodata']['email']
+        pin = watershed_workflow.utils.config.rcParams['HFHydrodata']['pin']
         if email == 'NOT_PROVIDED' or pin == 'NOT_PROVIDED':
             raise ValueError(
                 "HFHydrodata credentials not set.  Add an [HFHydrodata] section "

@@ -22,7 +22,7 @@ import xarray as xr
 import rasterio
 
 import watershed_workflow.crs
-import watershed_workflow.soil_properties
+import watershed_workflow.properties.soil
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
@@ -261,6 +261,6 @@ class ManagerSoilGrids(manager_dataset.ManagerDataset):
         rosetta_inputs = {'clay', 'sand', 'silt', 'bdod'}
         if rosetta_inputs.issubset(set(ds.data_vars)):
             logging.info('  Running Rosetta on SoilGrids texture rasters')
-            ds = watershed_workflow.soil_properties.computeVanGenuchtenModelFromRasters(ds)
+            ds = watershed_workflow.properties.soil.computeVanGenuchtenModelFromRasters(ds)
 
         return ds

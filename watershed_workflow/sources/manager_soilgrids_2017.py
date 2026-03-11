@@ -11,7 +11,7 @@ import xarray as xr
 import rioxarray
 import cftime
 
-import watershed_workflow.warp
+import watershed_workflow.utils.warp
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 

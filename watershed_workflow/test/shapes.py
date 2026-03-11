@@ -3,13 +3,13 @@ import pytest
 import numpy as np
 import shapely.geometry
 import geopandas
-import watershed_workflow.utils
+import watershed_workflow.utils.utils
 
 _tol = 1.e-7
 
 
 def assert_close(s1, s2, tol=_tol):
-    assert (watershed_workflow.utils.isClose(s1, s2, tol))
+    assert (watershed_workflow.utils.utils.isClose(s1, s2, tol))
 
 
 # ===== river shapes =====
@@ -167,11 +167,11 @@ def watershed_reaches2():
 @pytest.fixture
 def watershed_rivers1(watershed_poly1, watershed_reaches1):
     if watershed_poly1 is not None:
-        hucs = watershed_workflow.split_hucs.SplitHUCs(watershed_poly1)
+        hucs = watershed_workflow.hydro.watershed.Watershed(watershed_poly1)
     else:
         hucs = None
     if watershed_reaches1 is not None:
-        rivers = watershed_workflow.river_tree.createRivers(watershed_reaches1)
+        rivers = watershed_workflow.hydro.river.createRivers(watershed_reaches1)
     else:
         rivers = None
     return hucs, rivers
@@ -183,11 +183,11 @@ def watershed_rivers1(watershed_poly1, watershed_reaches1):
 def watershed_rivers2(watershed_poly2, watershed_reaches2):
     """The goalpost river network with two rivers."""
     if watershed_poly2 is not None:
-        hucs = watershed_workflow.split_hucs.SplitHUCs(watershed_poly2)
+        hucs = watershed_workflow.hydro.watershed.Watershed(watershed_poly2)
     else:
         hucs = None
     if watershed_reaches2 is not None:
-        rivers = watershed_workflow.river_tree.createRivers(watershed_reaches2)
+        rivers = watershed_workflow.hydro.river.createRivers(watershed_reaches2)
     else:
         rivers = None
     return hucs, rivers

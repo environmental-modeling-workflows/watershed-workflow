@@ -2,7 +2,7 @@ import pytest
 import os
 import numpy as np
 
-import watershed_workflow.config
+import watershed_workflow.utils.config
 import watershed_workflow.sources.manager_soilgrids_2017 as manager_soilgrids
 import watershed_workflow.crs
 
