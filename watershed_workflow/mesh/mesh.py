@@ -63,7 +63,7 @@ except Exception:
 #
 # Note, this can only work with __dict__ classes, not slotted classes.
 #
-def cache(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
+def _cache(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
     """A caching decorator for instance methods.
 
     This decorator caches the result of a method call in an instance attribute.
@@ -362,7 +362,7 @@ class Mesh2D:
         return self.edge_cells.keys()
 
     @property
-    @cache
+    @_cache
     def edge_cells(self):
         """A map from edge to lists of cells that edge touches."""
         e2c = collections.defaultdict(list)
@@ -372,7 +372,7 @@ class Mesh2D:
         return e2c
 
     @property
-    @cache
+    @_cache
     def cell_edges(self):
         """A map from cell to list of edges."""
         def ce(c):
@@ -382,7 +382,7 @@ class Mesh2D:
 
 
     @property
-    @cache
+    @_cache
     def cell_to_cells(self):
         """A list of length ncells, each entry is a list of neighboring cells."""
         c2c = [list() for c in range(len(self.conn))]
@@ -393,7 +393,7 @@ class Mesh2D:
         return c2c
 
     @property
-    @cache
+    @_cache
     def boundary_edges(self):
         """Return edges in the boundary of the mesh, ordered around the boundary."""
         be = sorted([e for (e, cells) in self.edge_cells.items() if len(cells) == 1])
@@ -417,7 +417,7 @@ class Mesh2D:
         return be_ordered
 
     @property
-    @cache
+    @_cache
     def boundary_vertices(self):
         return list(set(v for e in self.boundary_edges for v in e))
 
@@ -488,14 +488,14 @@ class Mesh2D:
                                                          for v in self.conn[c]])
 
     @property
-    @cache
+    @_cache
     def centroids(self):
         """Cell centroids."""
         return np.array([self.computeCentroid(c) for c in range(self.num_cells)])
 
 
     @property
-    @cache
+    @_cache
     def edge_centroids(self):
         """Edge centroids."""
         return {e: watershed_workflow.utils.utils.computeMidpoint(self.coords[e[0]],
@@ -1344,7 +1344,7 @@ class Mesh3D:
 
 
     @property
-    @cache
+    @_cache
     def barycentric_centroids(self):
 
         def _bary_centroid(m3, c):
@@ -1357,7 +1357,7 @@ class Mesh3D:
         return np.array([_bary_centroid(self, c) for c in range(self.num_cells)])
 
     @property
-    @cache
+    @_cache
     def mstk_centroids(self):
         def _mstk_centroid(m3, c):
             cverts = set(v for f in m3.cell_to_face_conn[c] for v in m3.face_to_vertex_conn[f])

@@ -154,7 +154,7 @@ def convertAORCToATS(dat: xr.Dataset,
     # convert times to standard time convention and remove leap day
     dout['time'] = watershed_workflow.utils.data.convertTimesToCFTime(dout['time'].values)
     if remove_leap_day:
-        dout = watershed_workflow.utils.data.filterLeapDay_DataFrame(dout)
+        dout = watershed_workflow.utils.data.filterLeapDay(dout)
 
     return dout
 

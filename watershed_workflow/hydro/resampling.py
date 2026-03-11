@@ -26,8 +26,6 @@ __all__ = [
     'resampleRivers',
     'resampleRiver',
     'resampleWatershed',
-    'resampleLineStringUniform',
-    'resampleLineStringNonuniform',
 ]
 
 
