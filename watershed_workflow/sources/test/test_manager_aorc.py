@@ -6,7 +6,7 @@ import cftime
 import datetime
 
 import watershed_workflow.crs
-import watershed_workflow.warp
+import watershed_workflow.utils.warp
 from watershed_workflow.crs import CRS
 
 from watershed_workflow.sources.manager_aorc import ManagerAORC

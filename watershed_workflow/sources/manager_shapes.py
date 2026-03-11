@@ -14,7 +14,7 @@ import logging
 
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
-import watershed_workflow.warp
+import watershed_workflow.utils.warp
 
 from . import standard_names as names
 from . import manager
@@ -156,7 +156,7 @@ class ManagerShapes(manager.Manager):
         # Transform to native CRS if needed
         if not watershed_workflow.crs.isEqual(geometry_gdf.crs, self.native_crs_in):
             geometry_gdf = geometry_gdf.to_crs(self.native_crs_in)
-            filter_polygon = watershed_workflow.warp.shply(filter_polygon, filter_crs, self.native_crs_in)
+            filter_polygon = watershed_workflow.utils.warp.warpShply(filter_polygon, filter_crs, self.native_crs_in)
             filter_crs = self.native_crs_in
 
         # Buffer for cache stability; keep filter_polygon un-buffered for clipping
@@ -257,7 +257,7 @@ class ManagerShapes(manager.Manager):
         # Filter by geometry intersection (using unbuffered geometry)
         if filter_geometry is not None and filter_geometry_crs is not None:
             if not watershed_workflow.crs.isEqual(filter_geometry_crs, df.crs):
-                filter_geometry = watershed_workflow.warp.shply(
+                filter_geometry = watershed_workflow.utils.warp.warpShply(
                     filter_geometry, filter_geometry_crs, df.crs)
             df = df[df.intersects(filter_geometry)]
 

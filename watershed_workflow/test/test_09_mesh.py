@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import warnings
 
-import watershed_workflow.mesh
+import watershed_workflow.mesh.mesh
 
 from watershed_workflow.test.shapes import two_boxes
 
@@ -29,22 +29,22 @@ def test_2D(two_boxes):
     print(coords)
     conn = [[0, 1, 2, 3], [1, 4, 5, 2]]
 
-    m2 = watershed_workflow.mesh.Mesh2D(coords, conn)
+    m2 = watershed_workflow.mesh.mesh.Mesh2D(coords, conn)
     check_2D_geometry(m2)
 
 
 def test_from_transect():
-    m2 = watershed_workflow.mesh.Mesh2D.from_Transect(np.array([0, 10, 20]),
+    m2 = watershed_workflow.mesh.mesh.Mesh2D.from_Transect(np.array([0, 10, 20]),
                                                       np.array([0, 0, 0]),
                                                       width=10)
     check_2D_geometry(m2)
 
 
 def test_extrude():
-    m2 = watershed_workflow.mesh.Mesh2D.from_Transect(np.array([0, 10, 20]),
+    m2 = watershed_workflow.mesh.mesh.Mesh2D.from_Transect(np.array([0, 10, 20]),
                                                       np.array([0, 0, 0]),
                                                       width=10)
-    m3 = watershed_workflow.mesh.Mesh3D.extruded_Mesh2D(m2, ['constant', ], [5.0, ], [10, ],
+    m3 = watershed_workflow.mesh.mesh.Mesh3D.extruded_Mesh2D(m2, ['constant', ], [5.0, ], [10, ],
                                                         [1001, ])
     assert (20 == m3.num_cells)
     assert (7*10 + 2*11 == m3.num_faces)
@@ -52,11 +52,11 @@ def test_extrude():
 
 
 def test_reorder():
-    m2 = watershed_workflow.mesh.Mesh2D.from_Transect(np.array([0, 10, 20, 30, 40, 50]),
+    m2 = watershed_workflow.mesh.mesh.Mesh2D.from_Transect(np.array([0, 10, 20, 30, 40, 50]),
                                                       np.array([0,  0,  0,  0,  0,  0]),
                                                       width=10)
     assert m2.num_cells == 5
-    m2.labeled_sets.append(watershed_workflow.mesh.LabeledSet('myset', 101, 'CELL', [3,]))
+    m2.labeled_sets.append(watershed_workflow.mesh.mesh.LabeledSet('myset', 101, 'CELL', [3,]))
     assert np.allclose(m2.centroids[m2.labeled_sets[0].ent_ids[0], 0:2], [35.,0.], 1.e-10)
 
     # reorder
@@ -89,11 +89,11 @@ def test_reorder():
 
     
 def test_write():
-    m2 = watershed_workflow.mesh.Mesh2D.from_Transect(np.array([0, 10, 20]),
+    m2 = watershed_workflow.mesh.mesh.Mesh2D.from_Transect(np.array([0, 10, 20]),
                                                       np.array([0, 0, 0]),
                                                       width=10)
     m2.cell_data['partition'] = [0,1]
-    m3 = watershed_workflow.mesh.Mesh3D.extruded_Mesh2D(m2, ['constant', ], [5.0, ], [10, ],
+    m3 = watershed_workflow.mesh.mesh.Mesh3D.extruded_Mesh2D(m2, ['constant', ], [5.0, ], [10, ],
                                                         [1001, ])
 
     import os

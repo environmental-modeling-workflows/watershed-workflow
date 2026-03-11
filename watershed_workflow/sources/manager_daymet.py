@@ -13,8 +13,8 @@ import xarray as xr
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
-import watershed_workflow.warp
-import watershed_workflow.data
+import watershed_workflow.utils.warp
+import watershed_workflow.utils.data
 
 from . import utils as source_utils
 from . import manager_dataset
@@ -203,8 +203,8 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
         attrs_ref['units'] = 'm'
         new_x = ds_combined.x * 1000
         new_y = ds_combined.y * 1000
-        new_time = watershed_workflow.data.convertTimesToCFTimeNoleap(
-            watershed_workflow.data.convertTimesToCFTime(ds_combined['time'].values))
+        new_time = watershed_workflow.utils.data.convertTimesToCFTimeNoleap(
+            watershed_workflow.utils.data.convertTimesToCFTime(ds_combined['time'].values))
 
         ds_combined = ds_combined.assign_coords(x=new_x, y=new_y, time=new_time)
         ds_combined.x.attrs = attrs_ref

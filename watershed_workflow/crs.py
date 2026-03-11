@@ -47,6 +47,24 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+__all__ = [
+    'CRS',
+    'isNative',
+    'from_proj',
+    'to_proj',
+    'from_rasterio',
+    'to_rasterio',
+    'from_epsg',
+    'to_epsg',
+    'from_cartopy',
+    'to_cartopy',
+    'from_string',
+    'from_wkt',
+    'to_wkt',
+    'from_xarray',
+    'isEqual',
+]
+
 
 def isNative(crs: CRS) -> bool:
     """Check if CRS is in the native format.

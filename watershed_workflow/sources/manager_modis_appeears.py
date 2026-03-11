@@ -12,8 +12,8 @@ import attr
 import rasterio.transform
 import xarray as xr
 
-import watershed_workflow.config
-import watershed_workflow.warp
+import watershed_workflow.utils.config
+import watershed_workflow.utils.warp
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
 
@@ -157,9 +157,9 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         FIXME: Can we make this more secure? --etc
         """
         if username == None:
-            username = watershed_workflow.config.rcParams['AppEEARS']['username']
+            username = watershed_workflow.utils.config.rcParams['AppEEARS']['username']
         if password is None:
-            password = watershed_workflow.config.rcParams['AppEEARS']['password']
+            password = watershed_workflow.utils.config.rcParams['AppEEARS']['password']
 
         if username == "NOT_PROVIDED" or password == "NOT_PROVIDED":
             raise ValueError(

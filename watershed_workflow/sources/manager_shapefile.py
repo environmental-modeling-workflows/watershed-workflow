@@ -8,7 +8,7 @@ import geopandas as gpd
 from shapely.geometry.base import BaseGeometry
 import watershed_workflow.utils
 import watershed_workflow.crs
-import watershed_workflow.warp
+import watershed_workflow.utils.warp
 from watershed_workflow.crs import CRS
 
 from . import manager_shapes

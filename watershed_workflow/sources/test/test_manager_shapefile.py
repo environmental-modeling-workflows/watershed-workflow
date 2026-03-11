@@ -5,7 +5,7 @@ import shapely
 import numpy as np
 import geopandas as gpd
 
-import watershed_workflow.config
+import watershed_workflow.utils.config
 import watershed_workflow.crs
 import watershed_workflow.sources.standard_names as names
 from watershed_workflow.sources.manager_shapefile import ManagerShapefile

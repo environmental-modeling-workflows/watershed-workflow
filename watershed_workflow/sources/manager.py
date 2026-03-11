@@ -13,7 +13,7 @@ import logging
 from typing import Optional, List
 
 from watershed_workflow.crs import CRS
-import watershed_workflow.config
+import watershed_workflow.utils.config
 
 
 class Manager:
@@ -165,7 +165,7 @@ class Manager:
         """
         if self.cache_category is None:
             return None
-        data_dir = watershed_workflow.config.rcParams['DEFAULT']['data_directory']
+        data_dir = watershed_workflow.utils.config.rcParams['DEFAULT']['data_directory']
         return os.path.join(data_dir, self.cache_category, self.short_name)
 
     def _cacheFilename(self,

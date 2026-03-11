@@ -11,7 +11,7 @@ import urllib.request
 import attr
 
 import watershed_workflow.utils
-import watershed_workflow.config
+import watershed_workflow.utils.config
 
 
 def getCode(fiona_or_shply_obj, level):
@@ -30,7 +30,7 @@ def getCode(fiona_or_shply_obj, level):
 
 def getVerifyOption():
     """Returns the 'verify' option for requests as provided in config files."""
-    verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
+    verify = watershed_workflow.utils.config.rcParams['DEFAULT']['ssl_cert']
     logging.debug('       cert: "%s"' % verify)
     if verify == "True":
         verify = True
@@ -72,7 +72,7 @@ def downloadWithProgressBar(url, location, force=False):
     if not os.path.isfile(location):
         logging.info('Downloading: "%s"' % url)
         logging.info('         to: "%s"' % location)
-        verify = watershed_workflow.config.rcParams['DEFAULT']['ssl_cert']
+        verify = watershed_workflow.utils.config.rcParams['DEFAULT']['ssl_cert']
         logging.info('       cert: "%s"' % verify)
         if verify == "True":
             verify = True

@@ -6,7 +6,7 @@ on the new Manager shared ABC.
 import os
 import pytest
 
-import watershed_workflow.config
+import watershed_workflow.utils.config
 from watershed_workflow.sources.manager import Manager
 
 
@@ -85,7 +85,7 @@ def test_snapBounds_idempotent():
 
 def test_cacheFilename_no_var_no_time(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=False, is_temporal=False)
     bounds = (-76.0, 42.0, -73.0, 45.0)
     fname = mgr._cacheFilename(bounds)
@@ -98,7 +98,7 @@ def test_cacheFilename_no_var_no_time(tmp_path, monkeypatch):
 
 def test_cacheFilename_with_var(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=True, is_temporal=False)
     bounds = (-76.0, 42.0, -73.0, 45.0)
     fname = mgr._cacheFilename(bounds, var='tmin')
@@ -107,7 +107,7 @@ def test_cacheFilename_with_var(tmp_path, monkeypatch):
 
 def test_cacheFilename_with_time(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=False, is_temporal=True)
     bounds = (-76.0, 42.0, -73.0, 45.0)
     fname = mgr._cacheFilename(bounds, start_year=2020, end_year=2022)
@@ -116,7 +116,7 @@ def test_cacheFilename_with_time(tmp_path, monkeypatch):
 
 def test_parseCacheFilename_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=True, is_temporal=True)
     bounds = (-76.0, 42.0, -73.0, 45.0)
     fname = mgr._cacheFilename(bounds, var='tmin', start_year=2020, end_year=2022)
@@ -133,7 +133,7 @@ def test_parseCacheFilename_roundtrip(tmp_path, monkeypatch):
 
 def test_parseCacheFilename_wrong_extension(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(cache_extension='nc')
     result = mgr._parseCacheFilename('test_manager_-76.0000_42.0000_-73.0000_45.0000.shp')
     assert result is None
@@ -155,7 +155,7 @@ def _touch_cache(mgr, bounds, var=None, start_year=None, end_year=None,
 
 def test_checkCache_finds_spatial_superset(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=False, is_temporal=False)
 
     # cached file covers a larger area
@@ -173,7 +173,7 @@ def test_checkCache_finds_spatial_superset(tmp_path, monkeypatch):
 
 def test_checkCache_no_match_spatial(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=False, is_temporal=False)
 
     # cached file covers a smaller area than the request
@@ -189,7 +189,7 @@ def test_checkCache_no_match_spatial(tmp_path, monkeypatch):
 
 def test_checkCache_wrong_var_excluded(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=True, is_temporal=False)
 
     # cached file is for 'tmax', not 'tmin'
@@ -205,7 +205,7 @@ def test_checkCache_wrong_var_excluded(tmp_path, monkeypatch):
 
 def test_checkCache_temporal_superset(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=True, is_temporal=True)
 
     # cached file covers years 2019-2023, request is 2020-2022
@@ -222,7 +222,7 @@ def test_checkCache_temporal_superset(tmp_path, monkeypatch):
 
 def test_checkCache_temporal_no_span(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=True, is_temporal=True)
 
     # cached file covers years 2020-2021 only, request is 2020-2022
@@ -239,7 +239,7 @@ def test_checkCache_temporal_no_span(tmp_path, monkeypatch):
 
 def test_checkCache_no_cache_category(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(cache_category=None)
 
     # With cache_category=None, _checkCache always returns None
@@ -250,7 +250,7 @@ def test_checkCache_no_cache_category(tmp_path, monkeypatch):
 def test_checkCache_exact_target_returned(tmp_path, monkeypatch):
     """_checkCache short-circuits and returns the exact file if it already exists."""
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(has_varname=False, is_temporal=False)
 
     snapped = (-76.0, 42.0, -73.0, 45.0)
@@ -266,7 +266,7 @@ def test_checkCache_exact_target_returned(tmp_path, monkeypatch):
 
 def test_cacheFilename_with_resampling(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(is_temporal=True, has_resampling=True)
     bounds = (-76.0, 42.0, -73.0, 45.0)
     fname = mgr._cacheFilename(bounds, start_year=2020, end_year=2022,
@@ -278,7 +278,7 @@ def test_cacheFilename_with_resampling(tmp_path, monkeypatch):
 def test_cacheFilename_resampling_native(tmp_path, monkeypatch):
     """None temporal_resampling should produce 'native' in the filename."""
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(is_temporal=True, has_resampling=True)
     bounds = (-76.0, 42.0, -73.0, 45.0)
     fname = mgr._cacheFilename(bounds, start_year=2020, end_year=2022,
@@ -288,7 +288,7 @@ def test_cacheFilename_resampling_native(tmp_path, monkeypatch):
 
 def test_parseCacheFilename_roundtrip_with_resampling(tmp_path, monkeypatch):
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(is_temporal=True, has_resampling=True)
     bounds = (-76.0, 42.0, -73.0, 45.0)
     fname = mgr._cacheFilename(bounds, start_year=2020, end_year=2022,
@@ -303,7 +303,7 @@ def test_parseCacheFilename_roundtrip_with_resampling(tmp_path, monkeypatch):
 def test_checkCache_resampling_exact_match(tmp_path, monkeypatch):
     """Cached '1D' file should be reused for a '1D' request."""
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(is_temporal=True, has_resampling=True)
 
     cached_bounds = (-77.0, 41.0, -72.0, 46.0)
@@ -322,7 +322,7 @@ def test_checkCache_resampling_exact_match(tmp_path, monkeypatch):
 def test_checkCache_resampling_mismatch_excluded(tmp_path, monkeypatch):
     """Cached '1D' file must NOT be reused for a '2D' request."""
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
+        watershed_workflow.utils.config.rcParams['DEFAULT'], 'data_directory', str(tmp_path))
     mgr = _FakeManager(is_temporal=True, has_resampling=True)
 
     cached_bounds = (-77.0, 41.0, -72.0, 46.0)

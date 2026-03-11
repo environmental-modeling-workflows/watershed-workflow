@@ -19,8 +19,8 @@ import time
 
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
-import watershed_workflow.warp
-import watershed_workflow.data
+import watershed_workflow.utils.warp
+import watershed_workflow.utils.data
 
 from . import manager
 
@@ -453,7 +453,7 @@ class ManagerDataset(manager.Manager):
             raise TypeError(f"Unsupported geometry type: {type(geometry)}")
 
         # Transform to native input CRS and buffer
-        polygon = watershed_workflow.warp.shply(polygon, geometry_crs, self.native_crs_in)
+        polygon = watershed_workflow.utils.warp.warpShply(polygon, geometry_crs, self.native_crs_in)
         logging.info(f'Incoming shape area = {polygon.area}')
         logging.info(f'... buffering incoming shape by 3x native resolution = {3 * self.native_resolution}')
         polygon = polygon.buffer(3 * self.native_resolution)
@@ -508,9 +508,9 @@ class ManagerDataset(manager.Manager):
                     if isinstance(dataset.indexes.get(d),
                                   (xr.CFTimeIndex, pd.DatetimeIndex))]:
             if isinstance(dataset.indexes[dim], pd.DatetimeIndex):
-                new_time = watershed_workflow.data.convertTimesToCFTime(dataset[dim].values)
+                new_time = watershed_workflow.utils.data.convertTimesToCFTime(dataset[dim].values)
                 if self.native_calendar == 'noleap':
-                    new_time = watershed_workflow.data.convertTimesToCFTimeNoleap(new_time)
+                    new_time = watershed_workflow.utils.data.convertTimesToCFTimeNoleap(new_time)
                 dataset[dim] = new_time
 
             dataset = dataset.sel({dim: slice(request.start, request.end)})
@@ -525,7 +525,7 @@ class ManagerDataset(manager.Manager):
             elif 'longitude' in dataset.coords and 'latitude' in dataset.coords:
                 dataset = dataset.rename({'longitude' : 'x', 'latitude' : 'y'})
 
-            dataset = watershed_workflow.warp.dataset(dataset, request.out_crs, request.resampling)
+            dataset = watershed_workflow.utils.warp.warpDataset(dataset, request.out_crs, request.resampling)
 
         # Add name and source to dataset attributes
         dataset.attrs['name'] = self.name

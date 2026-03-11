@@ -1,7 +1,7 @@
 import pytest
 import shapely.geometry
 import geopandas
-import watershed_workflow.split_hucs
+import watershed_workflow.hydro.watershed
 
 from watershed_workflow.test.shapes import two_boxes, three_boxes
 
@@ -10,7 +10,7 @@ def test_hc():
     """HandledCollection is in the inner guts of split_hucs"""
     # construction
     things = ['a', 'b', 'c', 'd']
-    hc = watershed_workflow.split_hucs.HandledCollection(things)
+    hc = watershed_workflow.hydro.watershed._HandledCollection(things)
     assert (len(hc) == 4)
     for i, j in zip(things, hc):
         assert i == j
@@ -29,7 +29,7 @@ def test_hc():
 
 
 def test_intersect_and_split(two_boxes):
-    boundaries, intersections = watershed_workflow.split_hucs.intersectAndSplit(two_boxes.geometry)
+    boundaries, intersections = watershed_workflow.hydro.watershed.intersectAndSplit(two_boxes.geometry)
     assert (len(boundaries) is 2)
 
     for b in boundaries:
@@ -46,13 +46,13 @@ def test_intersect_and_split(two_boxes):
             else:
                 assert type(entry) is shapely.geometry.LineString
                 assert len(entry.coords) is 2
-                watershed_workflow.utils.isClose(entry.coords[0], (10, -5))
-                watershed_workflow.utils.isClose(entry.coords[1], (10, 5))
+                watershed_workflow.utils.utils.isClose(entry.coords[0], (10, -5))
+                watershed_workflow.utils.utils.isClose(entry.coords[1], (10, 5))
 
 
 def test_hucs(two_boxes):
     # test construction
-    tb = watershed_workflow.split_hucs.SplitHUCs(two_boxes)
+    tb = watershed_workflow.hydro.watershed.Watershed(two_boxes)
 
     # test uniqueness of the boundaries+intersections collections
     handles = [p for b in tb.boundaries for p in b] + [p for i in tb.intersections for p in i]
@@ -81,23 +81,23 @@ def test_hucs(two_boxes):
 
     p0 = tb.computePolygon(0)
     assert (len(p0.boundary.coords) == 5)
-    assert (watershed_workflow.utils.isClose(two_boxes.geometry[0], p0))
+    assert (watershed_workflow.utils.utils.isClose(two_boxes.geometry[0], p0))
 
     p1 = tb.computePolygon(1)
     assert (len(p1.boundary.coords) == 5)
-    assert (watershed_workflow.utils.isClose(two_boxes.geometry[1], p1))
+    assert (watershed_workflow.utils.utils.isClose(two_boxes.geometry[1], p1))
 
     # boundary gon
     p3 = tb.exterior
     assert (len(p3.boundary.coords) == 7)  # closed polygon
     bndry_c = [(0, -5), (10, -5), (20, -5), (20, 5), (10, 5), (0, 5)]
     poly = shapely.geometry.Polygon(bndry_c)
-    assert (watershed_workflow.utils.isClose(poly, p3))
+    assert (watershed_workflow.utils.utils.isClose(poly, p3))
 
     # should check that these are close to those in two_boxes, but
     # they are shifted, so this check would be difficult.
     # for b1,b2 in zip(tb.polygons(), two_boxes):
-    #     assert(watershed_workflow.utils.isClose(b1,b2))
+    #     assert(watershed_workflow.utils.utils.isClose(b1,b2))
 
     # now split the middle
     # one could imagine iterating over the spine and smoothing/doing something
@@ -125,7 +125,7 @@ def test_hucs(two_boxes):
 
 def test_hucs_three(three_boxes):
     # test construction
-    tb = watershed_workflow.split_hucs.SplitHUCs(three_boxes)
+    tb = watershed_workflow.hydro.watershed.Watershed(three_boxes)
 
     # test uniqueness of the boundaries+intersections collections
     handles = [p for b in tb.boundaries for p in b] + [p for i in tb.intersections for p in i]
@@ -148,7 +148,7 @@ def test_hucs_triple():
     ]
     df = geopandas.GeoDataFrame({'index' : range(len(boxes)),
                                  'geometry' : boxes})
-    hucs = watershed_workflow.split_hucs.SplitHUCs(df)
+    hucs = watershed_workflow.hydro.watershed.Watershed(df)
     assert (len(hucs) is 3)
     assert (len(hucs.linestrings) is 6)
     assert (len(hucs.intersections) is 3)
@@ -157,25 +157,25 @@ def test_hucs_triple():
     # note order is not required here, but I don't have a good way of checking without order
     boundaries = [shandle for b in hucs.boundaries for shandle in b]
     bound1 = hucs.linestrings[boundaries[0]]
-    assert (watershed_workflow.utils.isClose(bound1,
+    assert (watershed_workflow.utils.utils.isClose(bound1,
                                            shapely.geometry.LineString([(0, 5), (0, -5),
                                                                         (10, -5)])))
 
     bound2 = hucs.linestrings[boundaries[1]]
-    assert (watershed_workflow.utils.isClose(
+    assert (watershed_workflow.utils.utils.isClose(
         bound2, shapely.geometry.LineString([(10, -5), (20, -5), (20, 5)])))
 
     bound3 = hucs.linestrings[boundaries[2]]
-    assert (watershed_workflow.utils.isClose(
+    assert (watershed_workflow.utils.utils.isClose(
         bound3, shapely.geometry.LineString([(20, 5), (20, 10), (0, 10), (0, 5)])))
 
     intersections = [shandle for b in hucs.intersections for shandle in b]
     spine1 = hucs.linestrings[intersections[0]]
-    assert (watershed_workflow.utils.isClose(spine1, shapely.geometry.LineString([(10, 5),
+    assert (watershed_workflow.utils.utils.isClose(spine1, shapely.geometry.LineString([(10, 5),
                                                                                 (10, -5)])))
 
     spine2 = hucs.linestrings[intersections[1]]
-    assert (watershed_workflow.utils.isClose(spine2, shapely.geometry.LineString([(0, 5), (10, 5)])))
+    assert (watershed_workflow.utils.utils.isClose(spine2, shapely.geometry.LineString([(0, 5), (10, 5)])))
 
     spine3 = hucs.linestrings[intersections[2]]
-    assert (watershed_workflow.utils.isClose(spine3, shapely.geometry.LineString([(10, 5), (20, 5)])))
+    assert (watershed_workflow.utils.utils.isClose(spine3, shapely.geometry.LineString([(10, 5), (20, 5)])))

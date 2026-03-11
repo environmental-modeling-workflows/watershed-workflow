@@ -18,10 +18,10 @@ Note, you probably need to also commit the updated files to the repo!
 
 import fiona
 import pickle
-import watershed_workflow.io
+import watershed_workflow.io.hdf5
 import watershed_workflow.sources
 import watershed_workflow.crs
-import watershed_workflow.utils
+import watershed_workflow.utils.utils
 
 
 def read_and_process_dump(pkl_dump_file):
@@ -49,7 +49,7 @@ def read_and_process_dump(pkl_dump_file):
 
     # convert to shapely
     for h, v in hucs.items():
-        hucs[h] = watershed_workflow.utils.create_shply(v)
+        hucs[h] = watershed_workflow.utils.utils.create_shply(v)
     for h, v in hucs.items():
         # normalize the properties
         v.properties = dict(HUC=h)
@@ -67,14 +67,14 @@ def read_and_process_dump(pkl_dump_file):
     # convert to shply -- and simplify, I think this should be safe!
     for h, v in hydro.items():
         print(v[0].keys())
-        rivers = [watershed_workflow.utils.create_shply(r) for r in v]
+        rivers = [watershed_workflow.utils.utils.create_shply(r) for r in v]
         hydro[h] = [r.simplify(50) for r in rivers]
 
     # write the files
-    watershed_workflow.io.write_to_shapefile('watershed_workflow/test/fixture_data/hucs.shp',
+    watershed_workflow.io.hdf5.write_to_shapefile('watershed_workflow/test/fixture_data/hucs.shp',
                                              list(hucs.values()), crs)
     for h, v in hydro.items():
-        watershed_workflow.io.write_to_shapefile(
+        watershed_workflow.io.hdf5.write_to_shapefile(
             f'watershed_workflow/test/fixture_data/river_{h}.shp', v, crs)
 
 

@@ -6,8 +6,8 @@ import pickle
 import os
 from matplotlib import pyplot as plt
 
-import watershed_workflow.condition as condition
-from watershed_workflow.mesh import Mesh2D
+import watershed_workflow.mesh.condition as condition
+from watershed_workflow.mesh.mesh import Mesh2D
 
 
 PLOT = False
