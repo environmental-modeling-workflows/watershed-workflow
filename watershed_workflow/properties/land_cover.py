@@ -328,7 +328,6 @@ def plotLAI(df: pd.DataFrame,
     ax.set_ylabel('Leaf Area Index [-]')
     ax.set_xlabel('time')
     ax.legend()
-    plt.show()
 
 
 nlcd_default_properties = pd.read_csv(importlib.resources.files("watershed_workflow") / "data" / "nlcd_land_cover_properties.csv").set_index('indices')

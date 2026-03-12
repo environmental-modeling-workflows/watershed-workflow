@@ -995,7 +995,7 @@ def fixConvexity(reach: River, e_coords: np.ndarray, computeWidth: Callable[[Riv
                     ax.plot(e_poly_hull.boundary.xy[0], e_poly_hull.boundary.xy[1], 'k-x')
                     ax.set_aspect('equal', adjustable='box')
                     plt.show()
-                    assert False, "No intersection point with convex hull?"
+                    assert False, "No intersection point with convex hull at reach {}?".format(reach.properties['comid'])
 
                 new_c_p = ls.intersection(e_poly_hull.boundary)
 
@@ -1017,7 +1017,7 @@ def fixConvexity(reach: River, e_coords: np.ndarray, computeWidth: Callable[[Riv
                     ax.plot(e_poly_hull.boundary.xy[0], e_poly_hull.boundary.xy[1], 'k-x')
                     ax.set_aspect('equal', adjustable='box')
                     plt.show()
-                    assert False, "Dual intersection points with convex hull?"
+                    assert False, "Dual intersection points with convex hull for reach {}?".format(reach.properties['comid'])
 
                 assert isinstance(new_c_p, shapely.geometry.Point)
                 new_c = new_c_p.coords[0]
@@ -1066,7 +1066,7 @@ def fixConvexity(reach: River, e_coords: np.ndarray, computeWidth: Callable[[Riv
         ax.plot(e_poly_hull.boundary.xy[0], e_poly_hull.boundary.xy[1], 'k-x')
         ax.set_aspect('equal', adjustable='box')
         plt.show()
-        assert False, "Cannot fix nonconvexity?"
+        assert False, "Cannot fix nonconvexity for reach {}?".format(reach.properties['comid'])
 
     return e_coords
 

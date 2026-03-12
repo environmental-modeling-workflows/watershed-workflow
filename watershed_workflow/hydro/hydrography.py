@@ -344,15 +344,23 @@ def cutAndSnapCrossings(hucs: Watershed, rivers: List[River], tol: float) -> Non
     for river in rivers:
         assert river.isContinuous()
             
+    class LocalContinuityError(Exception):
+        pass
+
     # check interior crossings on all
     for river in rivers:
         # DO NOT make a copy -- we want the iterator in this case to be modified in place!
         for reach in river:
             try:
-                assert reach.isLocallyContinuous(), 'prior'
+                if not reach.isLocallyContinuous():
+                    raise LocalContinuityError('prior')
+
                 _cutAndSnapInteriorCrossing(hucs, reach, tol)
-                assert reach.isLocallyContinuous(), 'after'
-            except AssertionError as err:
+
+                if not reach.isLocallyContinuous():
+                    raise LocalContinuityError('after')
+
+            except LocalContinuityError as err:
                 fig, ax = plt.subplots(1,1)
                 import watershed_workflow.plot.plot
                 ax = watershed_workflow.plot.plot.linestringWithCoords(reach.linestring, marker='x', color='r')
@@ -362,9 +370,9 @@ def cutAndSnapCrossings(hucs: Watershed, rivers: List[River], tol: float) -> Non
                 watershed_workflow.plot.plot.linestringWithCoords(reach.parent.parent.linestring, marker='x', color='c', ax=ax)
                 hucs.plot(ax=ax, color='k')
                 plt.show()
-                raise RuntimeError(f'Failed locally continuous on reach {reach[names.ID]} in cutAndSnapCrossings due to check {err}')
 
-                
+                raise RuntimeError(f'Failed locally continuous on reach {reach[names.ID]} in cutAndSnapCrossings due to check {err}')
+            
 
 def _cutAndSnapExteriorCrossing(hucs: Watershed, reach: River, merge_tol: float) -> None:
     """Cut and snap reach at exterior HUC boundary crossings.
@@ -474,41 +482,51 @@ def _cutAndSnapInteriorCrossing(hucs: Watershed, reach: River, merge_tol: float)
 
             if watershed_workflow.utils.geometry.intersects(ls, r):
                 new_spine, new_reach = watershed_workflow.utils.geometry.cut(ls, r)
-                assert len(new_reach) == 1 or len(new_reach) == 2
-                assert len(new_spine) == 1 or len(new_spine) == 2
-                logging.info("  - snapping reach at internal boundary of HUCs")
-                if len(new_reach) == 1:
-                    reach.linestring = new_reach[0]
-                    logging.info(f'  branch1 on reach {reach[names.ID]}')
-                    return_code = max(return_code, 1)
-                elif len(new_reach) == 2:
-                    logging.info(f'  branch2 on reach {reach[names.ID]}')
-                    reach.linestring = shapely.geometry.LineString(
-                        list(new_reach[0].coords) + list(new_reach[1].coords)[1:])
-                    logging.info(f'  old_r: {list(r.coords)}')
-                    logging.info(f'  seg1: {list(new_reach[0].coords)}')
-                    logging.info(f'  seg2: {list(new_reach[1].coords)}')
-                    logging.info(
-                        f'  splitting at coord: {len(new_reach[0].coords)-1} of {len(reach.linestring.coords)}'
-                    )
-                    us, ds = reach.split(len(new_reach[0].coords) - 1)
-                    split = True
-                    logging.info(
-                        f'  into reach (upstream) {us[names.ID]} and reach (downstream) {ds[names.ID]}')
-                    assert us.isLocallyContinuous()
-                    assert ds.isLocallyContinuous()
-                    return_code = max(return_code, 2)
+                if len(new_reach) not in (1, 2) or len(new_spine) not in (1, 2):
+                    import geopandas as gpd
+                    fig, ax = plt.subplots(1,1)
+                    hucs.plot(ax=ax, color='k', alpha=0.8)
+                    reach.parent.plot(ax=ax, color='g', marker='+')
+                    reach.plot(ax=ax, color='b', marker='+', label='reach before cut')
+                    gpd.GeoDataFrame(geometry=[shapely.geometry.LineString(s) for s in new_spine]).plot(ax=ax, color='r', marker='+', label='hucs bound after cut')
+                    gpd.GeoDataFrame(geometry=[shapely.geometry.LineString(s) for s in new_reach]).plot(ax=ax, color='y', marker='+', label='reach after cut')
+                    fig.legend()
+                    plt.show()
+                    raise RuntimeError("Failed to cut and snap interior crossing at reach {}".format(reach[names.ID]))
+                else:
+                    logging.info("  - snapping reach at internal boundary of HUCs")
+                    if len(new_reach) == 1:
+                        reach.linestring = new_reach[0]
+                        logging.info(f'  branch1 on reach {reach[names.ID]}')
+                        return_code = max(return_code, 1)
+                    elif len(new_reach) == 2:
+                        logging.info(f'  branch2 on reach {reach[names.ID]}')
+                        reach.linestring = shapely.geometry.LineString(
+                            list(new_reach[0].coords) + list(new_reach[1].coords)[1:])
+                        logging.info(f'  old_r: {list(r.coords)}')
+                        logging.info(f'  seg1: {list(new_reach[0].coords)}')
+                        logging.info(f'  seg2: {list(new_reach[1].coords)}')
+                        logging.info(
+                            f'  splitting at coord: {len(new_reach[0].coords)-1} of {len(reach.linestring.coords)}'
+                        )
+                        us, ds = reach.split(len(new_reach[0].coords) - 1)
+                        split = True
+                        logging.info(
+                            f'  into reach (upstream) {us[names.ID]} and reach (downstream) {ds[names.ID]}')
+                        assert us.isLocallyContinuous()
+                        assert ds.isLocallyContinuous()
+                        return_code = max(return_code, 2)
 
-                    # continue with the downstream segment -- upstream
-                    # will be continued in the next iteration
-                    reach = ds
-                    r = reach.linestring
+                        # continue with the downstream segment -- upstream
+                        # will be continued in the next iteration
+                        reach = ds
+                        r = reach.linestring
 
-                hucs.linestrings[ls_handle] = new_spine[0]
-                if len(new_spine) > 1:
-                    assert (len(new_spine) == 2)
-                    new_handle = hucs.linestrings.append(new_spine[1])
-                    spine.append(new_handle)
+                    hucs.linestrings[ls_handle] = new_spine[0]
+                    if len(new_spine) > 1:
+                        assert (len(new_spine) == 2)
+                        new_handle = hucs.linestrings.append(new_spine[1])
+                        spine.append(new_handle)
 
     return return_code
 

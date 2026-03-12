@@ -413,7 +413,11 @@ def filterLeapDay_xarray(da: xr.DataArray | xr.Dataset,
         pass
     else:
         if crs is not None:
-            da_filtered.rio.write_crs(crs, inplace=True)
+            if isinstance(da_filtered, xr.Dataset):
+                for var in da_filtered.variables:
+                    da_filtered[var].rio.write_crs(crs, inplace=True)
+            else:
+                da_filtered.rio.write_crs(crs, inplace=True)
     da_filtered.attrs = da.attrs.copy()
 
     # Preserve coordinate attributes (including CRS if present)

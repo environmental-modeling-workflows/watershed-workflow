@@ -556,14 +556,18 @@ def intersectAndSplit(list_of_shapes : Sequence[shapely.geometry.Polygon]) -> \
 
                 if isinstance(inter, shapely.geometry.GeometryCollection) or \
                    isinstance(inter, shapely.geometry.MultiLineString):
-
+                    fig, ax = plt.subplots(1,1)
+                    gpd.GeoDataFrame(geometry=list_of_shapes).plot(ax=ax, color='silver')
+                    gpd.GeoDataFrame(geometry=[s1]).plot(ax=ax, color='r')
+                    gpd.GeoDataFrame(geometry=[s2]).plot(ax=ax, color='b')
+                    plt.show()
                     logging.info(
                         f'HUC intersection yielded collection of odd types: {set(type(i) for i in inter.geoms)}'
                     )
 
                     class IntersectionError(RuntimeError):
                         def __init__(self, msg, list_of_shapes, i_p1, p1, i_p2, p2, intersection):
-                            super(self, IntersectionError).__init__(msg)
+                            super().__init__(msg)
                             self.polys = list_of_shapes
                             self.i_p1 = i_p1
                             self.p1 = p1
