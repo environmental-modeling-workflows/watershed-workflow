@@ -1,24 +1,26 @@
 """Manager for downloading MODIS products from the NASA Earthdata AppEEARS database."""
-from typing import Tuple, Dict, Optional, List, overload
+from typing import Tuple, Dict, Optional, List
 
 import os, sys
 import logging
+import netrc
 import requests
 import time
 import cftime, datetime
 import shapely
 import numpy as np
-import attr
 import rasterio.transform
 import xarray as xr
 
-import watershed_workflow.utils.config
 import watershed_workflow.utils.warp
 from watershed_workflow.crs import CRS
 import watershed_workflow.crs
 
 from . import utils as source_utils
 from . import manager_dataset
+from .manager_dataset_cached import cached_dataset_manager
+from .cache_info import CacheInfo, _snapBounds
+
 
 _colors = {
     -1: ('Unclassified', (0, 0, 0)),
@@ -49,7 +51,16 @@ for k, v in _colors.items():
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
+_CACHE_INFO = CacheInfo(
+    category='land_cover',
+    subcategory='modis_appeears',
+    name='modis_appeears',
+    snap_resolution=0.01,
+    is_temporal=True,
+)
 
+
+@cached_dataset_manager(_CACHE_INFO)
 class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
     """MODIS data through the AppEEARS data portal.
 
@@ -78,20 +89,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
 
     """
 
-    class Request(manager_dataset.ManagerDataset.Request):
-        """MODIS AppEEARS-specific request that includes Task information."""
-        def __init__(self,
-                     request : manager_dataset.ManagerDataset.Request,
-                     task_id : str = "",
-                     cache_filenames : Optional[Dict[str, str]] = None,
-                     urls : Optional[Dict[str, str]] = None):
-            super().copyFromExisting(request)
-            self.task_id = task_id
-            self.cache_filenames = cache_filenames
-            self.urls = urls
-
-
-    _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login"  # URL for AppEEARS rest requests
+    _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login"
     _TASK_URL = "https://appeears.earthdatacloud.nasa.gov/api/task"
     _STATUS_URL = "https://appeears.earthdatacloud.nasa.gov/api/status/"
     _BUNDLE_URL_TEMPLATE = "https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}"
@@ -110,10 +108,9 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
     colors = colors
     indices = indices
 
-    def __init__(self, login_token : Optional[str] = None):
+    def __init__(self, login_token: Optional[str] = None):
         """Create a new manager for MODIS data."""
 
-        import cftime
         native_resolution = 500.0 * 9.e-6  # in native_crs (degrees)
         native_start = cftime.datetime(2002, 7, 1, calendar='standard')
         native_end = cftime.datetime(2024, 1, 1, calendar='standard')
@@ -131,54 +128,69 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             native_end=native_end,
             valid_variables=valid_variables,
             default_variables=default_variables,
-            cache_category='land_cover',
-            cache_extension='nc',
-            has_varname=True,
-            short_name='MODIS',
         )
 
         self.login_token = login_token
-        os.makedirs(self._cacheFolder(), exist_ok=True)
 
-    def _authenticate(self,
-                      username : Optional[str] = None,
-                      password : Optional[str] = None) -> str | None:
-        """Authenticate to the AppEEARS API.
+    def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True if all per-variable NetCDF files exist in the cache directory.
 
         Parameters
         ----------
-        username : string, optional
-          Username, defaults to value from watershed_workflowrc,
-          conf['AppEEARS']['username']
-        password : string, optional
-          Username, defaults to value from watershed_workflowrc,
-          conf['AppEEARS']['password'].
+        dir : str
+            Absolute path to a candidate cache directory.
+        request : ManagerDataset.Request
+            The request being fulfilled.
 
-        FIXME: Can we make this more secure? --etc
+        Returns
+        -------
+        bool
+            True if ``{var}.nc`` exists for every requested variable.
         """
-        if username == None:
-            username = watershed_workflow.utils.config.rcParams['AppEEARS']['username']
-        if password is None:
-            password = watershed_workflow.utils.config.rcParams['AppEEARS']['password']
+        for var in request.variables:
+            if not os.path.isfile(os.path.join(dir, f'{var}.nc')):
+                return False
+        return True
 
-        if username == "NOT_PROVIDED" or password == "NOT_PROVIDED":
-            raise ValueError(
-                "Username or password for AppEEARS are not set in watershed_workflowrc.")
+    def _authenticate(self,
+                      username: Optional[str] = None,
+                      password: Optional[str] = None) -> str | None:
+        """Authenticate to the AppEEARS API using NASA Earthdata credentials.
+
+        Parameters
+        ----------
+        username : str, optional
+            NASA Earthdata username.  If not provided, read from ``~/.netrc``
+            (``machine urs.earthdata.nasa.gov``).
+        password : str, optional
+            NASA Earthdata password.  If not provided, read from ``~/.netrc``.
+        """
+        if username is None or password is None:
+            try:
+                creds = netrc.netrc().authenticators('urs.earthdata.nasa.gov')
+            except FileNotFoundError:
+                creds = None
+            if creds is None:
+                raise ValueError(
+                    'NASA Earthdata credentials not found. Add an entry to ~/.netrc:\n\n'
+                    '    machine urs.earthdata.nasa.gov login <username> password <password>\n\n'
+                    'Register for a free account at https://urs.earthdata.nasa.gov'
+                )
+            username, _, password = creds
 
         try:
             lr = requests.post(self._LOGIN_URL, auth=(username, password))
             lr.raise_for_status()
             return lr.json()['token']
         except Exception as err:
-            logging.info('Unable to authenticate at Appeears database:')
-            logging.info('Message: {err}')
+            logging.info(f'Unable to authenticate at AppEEARS database: {err}')
             return None
 
     def _constructRequest(self,
-                          snapped_bounds : tuple,
-                          start_year : int,
-                          end_year : int,
-                          variables : List[str]) -> str:
+                          snapped_bounds: tuple,
+                          start_year: int,
+                          end_year: int,
+                          variables: List[str]) -> str:
         """Create an AppEEARS request to download the variable for whole years.
 
         Parameters
@@ -249,9 +261,9 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         return task_id
 
     def _checkStatus(self, request: manager_dataset.ManagerDataset.Request) -> str | bool:
-        """Checks and prints the status of the AppEEARS request.
+        """Check and print the status of the AppEEARS request.
 
-        Returns True, False, or 'UNKNOWN' when the response is not well formed, which seems to happen sometimes...
+        Returns True, False, or 'UNKNOWN' when the response is not well formed.
         """
         if self.login_token is None:
             self.login_token = self._authenticate()
@@ -284,6 +296,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             return 'UNKNOWN'
 
     def _checkBundleURL(self, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Check for the AppEEARS bundle and populate download URLs on the request."""
         if self.login_token is None:
             self.login_token = self._authenticate()
 
@@ -299,12 +312,10 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             logging.info(f'{err}')
             return False
         else:
-            # does the bundle exist?
             if len(r.json()) == 0:
                 logging.info('... bundle not found')
                 return False
 
-            # bundle exists -- find the url and sha for each varname
             for var in request.variables:
                 product = self._PRODUCTS[var]['product']
                 found = False
@@ -312,66 +323,17 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
                     if entry['file_name'].startswith(product):
                         logging.info(f'... bundle found {entry["file_name"]}')
                         assert (entry['file_name'].endswith('.nc'))
-                        request.urls[var] = self._BUNDLE_URL_TEMPLATE.format(
+                        request._urls[var] = self._BUNDLE_URL_TEMPLATE.format(
                             request.task_id) + '/' + entry['file_id']
                         found = True
                 assert (found)
             return True
 
-    def _download(self, request: manager_dataset.ManagerDataset.Request) -> bool:
-        """Download the data files for the provided request to cache filenames."""
-        os.makedirs(self._cacheFolder(), exist_ok=True)
-
-        if len(request.urls) == 0:
-            ready = self._checkBundleURL(request)
-        else:
-            ready = True
-
-        if ready:
-            assert (len(request.cache_filenames) == len(request.urls))
-            assert (len(request.variables) == len(request.urls))
-            for var in request.variables:
-                url = request.urls[var]
-                filename = request.cache_filenames[var]
-                logging.info("  Downloading: {}".format(url))
-                logging.info("      to file: {}".format(filename))
-                good = source_utils.download(
-                    url, filename, headers={ 'Authorization': f'Bearer {self.login_token}'})
-                assert (good)
-            return True
-        else:
-            return False
-
-
-    def _readData(self, request) -> xr.Dataset:
-        """Read all files for a request, returning the data as a Dataset."""
-        darrays = dict((var, self._readFile(request.cache_filenames[var], var))
-                       for var in request.variables)
-
-        # keep independent times for LAI (which is every 3-6 days) and
-        # LULC (which is once a yearish)
-        for k,v in darrays.items():
-            darrays[k] = darrays[k].rename({'time': f'time_{k}'})
-
-        dataset = xr.Dataset(darrays)
-        return dataset
-
-
-    def _readFile(self, filename : str, variable : str) -> xr.DataArray:
-        """Open the file and get the data."""
-        with xr.open_dataset(filename) as fid:
-            layer = self._PRODUCTS[variable]['layer']
-            data = fid[layer]
-
-        data.name = variable
-        return data
-
-
     def _requestDataset(self,
                         request: manager_dataset.ManagerDataset.Request,
-                        task_id : Optional[str] = None
+                        task_id: Optional[str] = None
                         ) -> manager_dataset.ManagerDataset.Request:
-        """Request MODIS data from AppEEARS - may not be ready immediately.
+        """Submit the AppEEARS task if not already submitted.
 
         Parameters
         ----------
@@ -383,85 +345,24 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         Returns
         -------
         ManagerDataset.Request
-            MODIS request object with AppEEARS task information.
+            The same request with ``task_id`` and ``_urls`` attached.
         """
-        # Snap dates to whole years for cache stability
         start_year = request.start.year
         end_year = request.end.year
-        snapped_bounds = request.snapped_bounds
-        geometry_bounds = request.geometry.bounds
 
+        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
         logging.info(f'Building MODIS request for bounds: {snapped_bounds}, years {start_year}-{end_year}')
 
-        # Build standard cache filenames for each variable
-        var_filenames = {}
-        for var in request.variables:
-            # Check for a spatial+temporal superset in the cache
-            superset = self._checkCache(geometry_bounds, snapped_bounds,
-                                        var=var, start_year=start_year, end_year=end_year)
-            if superset is not None:
-                logging.info(f'  Using superset cache for {var}: {superset}')
-                var_filenames[var] = superset
-            else:
-                var_filenames[var] = self._cacheFilename(
-                    snapped_bounds, var=var, start_year=start_year, end_year=end_year)
+        if task_id is None:
+            task_id = self._constructRequest(
+                snapped_bounds, start_year, end_year, request.variables)
 
-        logging.info('  Cache filenames:')
-        for fname in var_filenames.values():
-            logging.info(f'    {fname}')
+        request.task_id = task_id
+        request._urls = {}
+        return request
 
-        # Check whether all files are already present
-        if all(os.path.isfile(f) for f in var_filenames.values()):
-            logging.info('  All files exist locally.')
-            modis_request = self.Request(
-                request,
-                task_id="",
-                cache_filenames=var_filenames,
-                urls={}
-            )
-            modis_request.is_ready = True
-        else:
-            logging.info('  Building AppEEARS request.')
-            if task_id is None:
-                task_id = self._constructRequest(
-                    snapped_bounds, start_year, end_year, request.variables)
-
-            modis_request = self.Request(
-                request,
-                task_id=task_id,
-                cache_filenames=var_filenames,
-                urls={}
-            )
-
-        return modis_request
-
-
-    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
-        """Fetch MODIS data from cache or AppEEARS.
-
-        Parameters
-        ----------
-        request : ManagerDataset.Request
-            Request object containing AppEEARS task information.
-
-        Returns
-        -------
-        xr.Dataset
-            Dataset containing the requested MODIS data.
-        """
-        if all(os.path.isfile(f) for f in request.cache_filenames.values()):
-            return self._readData(request)
-
-        if self._download(request):
-            return self._readData(request)
-        else:
-            raise RuntimeError(f"Unable to download MODIS data for task {request.task_id}")
-
-
-    def isReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
-        """Check if MODIS data request is ready for download.
-
-        Overrides base class to check AppEEARS processing status and bundle availability.
+    def _isServerReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Poll AppEEARS to check whether the task is complete and bundle is available.
 
         Parameters
         ----------
@@ -473,14 +374,63 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         bool
             True if data is ready for download, False otherwise.
         """
-        if request.is_ready:
-            return True
-
         status = self._checkStatus(request)
-        if status != False:  # note this matches True or UNKNOWN
+        if status != False:  # note: matches True or 'UNKNOWN'
             ready = self._checkBundleURL(request)
-            if ready:
-                request.is_ready = True
             return ready
-        else:
-            return False
+        return False
+
+    def _downloadDataset(self, request: manager_dataset.ManagerDataset.Request) -> None:
+        """Download AppEEARS result files to the cache directory.
+
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Request with ``task_id`` and ``_urls`` populated.
+            Files are written to ``request._download_path/{var}.nc``.
+        """
+        assert len(request._urls) == len(request.variables), \
+            "Bundle URLs must be populated before calling _downloadDataset"
+
+        for var in request.variables:
+            url = request._urls[var]
+            filename = os.path.join(request._download_path, f'{var}.nc')
+            if os.path.isfile(filename):
+                logging.info(f'  Using existing: {filename}')
+                continue
+            logging.info("  Downloading: {}".format(url))
+            logging.info("      to file: {}".format(filename))
+            good = source_utils.download(
+                url, filename, headers={ 'Authorization': f'Bearer {self.login_token}'})
+            assert good
+
+    def _loadDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
+        """Open cached NetCDF files and merge into a Dataset.
+
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Request with ``_download_path`` set.
+
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing the requested MODIS data.
+        """
+        darrays = {}
+        for var in request.variables:
+            filename = os.path.join(request._download_path, f'{var}.nc')
+            da = self._readFile(filename, var)
+            da = da.rename({'time': f'time_{var}'})
+            darrays[var] = da
+
+        return xr.Dataset(darrays)
+
+    def _readFile(self, filename: str, variable: str) -> xr.DataArray:
+        """Open the file and get the data."""
+        with xr.open_dataset(filename) as fid:
+            layer = self._PRODUCTS[variable]['layer']
+            data = fid[layer]
+
+        data.name = variable
+        return data

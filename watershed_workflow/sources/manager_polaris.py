@@ -29,6 +29,8 @@ Depths : 0_5, 5_15, 15_30, 30_60, 60_100, 100_200 (cm)
 
 Data license: CC BY-NC 4.0.
 
+References: [Chaney2019]_
+
 .. [Chaney2019] Chaney, N.W., et al. (2019). POLARIS soil properties: 30-m
    probabilistic maps of soil properties over the contiguous United States.
    *Water Resources Research*, 55, 2916-2938.
@@ -51,6 +53,16 @@ import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager_dataset_cached import cached_dataset_manager
+from .cache_info import CacheInfo, _snapBounds
+
+
+_CACHE_INFO = CacheInfo(
+    category='soil_structure',
+    subcategory='polaris',
+    name='polaris',
+    snap_resolution=0.1,
+)
 
 
 _BASE_URL = (
@@ -104,11 +116,12 @@ _LONG_NAMES = {
 }
 
 
+@cached_dataset_manager(_CACHE_INFO)
 class ManagerPOLARIS(manager_dataset.ManagerDataset):
     """POLARIS 30-m CONUS soil hydraulic properties manager.
 
-    Downloads soil properties from the POLARIS v1.0 dataset served by Duke
-    University.  Data are returned as a 3-D ``xr.Dataset`` with dimensions
+    Downloads soil properties from the POLARIS v1.0 dataset [Chaney2019]_ served
+    by Duke University.  Data are returned as a 3-D ``xr.Dataset`` with dimensions
     ``(depth, y, x)`` where ``depth`` holds the centre depth in metres for
     each of the six soil layers (0-5, 5-15, 15-30, 30-60, 60-100, 100-200 cm).
 
@@ -164,47 +177,56 @@ class ManagerPOLARIS(manager_dataset.ManagerDataset):
             native_end=None,
             valid_variables=self.VALID_VARIABLES,
             default_variables=self.DEFAULT_VARIABLES,
-            cache_category='soil_structure',
-            cache_extension='nc',
-            has_varname=True,
-            short_name='POLARIS',
         )
         self.stat = stat
         self.force_download = force_download
-        os.makedirs(self._cacheFolder(), exist_ok=True)
 
     # ------------------------------------------------------------------
     # Abstract method implementations
     # ------------------------------------------------------------------
 
+    def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True if all per-variable NetCDF files exist in the cache directory.
+
+        Parameters
+        ----------
+        dir : str
+            Absolute path to a candidate cache directory.
+        request : ManagerDataset.Request
+            The request being fulfilled.
+
+        Returns
+        -------
+        bool
+            True if ``{var}_{stat}.nc`` exists for every requested variable.
+        """
+        for var in request.variables:
+            if not os.path.isfile(os.path.join(dir, f'{var}_{self.stat}.nc')):
+                return False
+        return True
+
     def _requestDataset(
         self,
         request: manager_dataset.ManagerDataset.Request,
     ) -> manager_dataset.ManagerDataset.Request:
-        """Download each requested variable to the cache if not already present.
-
-        Parameters
-        ----------
-        request : ManagerDataset.Request
-            Pre-processed request with geometry, snapped bounds, and variables.
-
-        Returns
-        -------
-        ManagerDataset.Request
-            The same request with ``is_ready`` set to ``True``.
-        """
-        for var in request.variables:
-            cache_var = f'{var}_{self.stat}'
-            fname = self._cacheFilename(request.snapped_bounds, var=cache_var)
-            cached = self._checkCache(
-                request.geometry.bounds, request.snapped_bounds, var=cache_var
-            )
-            if cached is None or self.force_download:
-                self._download(var, request.snapped_bounds, fname)
-        request.is_ready = True
+        """Return the request unchanged — no async step."""
         return request
 
-    def _fetchDataset(
+    def _isServerReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True — POLARIS HTTP server is synchronous."""
+        return True
+
+    def _downloadDataset(
+        self,
+        request: manager_dataset.ManagerDataset.Request,
+    ) -> None:
+        """Download each requested variable to the cache directory."""
+        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        for var in request.variables:
+            fname = os.path.join(request._download_path, f'{var}_{self.stat}.nc')
+            self._download(var, snapped_bounds, fname)
+
+    def _loadDataset(
         self,
         request: manager_dataset.ManagerDataset.Request,
     ) -> xr.Dataset:
@@ -213,7 +235,7 @@ class ManagerPOLARIS(manager_dataset.ManagerDataset):
         Parameters
         ----------
         request : ManagerDataset.Request
-            Ready request with snapped bounds and variable list.
+            Request with ``_download_path`` set.
 
         Returns
         -------
@@ -223,12 +245,7 @@ class ManagerPOLARIS(manager_dataset.ManagerDataset):
         """
         datasets = []
         for var in request.variables:
-            cache_var = f'{var}_{self.stat}'
-            cached = self._checkCache(
-                request.geometry.bounds, request.snapped_bounds, var=cache_var
-            )
-            fname = self._cacheFilename(request.snapped_bounds, var=cache_var)
-            path = cached if cached is not None else fname
+            path = os.path.join(request._download_path, f'{var}_{self.stat}.nc')
             datasets.append(xr.open_dataset(path))
         return xr.merge(datasets, compat='override')
 
@@ -308,10 +325,6 @@ class ManagerPOLARIS(manager_dataset.ManagerDataset):
                     tile_arrays, tile_transforms, tile_profile
                 )
 
-            # Clip to snapped_bounds.
-            merged_arr, merged_transform = self._clipToSnappedBounds(
-                merged_arr, merged_transform, snapped_bounds
-            )
             final_transform = merged_transform
             final_height, final_width = merged_arr.shape
             layers.append(merged_arr)
@@ -433,49 +446,3 @@ class ManagerPOLARIS(manager_dataset.ManagerDataset):
 
         return merged[0], merged_transform
 
-    def _clipToSnappedBounds(
-        self,
-        array: np.ndarray,
-        transform: 'rasterio.transform.Affine',
-        snapped_bounds: tuple,
-    ) -> tuple:
-        """Clip a 2-D array and its affine transform to snapped_bounds.
-
-        Parameters
-        ----------
-        array : np.ndarray
-            2-D float32 array.
-        transform : Affine
-            Affine transform for the array.
-        snapped_bounds : tuple of float
-            ``(xmin, ymin, xmax, ymax)`` target clip region.
-
-        Returns
-        -------
-        tuple of (np.ndarray, Affine)
-            Clipped array and updated affine transform.
-        """
-        xmin, ymin, xmax, ymax = snapped_bounds
-        h, w = array.shape
-
-        row_top, col_left = rasterio.transform.rowcol(
-            transform, xmin, ymax, op=math.floor
-        )
-        row_bot, col_right = rasterio.transform.rowcol(
-            transform, xmax, ymin, op=math.ceil
-        )
-
-        row_top   = max(0, row_top)
-        col_left  = max(0, col_left)
-        row_bot   = min(h, row_bot)
-        col_right = min(w, col_right)
-
-        clipped = array[row_top:row_bot, col_left:col_right]
-
-        new_origin_x = transform.c + col_left * transform.a
-        new_origin_y = transform.f + row_top  * transform.e
-        new_transform = rasterio.transform.Affine(
-            transform.a, transform.b, new_origin_x,
-            transform.d, transform.e, new_origin_y,
-        )
-        return clipped, new_transform

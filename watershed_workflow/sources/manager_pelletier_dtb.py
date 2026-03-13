@@ -1,85 +1,71 @@
-"""Manager for interacting with GLHYMPS v2.0 dataset."""
-import os, sys
-import logging
-import xarray as xr
-import shapely.geometry
+"""Manager for the Pelletier et al. (2016) global depth-to-bedrock dataset."""
+import os
 import numpy as np
+import xarray as xr
 
-from watershed_workflow.crs import CRS
+import watershed_workflow.crs
+import watershed_workflow.utils.config
 
 from . import manager_raster
-from . import filenames
 
-# No API for getting GLHYMPS locally -- must download the whole thing.
-urls = {
-    'Pelletier at NASA DAAC':
-    'https://daac.ornl.gov/SOILS/guides/Global_Soil_Regolith_Sediment.html'
-}
+
+_URL = 'https://daac.ornl.gov/SOILS/guides/Global_Soil_Regolith_Sediment.html'
+
+_FILENAME = os.path.join(
+    'Global_Soil_Regolith_Sediment_1304', 'data',
+    'average_soil_and_sedimentary-deposit_thickness.tif',
+)
 
 
 class ManagerPelletierDTB(manager_raster.ManagerRaster):
-    """The [PelletierDTB]_ global soil regolith sediment map provides global values of
-    depth to bedrock at a 1km spatial resolution.
+    """Global 1 km depth-to-bedrock from Pelletier et al. (2016) [PelletierDTB]_.
 
-    .. note:: Pelletier DTB is served through ORNL's DAAC, does not
-       have an API, and is a large (~1GB) download.  Download the file
-       from the below citation DOI and unzip the file into:
-       
-       <data_directory>/soil_structure/PelletierDTB/
+    .. note:: This dataset has no download API and is a large (~1 GB) file.
+       Download it from the DOI below and unzip into::
 
-       which should yield a set of tif files, 
+           <data_directory>/soil_structure/PelletierDTB/
 
-       Global_Soil_Regolith_Sediment_1304/data/\\*.tif
+       which should yield::
 
-    .. [PelletierDTB] Pelletier, J.D., P.D. Broxton, P. Hazenberg,
-       X. Zeng, P.A. Troch, G. Niu, Z.C. Williams, M.A. Brunke, and
-       D. Gochis. 2016. Global 1-km Gridded Thickness of Soil,
-       Regolith, and Sedimentary Deposit Layers. ORNL DAAC, Oak Ridge,
-       Tennessee, USA. http://dx.doi.org/10.3334/ORNLDAAC/1304
+           Global_Soil_Regolith_Sediment_1304/data/average_soil_and_sedimentary-deposit_thickness.tif
 
+    The returned ``band_1`` variable is depth to bedrock in **metres**.
+
+    .. [PelletierDTB] Pelletier, J.D., et al. 2016. Global 1-km Gridded
+       Thickness of Soil, Regolith, and Sedimentary Deposit Layers. ORNL
+       DAAC, Oak Ridge, Tennessee, USA.
+       http://dx.doi.org/10.3334/ORNLDAAC/1304
     """
-    def __init__(self, filename=None):
-        if filename is None:
-            # Use default file location via Names system
-            self.names = filenames.Names(
-                'Pelletier DTB',
-                os.path.join('soil_structure', 'PelletierDTB', 'Global_Soil_Regolith_Sediment_1304',
-                             'data'), '', 'average_soil_and_sedimentary-deposit_thickness.tif')
-            filename = self.names.file_name()
-        else:
-            # Use provided filename directly
-            self.names = None
-            
-        # Initialize ManagerRaster with the resolved filename
-        # ManagerRaster will set name and source attributes appropriately
-        super(ManagerPelletierDTB, self).__init__(filename, None, None, None, None)
 
+    def __init__(self):
+        data_dir = watershed_workflow.utils.config.rcParams['DEFAULT']['data_directory']
+        filename = os.path.join(data_dir, 'soil_structure', 'PelletierDTB', _FILENAME)
+        super().__init__(
+            filename,
+            native_crs=watershed_workflow.crs.from_epsg(4326),
+            native_resolution=1000.0 / 111320.0,  # 1 km in degrees
+            bands=['band_1'],
+        )
 
-    def _download(self, force : bool = False):
-        """Validate the files exist, returning the filename."""
-        if self.names is not None:
-            filename = self.names.file_name()
-        else:
-            filename = self.filename
-        logging.info('  from file: {}'.format(filename))
-        if not os.path.exists(filename):
-            logging.error(f'PelletierDTB download file {filename} not found.')
-            logging.error('See download instructions below\n\n')
-            logging.error(self.__doc__)
-            raise RuntimeError(f'PelletierDTB download file {filename} not found.')
-        return filename
+    def _downloadDataset(self, request: manager_raster.ManagerRaster.Request) -> None:
+        """Validate that the file exists; raise a helpful error if not."""
+        if not os.path.exists(self.filename):
+            raise FileNotFoundError(
+                f'PelletierDTB file not found: {self.filename}\n'
+                f'Download from {_URL} and unzip into '
+                f'<data_directory>/soil_structure/PelletierDTB/'
+            )
 
+    def _loadDataset(self, request: manager_raster.ManagerRaster.Request) -> xr.Dataset:
+        return super()._loadDataset(request)
 
-    def _fetchDataset(self, request : manager_raster.ManagerRaster.Request) -> xr.Dataset:
-        """Fetch the data."""
-        dset = super(ManagerPelletierDTB, self)._fetchDataset(request)
-
-        # DTB in pelletier is an int with -1 indicating nodata; convert to float with NaN
-        dset['band_1'] = dset['band_1'].astype("float32")
-        dset['band_1'] = dset['band_1'].where(dset['band_1'] >= 0)
-        dset['band_1'].attrs['_FillValue'] = np.nan
-        dset['band_1'].encoding["_FillValue"] = np.nan
-        dset.encoding["_FillValue"] = np.nan
-        if hasattr(dset['band_1'], 'rio'):
-            dset['band_1'].rio.write_nodata(np.nan, inplace=True)
-        return dset
+    def _postprocessDataset(self, request, dataset):
+        """Clip first, then convert dtype/nodata on the small clipped result."""
+        dataset = super()._postprocessDataset(request, dataset)
+        da = dataset['band_1'].astype('float32')
+        da = da.rio.write_nodata(-1, encoded=True, inplace=True)
+        da = da.where(da != -1)  # -1 -> NaN; raw values are integer metres
+        da.attrs['units'] = 'm'
+        da.attrs['description'] = 'Depth to bedrock'
+        dataset['band_1'] = da
+        return dataset

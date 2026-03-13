@@ -51,15 +51,16 @@ def test_manager_properties(modis_manager):
     assert set(modis_manager.default_variables) == {'LAI', 'LULC'}
 
 
-def test_filename_generation(modis_manager):
-    """Test cache filename generation via the standard Manager scheme."""
+def test_cache_dir_generation(modis_manager, tmp_path, monkeypatch):
+    """Test cache directory name generation via CacheInfo."""
+    import watershed_workflow.utils.config
+    monkeypatch.setitem(watershed_workflow.utils.config.rcParams['DEFAULT'],
+                        'data_directory', str(tmp_path))
     bounds = (-83.5, 35.0, -83.4, 35.1)
-    filename = modis_manager._cacheFilename(bounds, var='LAI', start_year=2010, end_year=2011)
-
-    assert 'LAI' in filename
-    assert '2010-2011' in filename
-    assert filename.endswith('.nc')
-    assert 'MODIS' in os.path.basename(filename)
+    dirpath = modis_manager._cache_info.cacheDirname(bounds, start_year=2010, end_year=2011)
+    dirname = os.path.basename(dirpath)
+    assert '2010-2011' in dirname
+    assert 'modis_appeears' in dirname
 
 
 def test_read_existing_lai_file(modis_manager, existing_lai_file):
@@ -87,20 +88,23 @@ def test_read_existing_lulc_file(modis_manager, existing_lulc_file):
     assert data_array.name == 'LULC'
 
 
-def test_read_dataset_multiple_variables(modis_manager, existing_lai_file, existing_lulc_file):
-    """Test reading dataset with multiple variables from existing files."""
+def test_read_dataset_multiple_variables(modis_manager, existing_lai_file, existing_lulc_file, tmp_path):
+    """Test reading dataset with multiple variables from existing files via _loadDataset."""
     if not os.path.exists(existing_lai_file) or not os.path.exists(existing_lulc_file):
         pytest.skip("Test files not available")
 
-    # Create a mock request using the new cache_filenames attribute
+    # Set up a fake cache directory with the files
+    import shutil
+    os.makedirs(tmp_path / 'cache_dir', exist_ok=True)
+    shutil.copy(existing_lai_file, tmp_path / 'cache_dir' / 'LAI.nc')
+    shutil.copy(existing_lulc_file, tmp_path / 'cache_dir' / 'LULC.nc')
+
     request = MagicMock()
     request.variables = ['LAI', 'LULC']
-    request.cache_filenames = {
-        'LAI': existing_lai_file,
-        'LULC': existing_lulc_file
-    }
+    request._download_path = str(tmp_path / 'cache_dir')
+    request._cache_hit = True
 
-    dataset = modis_manager._readData(request)
+    dataset = modis_manager._loadDataset(request)
 
     assert isinstance(dataset, xr.Dataset)
     assert 'LAI' in dataset.data_vars
@@ -108,57 +112,63 @@ def test_read_dataset_multiple_variables(modis_manager, existing_lai_file, exist
     assert len(dataset.data_vars) == 2
 
 
-def test_getDataset_with_existing_files(modis_manager, coweeta, coweeta_date_range, existing_lai_file, existing_lulc_file):
-    """Test blocking getDataset with existing files.
+def test_getDataset_with_existing_files(modis_manager, coweeta, coweeta_date_range, tmp_path,
+                                         monkeypatch, existing_lai_file, existing_lulc_file):
+    """Test blocking getDataset with existing files via isComplete mock."""
+    if not os.path.exists(existing_lai_file) or not os.path.exists(existing_lulc_file):
+        pytest.skip("Test files not available")
 
-    The existing files have old-style filenames, so the manager will not find
-    them automatically by the standard cache name.  We skip this test when the
-    files are absent, since the test would otherwise try to authenticate with
-    AppEEARS.
-    """
-    bounds = (-83.493, 35.0145, -83.4075, 35.091)
-    # Build the canonical cache filename that the manager would look for
-    canonical_fname = modis_manager._cacheFilename(bounds, var='LAI', start_year=2010, end_year=2011)
-    if not os.path.exists(canonical_fname):
-        pytest.skip("Canonical MODIS cache file not available")
+    import shutil, watershed_workflow.utils.config
+    monkeypatch.setitem(watershed_workflow.utils.config.rcParams['DEFAULT'],
+                        'data_directory', str(tmp_path))
 
+    # Build cache dir for the request and populate it
     coweeta_crs = coweeta.crs
     coweeta_geometry = coweeta.geometry[0]
     start, end = coweeta_date_range
 
-    request_out = modis_manager.requestDataset(coweeta_geometry, coweeta_crs, start, end, ['LAI'])
-    dataset = modis_manager.fetchRequest(request_out)
+    cache_dir = modis_manager._cache_info.cacheDirname(
+        coweeta_geometry.buffer(3 * modis_manager.native_resolution).bounds,
+        start_year=start.year, end_year=end.year)
+    os.makedirs(cache_dir, exist_ok=True)
+    shutil.copy(existing_lai_file, os.path.join(cache_dir, 'LAI.nc'))
+    shutil.copy(existing_lulc_file, os.path.join(cache_dir, 'LULC.nc'))
+
+    dataset = modis_manager.getDataset(coweeta_geometry, coweeta_crs, start, end, ['LAI', 'LULC'])
 
     assert isinstance(dataset, xr.Dataset)
-    assert 'LAI' in dataset.data_vars
     assert dataset.attrs['name'] == 'MODIS'
     assert dataset.attrs['source'] == 'AppEEARS'
 
 
-def test_request_fetch_pattern(modis_manager, coweeta, coweeta_date_range, existing_lai_file):
-    """Test non-blocking request/fetch pattern."""
-    coweeta_crs = coweeta.crs
-    coweeta_geometry = coweeta.geometry[0]
-
+def test_request_fetch_pattern(modis_manager, coweeta, coweeta_date_range, tmp_path,
+                                monkeypatch, existing_lai_file):
+    """Test non-blocking request/fetch pattern using isComplete mock."""
     if not os.path.exists(existing_lai_file):
         pytest.skip("Test file not available")
 
+    import shutil, watershed_workflow.utils.config
+    monkeypatch.setitem(watershed_workflow.utils.config.rcParams['DEFAULT'],
+                        'data_directory', str(tmp_path))
+
+    coweeta_crs = coweeta.crs
+    coweeta_geometry = coweeta.geometry[0]
     start, end = coweeta_date_range
 
-    # Mock _cacheFilename to return the existing file path
-    with patch.object(modis_manager, '_cacheFilename', return_value=existing_lai_file):
-        request = modis_manager.requestDataset(
-            coweeta_geometry, coweeta_crs,
-            start=start, end=end,
-            variables=['LAI']
-        )
+    cache_dir = modis_manager._cache_info.cacheDirname(
+        coweeta_geometry.buffer(3 * modis_manager.native_resolution).bounds,
+        start_year=start.year, end_year=end.year)
+    os.makedirs(cache_dir, exist_ok=True)
+    shutil.copy(existing_lai_file, os.path.join(cache_dir, 'LAI.nc'))
 
-        assert modis_manager.isReady(request)
+    request = modis_manager.requestDataset(
+        coweeta_geometry, coweeta_crs, start=start, end=end, variables=['LAI']
+    )
+    assert modis_manager.isReady(request)
 
-        dataset = modis_manager.fetchRequest(request)
-
-        assert isinstance(dataset, xr.Dataset)
-        assert 'LAI' in dataset.data_vars
+    dataset = modis_manager.fetchDataset(request)
+    assert isinstance(dataset, xr.Dataset)
+    assert 'LAI' in dataset.data_vars
 
 
 def test_invalid_variable_error(modis_manager, coweeta, coweeta_date_range):
@@ -196,39 +206,17 @@ def test_date_validation_errors(modis_manager, coweeta):
         )
 
 
-def test_default_variables(modis_manager, coweeta, coweeta_date_range, tmp_path):
-    """Test that default variables work when none specified."""
+def test_default_variables(modis_manager, coweeta, coweeta_date_range):
+    """Test that default variables are used when none specified."""
     coweeta_crs = coweeta.crs
     coweeta_geometry = coweeta.geometry[0]
     start, end = coweeta_date_range
 
-    # Create dummy nc files in tmp_path so isfile() succeeds
-    lai_file = str(tmp_path / 'modis_LAI_2010-2011.nc')
-    lulc_file = str(tmp_path / 'modis_LULC_2010-2011.nc')
+    request = modis_manager._preprocessParameters(
+        coweeta_geometry, coweeta_crs, start, end, None, None, None
+    )
 
-    # Build minimal valid xarray datasets and save them
-    import numpy as np
-    ds_lai = xr.Dataset({'Lai_500m': xr.DataArray(
-        np.zeros((1, 2, 2)), dims=['time', 'lat', 'lon'])})
-    ds_lai.to_netcdf(lai_file)
-    ds_lulc = xr.Dataset({'LC_Type1': xr.DataArray(
-        np.zeros((1, 2, 2), dtype='int16'), dims=['time', 'lat', 'lon'])})
-    ds_lulc.to_netcdf(lulc_file)
-
-    # Map var name → temp file; _cacheFilename is called per var
-    def mock_cache_filename(bounds, var=None, start_year=None, end_year=None):
-        return {'LAI': lai_file, 'LULC': lulc_file}.get(var, '/nonexistent.nc')
-
-    with patch.object(modis_manager, '_cacheFilename', side_effect=mock_cache_filename), \
-         patch.object(modis_manager, '_checkCache', return_value=None):
-        # Don't specify variables - should use defaults
-        request = modis_manager.requestDataset(
-            coweeta_geometry, coweeta_crs,
-            start=start, end=end
-        )
-
-        assert request.is_ready
-        assert set(request.variables) == {'LAI', 'LULC'}
+    assert set(request.variables) == {'LAI', 'LULC'}
 
 
 @patch('watershed_workflow.sources.manager_modis_appeears.requests.post')
@@ -252,22 +240,13 @@ def test_construct_request_mocked(mock_post, modis_manager):
     assert call_args[1]['json']['params']['layers'][0]['product'] == 'MCD15A3H.061'
 
 
-def test_missing_files_error(modis_manager):
-    """Test behavior when expected files don't exist."""
-    r = ManagerDataset.Request(manager=modis_manager,
-                               is_ready=True,
-                               geometry=shapely.geometry.box(-83.5, 35.0, -83.4, 35.1),
-                               start=cftime.datetime(2010, 8, 1, calendar='standard'),
-                               end=cftime.datetime(2011, 8, 1, calendar='standard'),
-                               variables=['LAI'],
-                               )
-
-    # Use the new cache_filenames kwarg (not filenames)
-    request = modis_manager.Request(r,
-        task_id="",
-        cache_filenames={'LAI': '/nonexistent/file.nc'},
-        urls={}
-    )
+def test_missing_files_error(modis_manager, tmp_path):
+    """Test behavior when expected files don't exist in cache directory."""
+    request = MagicMock()
+    request.variables = ['LAI']
+    request._download_path = str(tmp_path / 'empty_dir')
+    os.makedirs(request._download_path, exist_ok=True)
+    request._cache_hit = True
 
     with pytest.raises(Exception):  # Should raise some kind of file not found error
-        modis_manager._fetchDataset(request)
+        modis_manager._loadDataset(request)

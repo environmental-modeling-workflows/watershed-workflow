@@ -35,6 +35,16 @@ import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager_dataset_cached import cached_dataset_manager
+from .cache_info import CacheInfo, _snapBounds
+
+
+_CACHE_INFO = CacheInfo(
+    category='soil_structure',
+    subcategory='hf_hydrodata',
+    name='hf_hydrodata',
+    snap_resolution=0.1,
+)
 
 
 # CONUS2 Lambert Conformal Conic CRS (spherical Earth, r=6370000 m).
@@ -65,6 +75,7 @@ def register_pin(email: str, pin: str) -> None:
     hf.register_api_pin(email, pin)
 
 
+@cached_dataset_manager(_CACHE_INFO)
 class ManagerHFHydrodata(manager_dataset.ManagerDataset):
     """HydroFrame HF-Hydrodata CONUS2 subsurface dataset manager.
 
@@ -124,13 +135,8 @@ class ManagerHFHydrodata(manager_dataset.ManagerDataset):
             native_end=None,
             valid_variables=self.VALID_VARIABLES,
             default_variables=self.DEFAULT_VARIABLES,
-            cache_category='soil_structure',
-            cache_extension='nc',
-            has_varname=True,     # one cache file per variable
-            short_name='CONUS2',
         )
         self.force_download = force_download
-        os.makedirs(self._cacheFolder(), exist_ok=True)
 
     def _prerequestDataset(self) -> None:
         """Register PIN with hf_hydrodata if credentials are configured."""
@@ -146,29 +152,63 @@ class ManagerHFHydrodata(manager_dataset.ManagerDataset):
         import hf_hydrodata as hf
         hf.register_api_pin(email, pin)
 
+    def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True if all per-variable NetCDF files exist in the cache directory.
+
+        Parameters
+        ----------
+        dir : str
+            Absolute path to a candidate cache directory.
+        request : ManagerDataset.Request
+            The request being fulfilled.
+
+        Returns
+        -------
+        bool
+            True if ``{var}.nc`` exists for every requested variable.
+        """
+        for var in request.variables:
+            if not os.path.isfile(os.path.join(dir, f'{var}.nc')):
+                return False
+        return True
+
     def _requestDataset(self,
                         request: manager_dataset.ManagerDataset.Request,
                         ) -> manager_dataset.ManagerDataset.Request:
-        """Download each requested variable to the cache if not already present.
+        """Authenticate with HF-Hydrodata if credentials are configured.
 
         Parameters
         ----------
         request : ManagerDataset.Request
-            Pre-processed request with geometry, snapped bounds, and variables.
+            Pre-processed request with geometry and variables.
 
         Returns
         -------
         ManagerDataset.Request
-            The same request with ``is_ready`` set to ``True``.
+            The same request, unchanged.
         """
-        for var in request.variables:
-            fname = self._cacheFilename(request.snapped_bounds, var=var)
-            cached = self._checkCache(request.geometry.bounds,
-                                      request.snapped_bounds, var=var)
-            if cached is None or self.force_download:
-                self._download(var, request.snapped_bounds, fname)
-        request.is_ready = True
+        self._prerequestDataset()
         return request
+
+    def _isServerReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True — HF-Hydrodata downloads are synchronous."""
+        return True
+
+    def _downloadDataset(self,
+                         request: manager_dataset.ManagerDataset.Request,
+                         ) -> None:
+        """Download each requested variable to the cache directory.
+
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Request with ``_download_path`` set. Files are written to
+            ``request._download_path/{var}.nc`` for each variable.
+        """
+        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        for var in request.variables:
+            fname = os.path.join(request._download_path, f'{var}.nc')
+            self._download(var, snapped_bounds, fname)
 
     def _download(self, var: str, snapped_bounds: tuple, filename: str) -> None:
         """Download one variable from hf_hydrodata and save as a NetCDF file.
@@ -226,12 +266,16 @@ class ManagerHFHydrodata(manager_dataset.ManagerDataset):
         x_coords = x_start + np.arange(nx) * _res
         y_coords = y_start + np.arange(ny) * _res
 
+        # Preserve integer dtype for categorical fields so that spatial
+        # resampling uses 'nearest' rather than interpolating indicator IDs.
+        out_dtype = np.int32 if var in self._INTEGER_VARS else np.float32
+
         # Build xarray Dataset
         if nz is not None:
             z_coords = np.arange(nz, dtype=np.int32)
             ds = xr.Dataset(
                 {var: xr.DataArray(
-                    data.astype(np.float32),
+                    data.astype(out_dtype),
                     dims=['z', 'y', 'x'],
                     coords={'z': z_coords, 'y': y_coords, 'x': x_coords},
                 )},
@@ -239,7 +283,7 @@ class ManagerHFHydrodata(manager_dataset.ManagerDataset):
         else:
             ds = xr.Dataset(
                 {var: xr.DataArray(
-                    data.astype(np.float32),
+                    data.astype(out_dtype),
                     dims=['y', 'x'],
                     coords={'y': y_coords, 'x': x_coords},
                 )},
@@ -254,15 +298,19 @@ class ManagerHFHydrodata(manager_dataset.ManagerDataset):
         ds.to_netcdf(filename)
         logging.info(f'    written to: {filename}')
 
-    def _fetchDataset(self,
-                      request: manager_dataset.ManagerDataset.Request,
-                      ) -> xr.Dataset:
+    # Categorical (indicator) variables that must be kept as integers so that
+    # spatial resampling uses 'nearest' rather than interpolating IDs.
+    _INTEGER_VARS = {'pf_indicator', 'pf_flowbarrier'}
+
+    def _loadDataset(self,
+                     request: manager_dataset.ManagerDataset.Request,
+                     ) -> xr.Dataset:
         """Open cached NetCDF files and merge into a single Dataset.
 
         Parameters
         ----------
         request : ManagerDataset.Request
-            Ready request with snapped bounds and variable list.
+            Request with ``_download_path`` set.
 
         Returns
         -------
@@ -271,12 +319,17 @@ class ManagerHFHydrodata(manager_dataset.ManagerDataset):
         """
         datasets = []
         for var in request.variables:
-            fname = self._cacheFilename(request.snapped_bounds, var=var)
-            cached = self._checkCache(request.geometry.bounds,
-                                      request.snapped_bounds, var=var)
-            path = cached if cached is not None else fname
+            path = os.path.join(request._download_path, f'{var}.nc')
             datasets.append(xr.open_dataset(path))
-        return xr.merge(datasets, compat='override')
+        ds = xr.merge(datasets, compat='override')
+
+        # Re-cast categorical variables to int32.  Older cached files may have
+        # stored them as float32; ensure we always load with the correct dtype
+        # so that _spatialResamplingMethod selects 'nearest' for these fields.
+        for var in self._INTEGER_VARS:
+            if var in ds:
+                ds[var] = ds[var].astype(np.int32)
+        return ds
 
     def getIndicatorTable(self) -> pd.DataFrame:
         """Return the CONUS2 subsurface indicator property lookup table.

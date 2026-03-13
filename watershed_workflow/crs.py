@@ -8,28 +8,26 @@ watershed in question.  Watershed Workflow aims to make using datasets
 in different CRSs as streamlined as possible.  Typically, a workflow
 will pick a CRS based upon either a default for the region or by
 simply using the CRS of the shapefile that specifies the watershed
-boundary.  This CRS is the passed into each function that acquires
+boundary.  This CRS is then passed into each function that acquires
 more data, and that data's coordinates are changed to the CRS
 requested.
 
-This process is made more difficult by the fact that most python GIS
-packages provide their own class object to store the CRS.  This said,
-nearly all of them are based, to some degree, on the `proj4` library
-and its python wrapper, `pyproj` for coordinate transformations.
-Watershed Workflow uses the `pyproj.Proj` class as its own internal
-representation of coordinate system, and provides methods for mapping
-`fiona` (shapefiles), `rasterio` (rasters), and `cartopy` (plotting)
-CRS objects to and from this type.  While this is typically done by
-calling functions from those libraries, standardizing the API makes
-dealing with these packages in an integrated form much simpler.
+**Users should interact with CRS objects exclusively through the
+``from_*`` and ``to_*`` functions in this module**, rather than
+constructing or calling methods on CRS objects directly.  This
+abstraction allows the underlying CRS representation to change in
+future versions without breaking user code.
 
+To create a CRS, use one of:
 
-.. note::
-    We intend to use the pyproj.Proj object as our standard.  But for
-    now we are trying to avoid hard-coding that, so internal code
-    should avoid using that knowledge, and instead map to and from
-    `pyproj.Proj` objects using the provided interface.
+- :func:`from_epsg` — most common, e.g. ``crs.from_epsg(5070)``
+- :func:`from_string` — from a proj string
+- :func:`from_wkt` — from a WKT string
+- :func:`from_rasterio`, :func:`from_cartopy`, :func:`from_proj` — convert from other libraries
+- Module-level constants: :data:`default_crs`, :data:`latlon_crs`, :data:`default_alaska_crs`
 
+To convert a CRS for use with another library, use the corresponding
+``to_*`` function.
 """
 from __future__ import annotations
 
@@ -166,12 +164,7 @@ def to_epsg(crs: CRS) -> int:
     Returns
     -------
     int
-        EPSG code.
-        
-    Raises
-    ------
-    ValueError
-        If CRS cannot be represented as an EPSG code.
+        EPSG code, or raises ValueError if the CRS has no EPSG representation.
     """
     auth, code = crs.to_authority()
     if auth == 'EPSG':

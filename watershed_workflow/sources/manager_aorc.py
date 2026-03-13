@@ -1,21 +1,31 @@
 """Manager for interacting with AORC datasets."""
-from typing import Tuple, List, Optional
+from typing import List, Optional
 
 import os
-import numpy as np
 import xarray as xr
-import shapely
-import cftime, datetime
+import cftime
 import logging
 import s3fs
-import attr
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager_dataset_cached import cached_dataset_manager
+from .cache_info import CacheInfo, _snapBounds
 
 
+_CACHE_INFO = CacheInfo(
+    category='meteorology',
+    subcategory='aorc',
+    name='aorc',
+    snap_resolution=0.1,
+    is_temporal=True,
+    is_resampled=True,
+)
+
+
+@cached_dataset_manager(_CACHE_INFO)
 class ManagerAORC(manager_dataset.ManagerDataset):
     """AORC dataset.
 
@@ -79,14 +89,6 @@ class ManagerAORC(manager_dataset.ManagerDataset):
 
     """
 
-    class Request(manager_dataset.ManagerDataset.Request):
-        """AORC-specific request that includes filename for cached data."""
-        def __init__(self,
-                     request: manager_dataset.ManagerDataset.Request,
-                     filename: str = ''):
-            super().copyFromExisting(request)
-            self.filename = filename
-
     # AORC constants
     VALID_VARIABLES = ['APCP_surface', 'DLWRF_surface',
                        'DSWRF_surface', 'PRES_surface', 'SPFH_2maboveground',
@@ -112,150 +114,99 @@ class ManagerAORC(manager_dataset.ManagerDataset):
             native_end=native_end,
             valid_variables=self.VALID_VARIABLES,
             default_variables=self.DEFAULT_VARIABLES,
-            cache_category='meteorology',
-            cache_extension='nc',
-            has_varname=False,      # all variables in one file
-            has_resampling=True,    # filename encodes temporal resampling rate
-            short_name='AORC',
         )
 
-        os.makedirs(self._cacheFolder(), exist_ok=True)
-
-
-    def _download(self,
-                  snapped_bounds: tuple,
-                  start_year: int,
-                  end_year: int,
-                  temporal_resampling: Optional[str] = None,
-                  force: bool = False,
-                  geometry_bounds: Optional[tuple] = None) -> str:
-        """Download AORC data for geometry and time range from S3 Zarr.
+    def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True if the cache directory contains a complete AORC download.
 
         Parameters
         ----------
-        snapped_bounds : tuple of float
-            (xmin, ymin, xmax, ymax) snapped, from request.snapped_bounds.
-        start_year : int
-            Starting year for data download.
-        end_year : int
-            Ending year for data download.
-        temporal_resampling : str, optional
-            Resample in time according to this time string, e.g. ``'1D'``.
-        force : bool, optional
-            If true, re-download even if a file already exists.
-        geometry_bounds : tuple of float, optional
-            Buffered un-snapped bounds for superset cache detection.
+        dir : str
+            Absolute path to a candidate cache directory.
+        request : ManagerDataset.Request
+            The request being fulfilled.
 
         Returns
         -------
-        str
-            The filename of the cached dataset.
+        bool
+            True if ``aorc.nc`` exists in ``dir``.
         """
-        os.makedirs(self._cacheFolder(), exist_ok=True)
-
-        filename = self._cacheFilename(snapped_bounds,
-                                       start_year=start_year,
-                                       end_year=end_year,
-                                       temporal_resampling=temporal_resampling)
-
-        # Superset check before downloading
-        if not os.path.exists(filename) and not force:
-            if geometry_bounds is not None:
-                superset = self._checkCache(geometry_bounds, snapped_bounds,
-                                            start_year=start_year, end_year=end_year,
-                                            temporal_resampling=temporal_resampling)
-                if superset is not None:
-                    logging.info(f'  Using superset cache: {superset}')
-                    return superset
-
-        if (not os.path.exists(filename)) or force:
-            dataset_years = list(range(start_year, end_year + 1))
-            s3_out = s3fs.S3FileSystem(anon=True)
-            fileset = [s3fs.S3Map(root=f"{self.URL}/{y}.zarr", s3=s3_out, check=False)
-                       for y in dataset_years]
-
-            ds_multi_year = xr.open_mfdataset(fileset, engine='zarr')
-            logging.info(f'Full dataset size: {ds_multi_year.nbytes/1e12:.1f} TB')
-
-            xmin, ymin, xmax, ymax = snapped_bounds
-            logging.info(f'Subsetting: lon {xmin, xmax}  lat {ymin, ymax}')
-            ds_subset = ds_multi_year.sel(longitude=slice(xmin, xmax),
-                                          latitude=slice(ymin, ymax))
-            logging.info(f'Spatial subset size: {ds_subset.nbytes/1e9:.3f} GB')
-
-            if temporal_resampling is not None:
-                ds_temporal = ds_subset.resample(time=temporal_resampling).mean()
-                logging.info(f'Resampling in time: {temporal_resampling}')
-            else:
-                ds_temporal = ds_subset
-
-            ds_temporal.to_netcdf(filename)
-            logging.info(f"Write to file: {filename}")
-
-        else:
-            logging.info(f"  Using existing: {filename}")
-
-        return filename
-
+        return os.path.isfile(os.path.join(dir, 'aorc.nc'))
 
     def _requestDataset(self,
                         request: manager_dataset.ManagerDataset.Request,
-                        temporal_resampling: Optional[str] = None,
                         ) -> manager_dataset.ManagerDataset.Request:
-        """Request AORC data - ready upon download completion.
+        """No-op, request not required."""
+        return request
+
+    def _isServerReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True — AORC S3 Zarr is always immediately available."""
+        return True
+
+    def _downloadDataset(self, request: manager_dataset.ManagerDataset.Request) -> None:
+        """Download AORC data for the request from S3 Zarr.
 
         Parameters
         ----------
         request : ManagerDataset.Request
             Request object containing geometry, dates, and variables.
-        temporal_resampling : str, optional
-            Resample in time according to this time string, e.g. ``'1D'``,
-            taking the mean.
-
-        Returns
-        -------
-        ManagerDataset.Request
-            New AORC request object with filename and is_ready flag set.
+            The download is written to ``request._download_path/aorc.nc``.
         """
-        assert request.start is not None
-        assert request.end is not None
-        assert request.variables is not None
+        output_path = os.path.join(request._download_path, 'aorc.nc')
+        if os.path.isfile(output_path):
+            logging.info(f'  Using existing: {output_path}')
+            return
 
         start_year = request.start.year
         end_year = request.end.year
-        if start_year > end_year:
-            raise RuntimeError(
-                f"Provided start year {start_year} is after provided end year {end_year}")
 
-        filename = self._download(
-            request.snapped_bounds, start_year, end_year,
-            temporal_resampling=temporal_resampling,
-            force=False,
-            geometry_bounds=request.geometry.bounds)
+        # Snap bounds for the spatial sel() call for cache-directory consistency.
+        xmin, ymin, xmax, ymax = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
 
-        aorc_request = self.Request(request, filename)
-        aorc_request.is_ready = True
-        return aorc_request
+        dataset_years = list(range(start_year, end_year + 1))
+        s3_out = s3fs.S3FileSystem(anon=True)
+        fileset = [s3fs.S3Map(root=f"{self.URL}/{y}.zarr", s3=s3_out, check=False)
+                   for y in dataset_years]
 
+        ds_multi_year = xr.open_mfdataset(fileset, engine='zarr')
+        logging.info(f'Full dataset size: {ds_multi_year.nbytes/1e12:.1f} TB')
 
-    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request,
-                      chunk_time=None) -> xr.Dataset:
-        """Fetch AORC data.
+        logging.info(f'Subsetting: lon {xmin, xmax}  lat {ymin, ymax}')
+        ds_subset = ds_multi_year.sel(longitude=slice(xmin, xmax),
+                                      latitude=slice(ymin, ymax))
+        logging.info(f'Spatial subset size: {ds_subset.nbytes/1e9:.3f} GB')
+
+        temporal_resampling = request.temporal_resampling
+        if temporal_resampling is not None:
+            ds_temporal = ds_subset.resample(time=temporal_resampling).mean()
+            logging.info(f'Resampling in time: {temporal_resampling}')
+        else:
+            ds_temporal = ds_subset
+
+        ds_temporal.to_netcdf(output_path)
+        logging.info(f"Write to file: {output_path}")
+
+    def _loadDataset(self, request: manager_dataset.ManagerDataset.Request,
+                     chunk_time=None) -> xr.Dataset:
+        """Open the cached AORC NetCDF file.
 
         Parameters
         ----------
         request : ManagerDataset.Request
-            Request object containing cached data reference.
+            Request object with ``_download_path`` set.
+        chunk_time : int, optional
+            If provided, chunk the time dimension for Dask-lazy loading.
 
         Returns
         -------
         xr.Dataset
             Dataset containing the requested AORC data.
         """
+        path = os.path.join(request._download_path, 'aorc.nc')
         if chunk_time:
-            dataset = xr.open_dataset(request.filename, chunks={"time": chunk_time})
+            dataset = xr.open_dataset(path, chunks={"time": chunk_time})
         else:
-            dataset = xr.open_dataset(request.filename)
+            dataset = xr.open_dataset(path)
 
         if request.variables != self.valid_variables:
             dataset = dataset[request.variables]

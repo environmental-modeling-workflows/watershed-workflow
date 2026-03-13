@@ -37,15 +37,15 @@ def test_constructor_us_variant(soilgrids_us):
 
 def test_valid_variables(soilgrids):
     """Test that all expected variables are present."""
-    expected_vars = set(['BDTICM'])  # bedrock variable
-    
-    # Add all layer variables
-    for base_var in manager_soilgrids.ManagerSoilGrids2017.BASE_VARIABLES:
+    expected_vars = set(manager_soilgrids.SINGLE_VARIABLES.keys())
+    for base_var in manager_soilgrids.LAYERED_VARIABLES:
         for layer in manager_soilgrids.ManagerSoilGrids2017.LAYERS:
             expected_vars.add(f'{base_var}_layer_{layer}')
-    
+
     assert set(soilgrids.valid_variables) == expected_vars
-    assert len(soilgrids.valid_variables) == 1 + 5 * 7  # BDTICM + 5 vars * 7 layers
+    n_layered = len(manager_soilgrids.LAYERED_VARIABLES) * 7
+    n_single = len(manager_soilgrids.SINGLE_VARIABLES)
+    assert len(soilgrids.valid_variables) == n_layered + n_single
 
 
 def test_parse_variable(soilgrids):
@@ -73,13 +73,14 @@ def test_parse_variable(soilgrids):
 
 def test_variable_categories(soilgrids):
     """Test that variables are properly categorized."""
-    # Check base variables
-    expected_base_vars = ['BLDFIE', 'CLYPPT', 'SLTPPT', 'SNDPPT', 'WWP']
-    assert soilgrids.BASE_VARIABLES == expected_base_vars
-    
-    # Check bedrock variable
-    assert soilgrids.BEDROCK_VARIABLE == 'BDTICM'
-    
+    # Check layered variables include expected soil texture vars
+    for var in ['BLDFIE', 'CLYPPT', 'SLTPPT', 'SNDPPT', 'WWP']:
+        assert var in manager_soilgrids.LAYERED_VARIABLES
+
+    # Check single-layer variables include bedrock depth vars
+    for var in ['BDTICM', 'BDRICM']:
+        assert var in manager_soilgrids.SINGLE_VARIABLES
+
     # Check layers
     assert soilgrids.LAYERS == list(range(1, 8))
 

@@ -69,7 +69,7 @@ def test_invalid_variable_raises():
     with pytest.raises(ValueError, match='Invalid variable'):
         mgr._preprocessParameters(
             geom, watershed_workflow.crs.latlon_crs,
-            None, None, ['not_a_real_variable'],
+            None, None, ['not_a_real_variable'], None, None,
         )
 
 

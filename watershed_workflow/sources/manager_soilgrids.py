@@ -7,6 +7,8 @@ centre depths (in metres) of the six GlobalSoilMap standard layers.
 
 No authentication is required.  Data are licensed CC-BY 4.0.
 
+References: [SoilGrids2]_ [Poggio2021]_
+
 .. [SoilGrids2] https://www.isric.org/explore/soilgrids
 .. [Poggio2021] Poggio, L., et al. (2021). SoilGrids 2.0: producing soil information
    for the globe with quantified spatial uncertainty. *SOIL*, 7, 217–240.
@@ -26,6 +28,16 @@ import watershed_workflow.properties.soil
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager_dataset_cached import cached_dataset_manager
+from .cache_info import CacheInfo, _snapBounds
+
+
+_CACHE_INFO = CacheInfo(
+    category='soil_structure',
+    subcategory='soilgrids',
+    name='soilgrids',
+    snap_resolution=0.1,
+)
 
 
 # SoilGrids 2.0 is delivered on the Homolosine grid (EPSG:152160 = IGH).
@@ -75,14 +87,15 @@ _LONG_NAMES = {
 }
 
 
+@cached_dataset_manager(_CACHE_INFO)
 class ManagerSoilGrids(manager_dataset.ManagerDataset):
     """SoilGrids 2.0 (250 m) soil property manager.
 
-    Downloads soil properties from the ISRIC SoilGrids v2.0 product via the
-    OGC WCS endpoint.  Each requested variable is returned as a 3-D array with
-    dimensions ``(depth, y, x)`` where ``depth`` holds the centre depth in metres
-    of each of the six GlobalSoilMap standard layers (0–5, 5–15, 15–30, 30–60,
-    60–100, 100–200 cm).
+    Downloads soil properties from the ISRIC SoilGrids v2.0 product [SoilGrids2]_
+    via the OGC WCS endpoint [Poggio2021]_.  Each requested variable is returned
+    as a 3-D array with dimensions ``(depth, y, x)`` where ``depth`` holds the
+    centre depth in metres of each of the six GlobalSoilMap standard layers
+    (0–5, 5–15, 15–30, 30–60, 60–100, 100–200 cm).
 
     Available variables
     -------------------
@@ -118,37 +131,65 @@ class ManagerSoilGrids(manager_dataset.ManagerDataset):
             native_end=None,
             valid_variables=self.VALID_VARIABLES,
             default_variables=self.DEFAULT_VARIABLES,
-            cache_category='soil_structure',
-            cache_extension='nc',
-            has_varname=True,
-            short_name='SoilGrids2',
         )
         self.force_download = force_download
-        os.makedirs(self._cacheFolder(), exist_ok=True)
+
+    def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True if all per-variable NetCDF files exist in the cache directory.
+
+        Parameters
+        ----------
+        dir : str
+            Absolute path to a candidate cache directory.
+        request : ManagerDataset.Request
+            The request being fulfilled.
+
+        Returns
+        -------
+        bool
+            True if ``{var}.nc`` exists for every requested variable.
+        """
+        for var in request.variables:
+            if not os.path.isfile(os.path.join(dir, f'{var}.nc')):
+                return False
+        return True
 
     def _requestDataset(self,
                         request: manager_dataset.ManagerDataset.Request,
                         ) -> manager_dataset.ManagerDataset.Request:
-        """Download each requested variable to the cache if not already present.
+        """Return the request unchanged — no async step.
 
         Parameters
         ----------
         request : ManagerDataset.Request
-            Pre-processed request with geometry, snapped bounds, and variables.
+            Pre-processed request with geometry and variables.
 
         Returns
         -------
         ManagerDataset.Request
-            The same request with ``is_ready`` set to ``True``.
+            The same request, unchanged.
         """
-        for var in request.variables:
-            fname = self._cacheFilename(request.snapped_bounds, var=var)
-            cached = self._checkCache(request.geometry.bounds,
-                                      request.snapped_bounds, var=var)
-            if cached is None or self.force_download:
-                self._download(var, request.snapped_bounds, fname)
-        request.is_ready = True
         return request
+
+    def _isServerReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True — SoilGrids WCS is synchronous."""
+        return True
+
+    def _downloadDataset(self,
+                         request: manager_dataset.ManagerDataset.Request,
+                         ) -> None:
+        """Download each requested variable to the cache directory.
+
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Request with ``_download_path`` set. Files are written to
+            ``request._download_path/{var}.nc`` for each variable.
+        """
+        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        for var in request.variables:
+            fname = os.path.join(request._download_path, f'{var}.nc')
+            self._download(var, snapped_bounds, fname)
 
     def _download(self, var: str, snapped_bounds: tuple, filename: str) -> None:
         """Download all depth layers for one variable and save as NetCDF.
@@ -229,15 +270,15 @@ class ManagerSoilGrids(manager_dataset.ManagerDataset):
         ds.to_netcdf(filename)
         logging.info(f'    Written to: {filename}')
 
-    def _fetchDataset(self,
-                      request: manager_dataset.ManagerDataset.Request,
-                      ) -> xr.Dataset:
+    def _loadDataset(self,
+                     request: manager_dataset.ManagerDataset.Request,
+                     ) -> xr.Dataset:
         """Open cached NetCDF files, merge, and apply Rosetta if texture vars are present.
 
         Parameters
         ----------
         request : ManagerDataset.Request
-            Ready request with snapped bounds and variable list.
+            Request with ``_download_path`` set.
 
         Returns
         -------
@@ -251,10 +292,7 @@ class ManagerSoilGrids(manager_dataset.ManagerDataset):
         """
         datasets = []
         for var in request.variables:
-            cached = self._checkCache(request.geometry.bounds,
-                                      request.snapped_bounds, var=var)
-            fname = self._cacheFilename(request.snapped_bounds, var=var)
-            path = cached if cached is not None else fname
+            path = os.path.join(request._download_path, f'{var}.nc')
             datasets.append(xr.open_dataset(path))
         ds = xr.merge(datasets, compat='override')
 

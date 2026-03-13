@@ -7,13 +7,17 @@ the fetching.
 """
 
 import abc
-from typing import Optional, overload, List
+import concurrent.futures
+import dataclasses
+import enum
+from typing import Optional, List
+import numpy as np
 import shapely.geometry
 import xarray as xr
+import rioxarray  # registers .rio accessor on xr.Dataset and xr.DataArray
 import cftime
 import geopandas as gpd
 import pandas as pd
-import attr
 import logging
 import time
 
@@ -22,10 +26,15 @@ import watershed_workflow.crs
 import watershed_workflow.utils.warp
 import watershed_workflow.utils.data
 
-from . import manager
+class RequestState(enum.Enum):
+    """State machine for a dataset request."""
+    SERVER_PENDING = 'server_pending'
+    SERVER_READY = 'server_ready'
+    DOWNLOADING = 'downloading'
+    READY = 'ready'
 
 
-class ManagerDataset(manager.Manager):
+class ManagerDataset(abc.ABC):
     """Managers that provide xarray Datasets should inherit from this class.
 
     There are three possible use patterns for this class:
@@ -43,7 +52,7 @@ class ManagerDataset(manager.Manager):
        ...
 
        # really, we need the result now
-       data = mgr.waitForDataset(request)
+       data = mgr.fetchDataset(request)
 
     3. Nonblocking, impatient user checks for data repeatedly (e.g. in a notebook):
 
@@ -60,68 +69,67 @@ class ManagerDataset(manager.Manager):
        mgr.isReady(request)
 
        # it's ready!
-       data = mgr.fetchRequest(request)
+       data = mgr.fetchDataset(request)
 
     Developer notes: derived classes must implement:
 
     - __init__() : Constructor that supplies native data properties as
       parameters by calling super().__init__()
 
-    - Request _requestDataset(Request) : Abstract method that establishes the request
+    - Request _requestDataset(Request) : Abstract method that establishes the
+      request and returns as quickly as possible. Should set
+      request.state = SERVER_PENDING or SERVER_READY if no server job is needed.
 
-    - bool isReady(Request) (optional, if not ready immediately)
+    - bool _isServerReady(Request) : Poll the server; trivially return True if
+      there is no server waiting step.
 
-    - Dataset _fetchDataset(request) : Abstract method that fetches the data.
+    - Request _downloadDataset(Request) : Abstract method that downloads the
+      data to disk.
+
+    - Dataset _loadDataset(Request) : Opens files from disk and returns the
+      raw dataset.
 
     """
 
-    @attr.define
+    @dataclasses.dataclass
     class Request:
-        """A PoD class for storing requested info -- intended to be
-        derived, adding in manager-specific references for the data.
+        """A PoD "future" identifying the requested data.
+
+        May be derived or just have more PoD attached by other classes.
         """
-        manager : 'ManagerDataset'
-        is_ready : bool
+        # manager that created the request
+        manager: object
 
-        # Buffered (un-snapped) polygon — used for clipping fetched data
+        # Requested geometry, in the native_crs_in of the manager
         geometry: shapely.geometry.Polygon
+        out_crs: CRS | None
 
-        start: cftime._cftime.datetime
-        end: cftime._cftime.datetime
-        variables: List
-        out_crs : Optional[CRS] = None
-        resampling : Optional[str] = None
+        # time range and resampling
+        start: cftime._cftime.datetime | None
+        end: cftime._cftime.datetime | None
+        temporal_resampling: str | None
 
-        # Snapped bounding box — used for cache filenames and download API calls
-        snapped_bounds : Optional[tuple] = None
+        # requested variables
+        variables: List[str] | None
 
-        def copyFromExisting(self, other):
-            self.manager = other.manager
-            self.is_ready = other.is_ready
-            self.geometry = other.geometry
-            self.start = other.start
-            self.end = other.end
-            self.variables = other.variables
-            self.out_crs = other.out_crs
-            self.resampling = other.resampling
-            self.snapped_bounds = other.snapped_bounds
+        # status of the request
+        state: RequestState = RequestState.SERVER_PENDING
 
+        # background future, set by requestDataset
+        _future: concurrent.futures.Future | None = None
+
+    _poll_interval: int = 120
 
     def __init__(self,
                  name: str,
                  source: str,
                  native_resolution: float,
-                 native_crs_in: CRS | None,
-                 native_crs_out: CRS | None,
+                 native_crs_in: CRS,
+                 native_crs_out: CRS,
                  native_start: cftime._cftime.datetime | None,
                  native_end: cftime._cftime.datetime | None,
                  valid_variables: List[str] | None,
-                 default_variables: List[str] | None,
-                 cache_category: str | None = None,
-                 cache_extension: str = 'nc',
-                 has_varname: bool = False,
-                 has_resampling: bool = False,
-                 short_name: str | None = None):
+                 default_variables: List[str] | None):
         """Initialize dataset manager with native data properties.
 
         Parameters
@@ -144,33 +152,11 @@ class ManagerDataset(manager.Manager):
             Valid variable names, None for single-variable datasets.
         default_variables : list of str or None
             Default variables to retrieve, None for single-variable datasets.
-        cache_category : str or None, optional
-            Top-level cache folder group, e.g. ``'meteorology'``.  Pass
-            ``None`` (default) to opt out of the standard cache system.
-        cache_extension : str, optional
-            File extension for cache files.  Default ``'nc'``.
-        has_varname : bool, optional
-            ``True`` when one cache file is written per variable.
-        has_resampling : bool, optional
-            ``True`` when the cache filename encodes a temporal resampling
-            rate (e.g. AORC).  Default ``False``.
-        short_name : str, optional
-            Short, filesystem-safe name used as the leaf cache directory and
-            filename prefix (e.g. ``'DayMet'``).
         """
-        is_temporal = (native_start is not None)
-        super().__init__(
-            name=name,
-            source=source,
-            native_crs_in=native_crs_in,
-            native_resolution=native_resolution,
-            cache_category=cache_category,
-            cache_extension=cache_extension,
-            has_varname=has_varname,
-            is_temporal=is_temporal,
-            has_resampling=has_resampling,
-            short_name=short_name,
-        )
+        self.name = name
+        self.source = source
+        self.native_resolution = native_resolution
+        self.native_crs_in = native_crs_in
         self.native_crs_out = native_crs_out
         self.native_start = native_start
         self.native_end = native_end
@@ -180,10 +166,18 @@ class ManagerDataset(manager.Manager):
         # Detect calendar from native dates
         self.native_calendar = self._detectCalendar()
 
+        # Background executor for _waitAndDownload tasks
+        self._executor = concurrent.futures.ThreadPoolExecutor()
 
-    def requestDataset(self, geometry, geometry_crs=None,
-                       start=None, end=None, variables=None,
-                       out_crs=None, resampling=None,
+
+    def requestDataset(self,
+                       geometry,
+                       geometry_crs=None,
+                       start=None,
+                       end=None,
+                       variables=None,
+                       out_crs=None,
+                       temporal_resampling=None,
                        **kwargs):
         """Establish a request for a dataset for the given geometry and time range.
 
@@ -201,14 +195,14 @@ class ManagerDataset(manager.Manager):
             Variables to retrieve. For multi-variable datasets, defaults to
             default_variables if None. Ignored for single-variable datasets.
         out_crs : CRS, optional
-            If provided, resamples the data into this CRS.
-        resampling : str, optional
-            If out_crs is provided, this gives the resampling method.
-            Note that the right choice here can depend upon the data
-            type -- for instance 'nearest' (the default) is good for
-            categorical data but 'bilinear' may be better for
-            continuous data.  See rasterio.warp.reproject for a list
-            of options.
+            If provided, reprojects the data into this CRS.  The spatial
+            resampling method is chosen automatically based on the variable
+            dtypes: ``'nearest'`` for integer (categorical) variables,
+            ``'bilinear'`` for float (continuous) variables.  Override
+            ``_spatialResamplingMethod`` on the manager to change this.
+        temporal_resampling : str, optional
+            Temporal resampling method applied to time-series datasets
+            (e.g. ``'monthly'``).  Unrelated to spatial resampling.
 
         Returns
         -------
@@ -216,71 +210,55 @@ class ManagerDataset(manager.Manager):
             Request object for this dataset.
 
         """
-        # pre-request allows downloading files, etc
-        self._prerequestDataset()
+        request = self._preprocessParameters(geometry, geometry_crs, start, end, variables, out_crs, temporal_resampling)
 
-        # Use extracted parameter processing
-        request = self._preprocessParameters(geometry, geometry_crs, start, end, variables)
-        request.out_crs = out_crs
-        request.resampling = resampling if resampling is not None else 'nearest'
-
-        # Get dataset
+        # Start the server-side job
         request = self._requestDataset(request, **kwargs)
+
+        # Submit background polling + download to the thread pool
+        request._future = self._executor.submit(self._waitAndDownload, request)
+
         return request
 
 
-    def isReady(self, request : Request) -> bool:
-        """Is the request ready for fetching?"""
-        return request.is_ready
-
-
-    def fetchRequest(self, request : Request, **kwargs) -> xr.Dataset:
-        """Fetch the request and get the actual data."""
-        data = self._fetchDataset(request, **kwargs)
-        data = self._postprocessDataset(request, data)
-        return data
-
-
-    def waitForDataset(self,
-                       request : Request,
-                       interval: int = 120,
-                       tries: int = 100) -> xr.Dataset:
-        """Block until task is complete and return Dataset.
+    def isReady(self, request: Request) -> bool:
+        """Check whether the background download is complete.
 
         Parameters
         ----------
         request : Request
-            Request object to wait for.
-        interval : int, optional
-            Sleep interval in seconds between checks.
-        tries : int, optional
-            Maximum number of tries before giving up.
+            Request object returned by requestDataset.
+
+        Returns
+        -------
+        bool
+            True if the download is finished (or failed), False otherwise.
+        """
+        return request._future.done()
+
+
+    def fetchDataset(self, request: Request) -> xr.Dataset:
+        """Block until the request is complete and return the dataset.
+
+        Parameters
+        ----------
+        request : Request
+            Request object returned by requestDataset.
 
         Returns
         -------
         xr.Dataset
-            Dataset when task is complete.
+            Dataset for the requested geometry and time range.
         """
-        count = 0
-        is_ready = request.is_ready
-        while count < tries and not is_ready:
-            is_ready = self.isReady(request)
-
-            if not is_ready:
-                logging.info(f'{request.manager.name} request not ready, sleeping {interval}s...')
-                time.sleep(interval)
-                count += 1
-
-        if not is_ready:
-            raise RuntimeError(f'{request.manager.name} request not completing after {tries} tries and {interval*tries} seconds.')
-
-        data = self.fetchRequest(request)
-        return data
+        # Blocks until done; re-raises any exception from the background thread
+        request._future.result()
+        dataset = self._loadDataset(request)
+        return self._postprocessDataset(request, dataset)
 
 
     def getDataset(self, geometry, geometry_crs=None,
                    start=None, end=None, variables=None,
-                   out_crs=None, resampling=None,
+                   out_crs=None, temporal_resampling=None,
                    **kwargs
                    ):
         """Get dataset for the given geometry and time range.
@@ -300,51 +278,48 @@ class ManagerDataset(manager.Manager):
         variables : list of str, optional
             Variables to retrieve. For multi-variable datasets, defaults to
             default_variables if None. Ignored for single-variable datasets.
+        out_crs : CRS, optional
+            If provided, reprojects the data into this CRS.  The spatial
+            resampling method is chosen automatically from variable dtypes.
+        temporal_resampling : str, optional
+            Temporal resampling method for time-series datasets.
 
         Returns
         -------
         xr.Dataset
             Dataset for the requested geometry and time range.
         """
-        request = self.requestDataset(geometry, geometry_crs, start, end, variables, out_crs, **kwargs)
-        data = self.waitForDataset(request)
-        return data
+        request = self.requestDataset(geometry, geometry_crs, start, end, variables,
+                                      out_crs, temporal_resampling, **kwargs)
+        return self.fetchDataset(request)
 
 
-    @abc.abstractmethod
-    def _requestDataset(self, request : Request) -> Request:
-        """Managers should overload this method to request the data.
-
-        Parameters
-        ----------
-        request : Request
-            Dataset request storing the input parameters.
-
-        Returns
-        -------
-        Request
-            Dataset request storing any extra needed data to identify the request.
-        """
-        pass
-
-
-    @abc.abstractmethod
-    def _fetchDataset(self, request : Request) -> xr.Dataset:
-        """Managers should overload this method to get the data.
+    #
+    # Background thread method
+    #
+    def _waitAndDownload(self, request: Request) -> None:
+        """Poll for server readiness then download; runs in background thread.
 
         Parameters
         ----------
         request : Request
-            Dataset request storing the input parameters.
-
-        Returns
-        -------
-        xr.Dataset
-            The data requested.
+            Request object to poll and download.
         """
-        pass
+        while not self._isServerReady(request):
+            logging.info(f'{self.name}: server not ready, sleeping {self._poll_interval}s...')
+            time.sleep(self._poll_interval)
+        request.state = RequestState.SERVER_READY
+        request.state = RequestState.DOWNLOADING
+        self._downloadDataset(request)
+        request.state = RequestState.READY
 
 
+    #
+    # Helper functions
+    #
+    # These need to be moved into a time utils or something -- don't
+    # we already do most of this in utils.data?
+    #
     def _detectCalendar(self) -> str:
         """Detect the calendar type from native start/end dates.
 
@@ -410,13 +385,34 @@ class ManagerDataset(manager.Manager):
             elif not is_start and date > bound:
                 raise ValueError(f"End date {date} is after dataset end {bound}")
 
+    def _validateVariables(self, variables: str | List[str] | None):
+        """Validate and normalize requested variables."""
+        if variables is None:
+            return self.default_variables
 
+        if self.valid_variables is None:
+            raise ValueError("This dataset does not support variable selection")
+
+        if isinstance(variables, str):
+            variables = [variables,]
+
+        for var in variables:
+            if var not in self.valid_variables:
+                raise ValueError(f"Invalid variable '{var}'. Valid variables: {', '.join(self.valid_variables)}")
+        return variables
+
+
+    #
+    # Dataset methods -- can be overridden but probably don't need to be
+    #
     def _preprocessParameters(self,
                               geometry: shapely.geometry.Polygon | gpd.GeoDataFrame,
                               geometry_crs: CRS | None,
                               start: str | int | cftime._cftime.datetime | None,
                               end: str | int | cftime._cftime.datetime | None,
-                              variables: List[str] | None
+                              variables: List[str] | None,
+                              out_crs: CRS | None,
+                              temporal_resampling: str | None
                               ) -> Request:
         """Process and validate parameters for getDataset calls.
 
@@ -432,6 +428,10 @@ class ManagerDataset(manager.Manager):
             End date.
         variables : list of str or None, optional
             Variables to retrieve.
+        out_crs : CRS or None
+            Output coordinate reference system, or None.
+        temporal_resampling : str or None
+            Temporal resampling method for time-series data, or None.
 
         Returns
         -------
@@ -459,38 +459,59 @@ class ManagerDataset(manager.Manager):
         polygon = polygon.buffer(3 * self.native_resolution)
         logging.info(f'... buffered shape area = {polygon.area}')
 
-        # Snap bounding box outward by up to 1x native_resolution for cache stability.
-        # The buffered polygon is kept as request.geometry for clipping;
-        # snapped_bounds is used only for filenames and download API calls.
-        snapped_bounds = self._snapBounds(polygon.bounds)
-        logging.info(f'... snapped bounding box = {snapped_bounds}')
-
-        # Parse and validate dates
+        # Parse and validate dates, temporal_resampling
         parsed_start = self._parseDate(start, True)
         self._validateDate(parsed_start, self.native_start, True)
 
         parsed_end = self._parseDate(end, False)
         self._validateDate(parsed_end, self.native_end, False)
 
-        # Handle variables
-        if variables is None:
-            variables = self.default_variables
-        elif self.valid_variables is None:
-            raise ValueError("This dataset does not support variable selection")
-        else:
-            for var in variables:
-                if var not in self.valid_variables:
-                    raise ValueError(f"Invalid variable '{var}'. Valid variables: {', '.join(self.valid_variables)}")
+        if temporal_resampling is not None and parsed_start is None:
+            raise ValueError("Cannot resample non-temporal dataset.")
 
-        return ManagerDataset.Request(self, False, polygon, parsed_start, parsed_end, variables,
-                                      snapped_bounds=snapped_bounds)
+        if parsed_start is not None and parsed_end is not None and parsed_start > parsed_end:
+            raise ValueError(f"start ({parsed_start}) must not be after end ({parsed_end}).")
 
+        # Parse and validate variables
+        parsed_variables = self._validateVariables(variables)
+
+        return self.Request(self, polygon, out_crs, parsed_start, parsed_end, temporal_resampling, parsed_variables)
+
+
+    def _spatialResamplingMethod(self, dataset: xr.Dataset) -> str:
+        """Choose a spatial resampling method appropriate for this dataset.
+
+        The default implementation returns ``'nearest'`` if any data variable
+        has an integer dtype (categorical / indicator data), and ``'bilinear'``
+        otherwise (continuous float data).  Derived classes may override this
+        to force a specific method.
+
+        Parameters
+        ----------
+        dataset : xr.Dataset
+            Dataset whose variables are inspected to choose the method.
+
+        Returns
+        -------
+        str
+            A rasterio resampling method name accepted by
+            ``watershed_workflow.utils.warp.warpDataset``.
+        """
+        for var in dataset.data_vars:
+            if np.issubdtype(dataset[var].dtype, np.integer):
+                return 'nearest'
+        return 'bilinear'
 
     def _postprocessDataset(self,
-                            request : Request,
-                            dataset : xr.Dataset,
+                            request: Request,
+                            dataset: xr.Dataset,
                             ):
-        """Time dtype conversions and clipping, check CRS is applied, and check post conditions."""
+        """Clip, time-slice, and (optionally) reproject the dataset.
+
+        Derived classes that need to change dtypes or units should do so
+        *before* calling ``super()._postprocessDataset()``, so that the
+        spatial resampling method is chosen from the final dtypes.
+        """
         # check the CRS out
         assert hasattr(dataset, 'rio')
         if dataset.rio.crs is None:
@@ -498,6 +519,12 @@ class ManagerDataset(manager.Manager):
         else:
             assert watershed_workflow.crs.isEqual(watershed_workflow.crs.from_rasterio(dataset.rio.crs),
                                            self.native_crs_out)
+
+        # Spatial clip to the buffered geometry bounds in native_crs_out.
+        clip_bounds = watershed_workflow.utils.warp.warpBounds(
+            request.geometry.bounds, self.native_crs_in, self.native_crs_out)
+        dataset = dataset.rio.clip_box(*clip_bounds,
+                                       crs=watershed_workflow.crs.to_rasterio(self.native_crs_out))
 
         # Convert and clip all time dimensions.
         # Detect by index type (CFTimeIndex or DatetimeIndex) rather than by
@@ -515,20 +542,96 @@ class ManagerDataset(manager.Manager):
 
             dataset = dataset.sel({dim: slice(request.start, request.end)})
 
-        # change coordinate system if requested
+        # Reproject to out_crs if requested.
+        # The resampling method is chosen based on the (already-converted) dtypes:
+        # integer variables use 'nearest'; float variables use 'bilinear'.
         if request.out_crs is not None:
-            # guess the coordinate names -- they must be in x,y
+            # Normalise coordinate names to x/y before reprojecting.
             if 'x' in dataset.coords and 'y' in dataset.coords:
                 pass
             elif 'lon' in dataset.coords and 'lat' in dataset.coords:
-                dataset = dataset.rename({'lon' : 'x', 'lat' : 'y'})
+                dataset = dataset.rename({'lon': 'x', 'lat': 'y'})
             elif 'longitude' in dataset.coords and 'latitude' in dataset.coords:
-                dataset = dataset.rename({'longitude' : 'x', 'latitude' : 'y'})
+                dataset = dataset.rename({'longitude': 'x', 'latitude': 'y'})
 
-            dataset = watershed_workflow.utils.warp.warpDataset(dataset, request.out_crs, request.resampling)
+            resampling = self._spatialResamplingMethod(dataset)
+            dataset = watershed_workflow.utils.warp.warpDataset(dataset, request.out_crs, resampling)
 
         # Add name and source to dataset attributes
         dataset.attrs['name'] = self.name
         dataset.attrs['source'] = self.source
 
         return dataset
+
+
+    #
+    # abstract methods that must be provided by derived datasets
+    # ------------------------------------------------------------------
+    # Hooks to be overridden by deriving classes.
+    # ------------------------------------------------------------------
+    @abc.abstractmethod
+    def _requestDataset(self, request: Request) -> Request:
+        """Submit server job and return quickly.
+
+        If the source has no asynchronous server step, this method may return
+        immediately. State transitions are managed entirely by the base class.
+
+        Parameters
+        ----------
+        request : Request
+            Dataset request storing the input parameters.
+
+        Returns
+        -------
+        Request
+            Dataset request storing any extra needed data to identify the request.
+        """
+        pass
+
+
+    @abc.abstractmethod
+    def _isServerReady(self, request: Request) -> bool:
+        """Poll the server to check whether the submitted job is complete.
+
+        For sources with no asynchronous server step, simply return True.
+
+        Parameters
+        ----------
+        request : Request
+            Dataset request to poll.
+
+        Returns
+        -------
+        bool
+            True if the server-side job is complete and data can be downloaded.
+        """
+        pass
+
+
+    @abc.abstractmethod
+    def _downloadDataset(self, request: Request) -> None:
+        """Download data files to disk.
+
+        Parameters
+        ----------
+        request : Request
+            Dataset request storing the input parameters.
+        """
+        pass
+
+
+    @abc.abstractmethod
+    def _loadDataset(self, request: Request) -> xr.Dataset:
+        """Open files from disk and return the raw dataset.
+
+        Parameters
+        ----------
+        request : Request
+            Dataset request populated by _downloadDataset.
+
+        Returns
+        -------
+        xr.Dataset
+            The raw dataset before postprocessing.
+        """
+        pass

@@ -92,27 +92,18 @@ def computeCrosswalkCorrelation(modis_lc : xarray.DataArray,
 
     Parameters
     ----------
-    modis_profile : xarray.DataArray
-      Rasterio profile of the modis_lc
-    modis_lc : np.ndarray[NX,NY]
+    modis_lc : xarray.DataArray
       Raster of a single year of MODIS land cover type.
-    nlcd_profile : dict
-      Rasterio profile of the nlcd_lc
-    nlcd_lc : np.ndarray[NX,NY]
+    nlcd_lc : xarray.DataArray
       Raster of a single year of NLCD land cover type.
-    method : string, optional
-      Two available methods:
-      - 'fractional area' (default) returns weights
-        based on the area fraction of the correlation
-      - 'maximal area' returns a weight of 1 for the largest
-        fractional area and 0 for all others.
     plot : bool, optional
       Plot the correlation matrix, default is True.
     warp : bool, optional
-      Warps MODIS to NLCD.  Should always be true except for tests.
-    unique_nlcd : list
+      Warps MODIS to NLCD CRS before correlating.  Should always be True
+      except for tests where the rasters are already aligned.
+    unique_nlcd : list of int, optional
       List of unique NLCD indices.  If None, will be computed from raster.
-    unique_modis : list
+    unique_modis : list of int, optional
       List of unique MODIS indices.  If None, will be computed from raster.
 
     Returns

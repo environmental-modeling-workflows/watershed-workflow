@@ -15,6 +15,8 @@ import pygeohydro.helpers
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager_dataset_cached import in_memory_cached_manager
+from .cache_info import CacheInfo
 
 
 colors = {
@@ -45,6 +47,12 @@ colors = {
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
+@in_memory_cached_manager(CacheInfo(
+    category='land_cover',
+    subcategory='nlcd',
+    name='pygeohydro',          # overridden per-instance in __init__
+    snap_resolution=0.001,
+))
 class ManagerNLCD(manager_dataset.ManagerDataset):
     """National Land Cover Database manager for single-year snapshots.
 
@@ -76,7 +84,7 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
         """
         self.location = self._validateLocation(location)
         self.year = self._validateYear(year, location)
-        
+
         # NLCD is non-temporal - each instance represents one year snapshot
         native_crs = CRS.from_epsg(4326)  # WGS84 Geographic
         super().__init__(
@@ -88,7 +96,16 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
             native_start=None,           # Non-temporal data
             native_end=None,             # Non-temporal data
             valid_variables=['cover', 'impervious', 'canopy', 'descriptor'],
-            default_variables=['cover']
+            default_variables=['cover'],
+        )
+
+        # Override the class-level CacheInfo with a per-instance one that
+        # embeds year and location so different instances use different cache dirs.
+        self._cache_info = CacheInfo(
+            category='land_cover',
+            subcategory=f'nlcd_{self.location}_{self.year}',
+            name='pygeohydro',
+            snap_resolution=0.001,
         )
 
     def _validateLocation(self, location):
@@ -117,72 +134,63 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
 
     def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
                         ) -> manager_dataset.ManagerDataset.Request:
-        """Request NLCD data - ready immediately.
-        
+        """Return the request unchanged — no async step.
+
         Parameters
         ----------
         request : ManagerDataset.Request
             Dataset request with preprocessed parameters.
-            
+
         Returns
         -------
         ManagerDataset.Request
-            Updated request marked as ready.
+            The same request, unchanged.
         """
-        request.is_ready = True
         return request
 
-    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
-        """Fetch NLCD data for the request.
-        
+    def _isServerReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True — pygeohydro is synchronous."""
+        return True
+
+    def _downloadDataset(self, request: manager_dataset.ManagerDataset.Request) -> None:
+        """Fetch NLCD data via pygeohydro and store on ``request._dataset``.
+
         Parameters
         ----------
         request : ManagerDataset.Request
             Dataset request with preprocessed parameters.
-            
-        Returns
-        -------
-        xr.Dataset
-            Dataset with requested NLCD variables for the specified year.
         """
-        # Extract parameters from request
-        geometry = request.geometry
         variables = request.variables
-        
-        assert variables is not None, "Variables should not be None for multi-variable NLCD data"
-        
-        # Create GeoDataFrame with native CRS (geometry is already in native_crs_in)
-        geom_df = gpd.GeoDataFrame(geometry=[geometry], crs=self.native_crs_in)
-        
-        # Build years dict for pygeohydro - single year for all variables
+        assert variables is not None
+
+        geom_df = gpd.GeoDataFrame(geometry=[request.geometry], crs=self.native_crs_in)
         years_dict = {var: [self.year] for var in variables}
-        
-        # Fetch data using pygeohydro
+
         data_dict = pygeohydro.nlcd_bygeom(
             geom_df,
-            resolution=30,  # Use 30 meters (pygeohydro expects meters)
+            resolution=30,
             years=years_dict,
             region=self.location,
         )
-        
-        # Extract the dataset (dict key is GeoDataFrame index, we have index 0)
+
         raw_dataset = data_dict[0]
-        
-        # Create final dataset with variable names as keys (not prefixed)
+
         final_dataset = xr.Dataset()
         for var in variables:
-            # pygeohydro returns variables as 'var_year'
             source_key = f'{var}_{self.year}'
             if source_key in raw_dataset:
                 final_dataset[var] = raw_dataset[source_key]
             else:
                 raise ValueError(f"Variable {var} for year {self.year} not found in pygeohydro response")
-        
-        # Add metadata attributes
+
         final_dataset.attrs['nlcd_year'] = self.year
         final_dataset.attrs['nlcd_location'] = self.location
-        
-        return final_dataset
+
+        request._dataset = final_dataset
+
+    def _loadDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
+        """Return the dataset stored on the request by ``_downloadDataset``."""
+        return request._dataset
     
 
 

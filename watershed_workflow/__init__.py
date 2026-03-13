@@ -54,6 +54,14 @@ import watershed_workflow.mesh.river_mesh
 import watershed_workflow.mesh.condition
 import watershed_workflow.utils.data
 
+__all__ = [
+    # types
+    'CRS', 'River', 'Watershed', 'Mesh2D', 'Mesh3D',
+    # functions
+    'findHUC', 'reduceRivers', 'simplify', 'triangulate',
+    'tessalateRiverAligned', 'elevate', 'getDatasetOnMesh',
+    'getShapePropertiesOnMesh', 'makeMap',
+]
 
 #
 # functions for relating objects
