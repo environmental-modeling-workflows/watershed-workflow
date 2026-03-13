@@ -116,7 +116,8 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         import cftime
         native_resolution = 500.0 * 9.e-6  # in native_crs (degrees)
         native_start = cftime.datetime(2002, 7, 1, calendar='standard')
-        native_end = cftime.datetime(2024, 1, 1, calendar='standard')
+        _today = datetime.date.today()
+        native_end = cftime.datetime(_today.year, _today.month, _today.day, calendar='standard')
         native_crs = CRS.from_epsg(4269)  # WGS84 Geographic
         valid_variables = ['LAI', 'LULC']
         default_variables = ['LAI', 'LULC']
