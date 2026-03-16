@@ -80,8 +80,8 @@ _WGS84_TO_SINU = pyproj.Transformer.from_crs(
 
 _CACHE_INFO = CacheInfo(
     category='land_cover',
-    subcategory='modis_earthdata',
-    name='modis_earthdata',
+    subcategory='modis',
+    name='earthdata',
     snap_resolution=0.01,
     is_temporal=True,
 )
@@ -113,7 +113,7 @@ _PRODUCTS: Dict[str, Dict] = {
         'dtype': np.int16,
         'long_name': 'Land Cover Type 1 (IGBP)',
         'units': 'class',
-        'opendap': True,    # cloud OPeNDAP available
+        'opendap': False,   # use HDF4 to match LAI pixel grid
     },
 }
 

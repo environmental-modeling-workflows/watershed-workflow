@@ -1,6 +1,7 @@
 """Manager for downloading MODIS products from the NASA Earthdata AppEEARS database."""
 from typing import Tuple, Dict, Optional, List
 
+import math
 import os, sys
 import logging
 import netrc
@@ -53,8 +54,8 @@ indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 _CACHE_INFO = CacheInfo(
     category='land_cover',
-    subcategory='modis_appeears',
-    name='modis_appeears',
+    subcategory='modis',
+    name='appeears',
     snap_resolution=0.01,
     is_temporal=True,
 )
@@ -77,8 +78,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
 
     .. [AppEEARs](https://appeears.earthdatacloud.nasa.gov/)
 
-    Currently the variables supported here include LAI and estimated
-    ET.
+    Currently the variables supported here include LAI and LULC.
 
     All data returned includes a time variable, which is in units of
     [days past Jan 1, 2000, 0:00:00.
@@ -87,6 +87,10 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
 
        https://appeears.earthdatacloud.nasa.gov/api/?python#introduction
 
+    Notes
+    -----
+    Data are requested in the native MODIS sinusoidal projection to
+    preserve native pixel values without server-side resampling.
     """
 
     _LOGIN_URL = "https://appeears.earthdatacloud.nasa.gov/api/login"
@@ -111,10 +115,15 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
     def __init__(self, login_token: Optional[str] = None):
         """Create a new manager for MODIS data."""
 
-        native_resolution = 500.0 * 9.e-6  # in native_crs (degrees)
+        native_crs_in = CRS.from_epsg(4326)  # WGS84 Geographic (bounding-box queries)
+        native_crs_out = watershed_workflow.crs.from_string(
+            '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 '
+            '+a=6371007.181 +b=6371007.181 +units=m +no_defs'
+        )
+        # 500 m / (pi/180 * 6 371 007.181 m/deg) ≈ 4.49e-3 deg
+        native_resolution = 500.0 / (math.pi / 180.0 * 6_371_007.181)
         native_start = cftime.datetime(2002, 7, 1, calendar='standard')
         native_end = cftime.datetime(2024, 1, 1, calendar='standard')
-        native_crs = CRS.from_epsg(4269)  # WGS84 Geographic
         valid_variables = ['LAI', 'LULC']
         default_variables = ['LAI', 'LULC']
 
@@ -122,8 +131,8 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             name='MODIS',
             source='AppEEARS',
             native_resolution=native_resolution,
-            native_crs_in=native_crs,
-            native_crs_out=native_crs,
+            native_crs_in=native_crs_in,
+            native_crs_out=native_crs_out,
             native_start=native_start,
             native_end=native_end,
             valid_variables=valid_variables,
@@ -230,7 +239,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
                     "format": {
                         "type": "netcdf4"
                     },
-                    "projection": "geographic"
+                    "projection": "native"
                 },
                 "geo": {
                     "type":
@@ -426,11 +435,38 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
 
         return xr.Dataset(darrays)
 
+    _DTYPES = {
+        'LAI': np.float32,
+        'LULC': np.int16,
+    }
+    _NODATA = {
+        'LAI': np.nan,
+        'LULC': -1,
+    }
+
     def _readFile(self, filename: str, variable: str) -> xr.DataArray:
         """Open the file and get the data."""
         with xr.open_dataset(filename) as fid:
             layer = self._PRODUCTS[variable]['layer']
             data = fid[layer]
+            # AppEEARS native-projection files use 'xdim'/'ydim'; rename to
+            # the standard 'x'/'y' that rioxarray and _postprocessDataset expect.
+            rename = {k: v for k, v in [('xdim', 'x'), ('ydim', 'y')] if k in data.dims}
+            if rename:
+                data = data.rename(rename)
+            # Write CRS from the file's grid_mapping variable so rioxarray can
+            # find it without relying on coordinate names alone.
+            if 'crs' in fid:
+                crs_wkt = fid['crs'].attrs.get('spatial_ref')
+                if crs_wkt:
+                    data = data.rio.write_crs(crs_wkt)
 
+        # Replace NaN with the integer nodata sentinel before casting —
+        # astype() silently converts NaN to 0 which is a valid LULC class.
+        nodata = self._NODATA[variable]
+        if np.issubdtype(self._DTYPES[variable], np.integer):
+            data = data.fillna(nodata)
+        data = data.astype(self._DTYPES[variable])
+        data = data.rio.write_nodata(nodata)
         data.name = variable
         return data
