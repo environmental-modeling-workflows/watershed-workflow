@@ -50,11 +50,11 @@ To add support for a custom data type, create a DataWrapper subclass and registe
     # Register it
     DataWrapperFactory.register(MyDataType, DataWrapperMyType)
 
-    # Now use it normally with createDynamicScaler
-    wrapper_groups = [
-        ([(my_data, my_image), (my_data2, my_image2)], False),
-    ]
-    scaler = createDynamicScaler(wrapper_groups, ax)
+    # Now use it normally with createDynamicScaler:
+    # wrapper_groups = [
+    #     ([(my_data, my_image), (my_data2, my_image2)], False),
+    # ]
+    # scaler = createDynamicScaler(wrapper_groups, ax)
 
 Colorbar Updates
 ----------------

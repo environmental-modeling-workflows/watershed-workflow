@@ -201,12 +201,14 @@ def findPits(m2: Mesh2D,
     where depth is from computePitDepth().
 
     Boundary edge partitioning:
+
     - All boundary edges are categorized into forced_outlet_edges,
       optional_outlet_edges, or divide_edges
     - Unspecified edges default to optional_outlet_edges
     - forced_outlet_edges take precedence in overlaps
 
     Pit criteria by cell type:
+
     - Internal cells: isPit(internal_depth)
     - Forced outlet cells: isPit(boundary_depth)
     - Divide edge cells: isPit(internal_depth) OR NOT isPit(boundary_depth)

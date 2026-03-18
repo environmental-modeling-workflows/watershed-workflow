@@ -47,6 +47,8 @@ __all__ = [
     'createSubmesh',
     'mergeMeshes',
     'mergeTwoMeshes',
+    'refineTriangle',
+    'refineTriangles',
 ]
 
 try:
