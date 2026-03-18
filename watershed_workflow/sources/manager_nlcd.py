@@ -71,6 +71,8 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
     """
     colors = colors
     indices = indices
+    _NODATA = {'cover': -1, 'descriptor': -1}
+    _DTYPE  = {'cover': 'int16', 'descriptor': 'int16'}
 
     def __init__(self, location='L48', year=None):
         """Initialize NLCD manager for specific location and year.
@@ -175,13 +177,33 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
 
         raw_dataset = data_dict[0]
 
+        # pygeohydro returns float arrays (NaN used for nodata).
+        # Cast to appropriate dtypes: categorical vars → int16 (nodata=-1),
+        # continuous vars → float32.
         final_dataset = xr.Dataset()
         for var in variables:
             source_key = f'{var}_{self.year}'
-            if source_key in raw_dataset:
-                final_dataset[var] = raw_dataset[source_key]
-            else:
+            if source_key not in raw_dataset:
                 raise ValueError(f"Variable {var} for year {self.year} not found in pygeohydro response")
+
+            da = raw_dataset[source_key]
+            da.name = var
+
+            if var in self._NODATA:
+                nodata = self._NODATA[var]
+                # Cast first so the nodata sentinel (-1) can be represented,
+                # then replace any integer nodata values pygeohydro used for
+                # out-of-polygon pixels (stored in nodatavals) with our sentinel.
+                da = da.astype(self._DTYPE[var])
+                for src_nodata in da.attrs.get('nodatavals', ()):
+                    da = da.where(da != src_nodata, nodata)
+                da.attrs['nodata'] = nodata
+                da.attrs.pop('_FillValue', None)
+                da.attrs.pop('nodatavals', None)
+                da.attrs.pop('scale_factor', None)
+                da.attrs.pop('add_offset', None)
+
+            final_dataset[var] = da
 
         final_dataset.attrs['nlcd_year'] = self.year
         final_dataset.attrs['nlcd_location'] = self.location

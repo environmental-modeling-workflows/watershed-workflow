@@ -206,6 +206,17 @@ def in_memory_cached_manager(cache_info: CacheInfo):
                 if request._cache_hit:
                     return
                 super()._downloadDataset(request)
+
+                # Rebuild a clean Dataset from raw numpy arrays to strip any
+                # rioxarray-derived state that could interfere with the netCDF
+                # round-trip, while preserving all variable and dataset attrs.
+                clean_vars = {}
+                for name, da in request._dataset.data_vars.items():
+                    clean_vars[name] = xr.DataArray(da.values, dims=da.dims,
+                                                    coords=da.coords, attrs=dict(da.attrs))
+                request._dataset = xr.Dataset(clean_vars,
+                                              attrs=request._dataset.attrs)
+
                 path = os.path.join(request._download_path, 'data.nc')
                 logging.info(f'{self.name}: writing in-memory cache to {path}')
                 request._dataset.to_netcdf(path)

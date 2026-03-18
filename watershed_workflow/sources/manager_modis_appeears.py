@@ -24,7 +24,7 @@ from .cache_info import CacheInfo, _snapBounds
 
 
 _colors = {
-    -1: ('Unclassified', (0, 0, 0)),
+    -1: ('Unclassified', (255, 255, 255)),
     0: ('Open Water', (140, 219, 255)),
     1: ('Evergreen Needleleaf Forests', (38, 115, 0)),
     2: ('Evergreen Broadleaf Forests', (82, 204, 77)),
@@ -467,6 +467,10 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         if np.issubdtype(self._DTYPES[variable], np.integer):
             data = data.fillna(nodata)
         data = data.astype(self._DTYPES[variable])
-        data = data.rio.write_nodata(nodata)
         data.name = variable
+
+        if np.issubdtype(self._DTYPES[variable], np.integer):
+            data.attrs['nodata'] = nodata
+            data.attrs.pop('_FillValue', None)
+
         return data

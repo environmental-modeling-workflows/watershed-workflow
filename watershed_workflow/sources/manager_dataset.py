@@ -557,6 +557,15 @@ class ManagerDataset(abc.ABC):
             resampling = self._spatialResamplingMethod(dataset)
             dataset = watershed_workflow.utils.warp.warpDataset(dataset, request.out_crs, resampling)
 
+        # Ensure y coordinate is monotonically increasing (xarray/matplotlib
+        # convention: south-first).  Some sources store data north-first
+        # (descending y), which causes imshow to render upside-down.
+        y_dim = next((d for d in dataset.dims if d in ('y', 'lat', 'latitude')), None)
+        if y_dim is not None:
+            y_vals = dataset[y_dim].values
+            if len(y_vals) > 1 and y_vals[0] > y_vals[-1]:
+                dataset = dataset.isel({y_dim: slice(None, None, -1)})
+
         # Add name and source to dataset attributes
         dataset.attrs['name'] = self.name
         dataset.attrs['source'] = self.source
