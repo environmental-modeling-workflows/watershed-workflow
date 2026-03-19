@@ -260,7 +260,7 @@ def removeNullLAI(nlcd_lai: pd.DataFrame,
     The null_list defaults to a common list for NLCD.
     """
     if null_list is None:
-        null_list = [0, 11, 12, 23, 24, 31]
+        null_list = [-1, 11, 12, 23, 24, 31]
 
     if names is None:
         names = watershed_workflow.sources.manager_nlcd.colors
