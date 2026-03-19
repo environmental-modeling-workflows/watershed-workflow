@@ -51,7 +51,7 @@ def test_crs():
 def test_constructor_basic(shapefile_path):
     """Test basic constructor"""
     ms = ManagerShapefile(shapefile_path)
-    assert ms.name.startswith('shapefile: ')
+    assert ms.product == 'undefined'
     assert ms.source == os.path.abspath(shapefile_path)
     assert ms.filename == shapefile_path
     assert ms.id_name is None
@@ -141,7 +141,7 @@ def test_standard_naming(manager_no_id, test_geometry, test_crs):
     assert result[names.NAME].iloc[0] == str(result[names.ID].iloc[0])
     
     # Check metadata
-    assert result.attrs['name'] == manager_no_id.name
+    assert result.attrs['product'] == manager_no_id.product
     assert result.attrs['source'] == manager_no_id.source
 
 

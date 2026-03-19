@@ -19,8 +19,9 @@ import watershed_workflow.crs
 
 from . import utils as source_utils
 from . import manager_dataset
+from .manager import ManagerAttributes
 from .manager_dataset_cached import cached_dataset_manager
-from .cache_info import CacheInfo, _snapBounds
+from .cache_info import snapBounds
 
 
 _colors = {
@@ -52,16 +53,7 @@ for k, v in _colors.items():
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
-_CACHE_INFO = CacheInfo(
-    category='land_cover',
-    subcategory='modis',
-    name='appeears',
-    snap_resolution=0.01,
-    is_temporal=True,
-)
-
-
-@cached_dataset_manager(_CACHE_INFO)
+@cached_dataset_manager
 class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
     """MODIS data through the AppEEARS data portal.
 
@@ -124,20 +116,27 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         native_resolution = 500.0 / (math.pi / 180.0 * 6_371_007.181)
         native_start = cftime.datetime(2002, 7, 1, calendar='standard')
         native_end = cftime.datetime(2024, 1, 1, calendar='standard')
-        valid_variables = ['LAI', 'LULC']
-        default_variables = ['LAI', 'LULC']
 
-        super().__init__(
-            name='MODIS',
-            source='AppEEARS',
-            native_resolution=native_resolution,
+        attrs = ManagerAttributes(
+            category='land_cover',
+            product='MODIS',
+            source='NASA AppEEARS',
+            description='MODIS LAI and LULC products via the NASA AppEEARS data portal.',
+            product_short='modis',
+            source_short='nasa_appeears',
+            url='https://appeears.earthdatacloud.nasa.gov/',
+            license='public domain',
+            citation='Didan et al.',
             native_crs_in=native_crs_in,
             native_crs_out=native_crs_out,
+            native_resolution=native_resolution,
             native_start=native_start,
             native_end=native_end,
-            valid_variables=valid_variables,
-            default_variables=default_variables,
+            valid_variables=['LAI', 'LULC'],
+            default_variables=['LAI', 'LULC'],
+            is_temporal=True,
         )
+        super().__init__(attrs)
 
         self.login_token = login_token
 
@@ -359,7 +358,7 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         start_year = request.start.year
         end_year = request.end.year
 
-        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        snapped_bounds = snapBounds(request.geometry.bounds, self.native_resolution)
         logging.info(f'Building MODIS request for bounds: {snapped_bounds}, years {start_year}-{end_year}')
 
         if task_id is None:

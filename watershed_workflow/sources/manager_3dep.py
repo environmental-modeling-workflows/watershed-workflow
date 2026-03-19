@@ -12,24 +12,19 @@ import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager import ManagerAttributes
 from .manager_dataset_cached import in_memory_cached_manager
-from .cache_info import CacheInfo
 
 
-@in_memory_cached_manager(CacheInfo(
-    category='elevation',
-    subcategory='3dep',
-    name='3dep',          # overridden per-instance in __init__ to encode resolution
-    snap_resolution=0.001,
-))
+@in_memory_cached_manager
 class Manager3DEP(manager_dataset.ManagerDataset):
     """3D Elevation Program (3DEP) data manager.
-    
+
     Provides access to USGS 3DEP elevation and derived products through
     the py3dep library. Supports multiple resolution options and various
     topographic layers including DEM, slope, aspect, and hillshade products.
     """
-    
+
     def __init__(self, resolution : int):
         """Downloads DEM data from the 3DEP.
 
@@ -46,23 +41,29 @@ class Manager3DEP(manager_dataset.ManagerDataset):
 
         valid_variables = [
             'DEM', 'Hillshade Gray', 'Aspect Degrees', 'Aspect Map',
-            'GreyHillshade_elevationFill', 'Hillshade Multidirectional', 
+            'GreyHillshade_elevationFill', 'Hillshade Multidirectional',
             'Slope Map', 'Slope Degrees', 'Hillshade Elevation Tinted',
             'Height Ellipsoidal', 'Contour 25', 'Contour Smoothed 25'
         ]
         default_variables = ['DEM']
-        
-        # Initialize base class with native properties
-        super().__init__(f'3DEP {resolution}m', 'py3dep', resolution_in_degrees, in_crs, out_crs,
-                         None, None, valid_variables, default_variables)
 
-        # Override class-level CacheInfo to encode resolution in the cache dir name
-        self._cache_info = CacheInfo(
+        attrs = ManagerAttributes(
             category='elevation',
-            subcategory='3dep',
-            name=f'3dep_{resolution}m',
-            snap_resolution=0.001,
+            product=f'3DEP {resolution}m DEM',
+            source='py3dep TNM',
+            description='USGS 3D Elevation Program digital elevation model and derived products.',
+            product_short=f'3DEP_{resolution}m',
+            source_short='py3dep_tnm',
+            url='https://www.usgs.gov/3d-elevation-program',
+            license='public domain',
+            citation='USGS 3DEP',
+            native_crs_in=in_crs,
+            native_crs_out=out_crs,
+            native_resolution=resolution_in_degrees,
+            valid_variables=valid_variables,
+            default_variables=default_variables,
         )
+        super().__init__(attrs)
 
     def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
                         ) -> manager_dataset.ManagerDataset.Request:
@@ -100,4 +101,3 @@ class Manager3DEP(manager_dataset.ManagerDataset):
     def _loadDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Return the dataset stored on the request by ``_downloadDataset``."""
         return request._dataset
-        

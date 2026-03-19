@@ -34,7 +34,7 @@ def test_geometry():
 def test_manager_raster_initialization(raster_manager, dtb_raster_path):
     """Test that ManagerRaster initializes correctly."""
     assert raster_manager.filename == dtb_raster_path
-    assert raster_manager.name == f'raster: "{os.path.basename(dtb_raster_path)}"'
+    assert raster_manager.product == 'undefined'
     assert raster_manager.source == os.path.abspath(dtb_raster_path)
     
     assert raster_manager.native_start is None  # Non-temporal
@@ -112,11 +112,10 @@ def test_getDataset_default_behavior(raster_manager, test_geometry, dtb_raster_p
     assert hasattr(result, 'rio')
     assert result.rio.crs is not None
     
-    # Should have name and source attributes from base class
-    assert 'name' in result.attrs
+    # Should have product and source attributes from base class
+    assert 'product' in result.attrs
     assert 'source' in result.attrs
-    expected_name = f'raster: "{os.path.basename(dtb_raster_path)}"'
-    assert result.attrs['name'] == expected_name
+    assert result.attrs['product'] == 'undefined'
     assert result.attrs['source'] == os.path.abspath(dtb_raster_path)
     
     # Should have at least one data variable (default variables)
@@ -229,7 +228,7 @@ def test_coweeta_basin_integration(raster_manager, coweeta):
     result_dataset = raster_manager.getDataset(basin_geom, basin_crs)
     assert isinstance(result_dataset, xr.Dataset)
     assert len(result_dataset.data_vars) >= 1
-    assert 'name' in result_dataset.attrs
+    assert 'product' in result_dataset.attrs
     assert 'source' in result_dataset.attrs
     
     # Verify spatial properties

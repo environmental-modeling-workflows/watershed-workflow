@@ -58,9 +58,9 @@ def coweeta_box(coweeta_bounds):
 # ---------------------------------------------------------------------------
 
 def test_manager_properties(mgr):
-    """Verify name, source, CRS, variable lists, and cache metadata."""
-    assert mgr.name == 'MODIS'
-    assert mgr.source == 'earthaccess/LP DAAC'
+    """Verify product, source, CRS, variable lists, and cache metadata."""
+    assert mgr.product == 'MODIS'
+    assert mgr.source == 'NASA Earthdata'
 
     assert watershed_workflow.crs.isEqual(mgr.native_crs_in, _WGS84_CRS)
     assert watershed_workflow.crs.isEqual(mgr.native_crs_out, _MODIS_SINU_CRS)
@@ -68,25 +68,27 @@ def test_manager_properties(mgr):
     assert set(mgr.valid_variables) == {'LAI', 'LULC'}
     assert set(mgr.default_variables) == {'LAI', 'LULC'}
 
-    assert mgr._cache_info.category == 'land_cover'
-    assert mgr._cache_info.is_temporal
+    assert mgr.attrs.category == 'land_cover'
+    assert mgr.attrs.is_temporal
 
 
 def test_cache_dirname_generation(mgr, tmp_path, monkeypatch):
     """cacheDirname produces a path with the expected tokens."""
+    from watershed_workflow.sources.cache_info import cacheDirname, snapBounds
     monkeypatch.setitem(watershed_workflow.utils.config.rcParams['DEFAULT'],
                         'data_directory', str(tmp_path))
     bounds = (-83.5, 35.0, -83.4, 35.1)
-    dirpath = mgr._cache_info.cacheDirname(bounds, start_year=2020, end_year=2020)
+    dirpath = cacheDirname(mgr.attrs, bounds, start_year=2020, end_year=2020)
 
     dirname = os.path.basename(dirpath)
     assert '2020-2020' in dirname
-    assert 'modis_earthdata' in dirname
-    # Coordinate tokens present
-    assert '-83.5000' in dirname
-    assert '35.0000' in dirname
-    assert '-83.4000' in dirname
-    assert '35.1000' in dirname
+    assert 'nasa_earthdata' in dirname
+    # Snapped coordinate tokens present — snap before asserting
+    xmin, ymin, xmax, ymax = snapBounds(bounds, mgr.native_resolution)
+    assert f'{xmin:.4f}' in dirname
+    assert f'{ymin:.4f}' in dirname
+    assert f'{xmax:.4f}' in dirname
+    assert f'{ymax:.4f}' in dirname
 
 
 def test_parse_hdf_date_lai():
@@ -137,11 +139,12 @@ def test_default_variables(mgr, coweeta_box):
 def test_download_not_called_when_cached(mgr, coweeta_box, tmp_path, monkeypatch):
     """_downloadVar is never invoked when the cache directory is complete."""
     import shutil
+    from watershed_workflow.sources.cache_info import cacheDirname
     monkeypatch.setitem(watershed_workflow.utils.config.rcParams['DEFAULT'],
                         'data_directory', str(tmp_path))
 
     bounds = coweeta_box.buffer(3 * mgr.native_resolution).bounds
-    cache_dir = mgr._cache_info.cacheDirname(bounds, start_year=2020, end_year=2020)
+    cache_dir = cacheDirname(mgr.attrs, bounds, start_year=2020, end_year=2020)
     os.makedirs(cache_dir, exist_ok=True)
     # Create stub LAI.nc so isComplete returns True
     xr.Dataset({'LAI': xr.DataArray([1.0])}).to_netcdf(os.path.join(cache_dir, 'LAI.nc'))
@@ -197,8 +200,8 @@ def test_getDataset_lai_coweeta(coweeta, tmp_path):
     assert valid.size > 0
     assert np.all(valid >= 0.0)
     assert np.all(valid <= 10.0)
-    # Dataset carries name/source attributes set by _postprocessDataset
-    assert ds.attrs.get('name') == 'MODIS'
+    # Dataset carries product/source attributes set by _postprocessDataset
+    assert ds.attrs.get('product') == 'MODIS'
 
 
 @pytest.mark.network

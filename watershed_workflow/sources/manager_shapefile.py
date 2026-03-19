@@ -12,6 +12,7 @@ import watershed_workflow.utils.warp
 from watershed_workflow.crs import CRS
 
 from . import manager_shapes
+from .manager import ManagerAttributes
 from . import standard_names as names
 
 class ManagerShapefile(manager_shapes.ManagerShapes):
@@ -27,11 +28,12 @@ class ManagerShapefile(manager_shapes.ManagerShapes):
     
     def __init__(self,
                  filename: str,
-                 url : Optional[str] = None,
-                 id_name: Optional[str] = None
+                 url: Optional[str] = None,
+                 id_name: Optional[str] = None,
+                 attrs: Optional[ManagerAttributes] = None,
                  ):
         """Initialize shapefile manager.
-        
+
         Parameters
         ----------
         filename : str
@@ -40,30 +42,26 @@ class ManagerShapefile(manager_shapes.ManagerShapes):
             URL from which to download the file.
         id_name : str, optional
             Name of the ID field in the shapefile.
+        attrs : ManagerAttributes, optional
+            Full metadata object.  If provided, overrides the default
+            attrs constructed from filename and url.
         """
         self.filename = filename
-        self.url = url
         self.id_name = id_name
-
-        # flag to indicate that we have the file and we have processed
-        # it for metadata
         self._file_preprocessed = False
-        
-        # Use basename of file as name
-        name = f'shapefile: "{os.path.basename(filename)}"'
 
-        # Use id_name or 'ID' as native_id_field
-        native_id_field = id_name if id_name is not None else names.ID
-
-        if url is not None:
-            # url is the source
-            source = url
-        else:
-            # Use absolute path as source for complete provenance  
-            source = os.path.abspath(filename)
-
-        # Initialize base class
-        super().__init__(name, source, None, None, native_id_field)
+        if attrs is None:
+            native_id_field = id_name if id_name is not None else names.ID
+            file_source = url if url is not None else os.path.abspath(filename)
+            attrs = ManagerAttributes(
+                category='undefined',
+                product='undefined',
+                source=file_source,
+                description=f'Local shapefile: {os.path.basename(filename)}',
+                url=url,
+                native_id_field=native_id_field,
+            )
+        super().__init__(attrs)
 
     def _prerequestDataset(self):
         # first download -- this is done here and not in _request so
@@ -75,14 +73,14 @@ class ManagerShapefile(manager_shapes.ManagerShapes):
         if not self._file_preprocessed:
             # Get file info to determine native CRS
             info = pyogrio.read_info(self.filename)
-            self.native_crs_in = watershed_workflow.crs.from_string(info['crs'])
-        
+            self.attrs.native_crs_in = watershed_workflow.crs.from_string(info['crs'])
+
             # Estimate resolution from bounds (simple heuristic)
             # Use 1/1000th of the smallest dimension as resolution estimate
             bounds = info['total_bounds']
             width = bounds[2] - bounds[0]
             height = bounds[3] - bounds[1]
-            self.native_resolution = min(width, height) / 1000.0
+            self.attrs.native_resolution = min(width, height) / 1000.0
 
             # only do this work once
             self._file_preprocessed = True

@@ -10,6 +10,7 @@ import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager import ManagerAttributes
 from . import utils as source_utils
 
 
@@ -36,6 +37,7 @@ class ManagerRaster(manager_dataset.ManagerDataset):
                  native_resolution: Optional[float] = None,
                  native_crs: Optional[CRS] = None,
                  bands: Optional[Iterable[str] | int] = None,
+                 attrs: Optional['ManagerAttributes'] = None,
                  ):
         self.filename = filename
 
@@ -67,9 +69,6 @@ class ManagerRaster(manager_dataset.ManagerDataset):
                     elif len(ds.values.shape) == 3:
                         bands = [f'band_{i}' for i in range(ds.values.shape[0])]
 
-        name = f'raster: "{os.path.basename(filename)}"'
-        source = os.path.abspath(filename)
-
         if bands is None:
             valid_variables = default_variables = None
         elif isinstance(bands, int):
@@ -79,11 +78,26 @@ class ManagerRaster(manager_dataset.ManagerDataset):
             valid_variables = list(bands)
             default_variables = [valid_variables[0]]
 
-        super().__init__(
-            name, source,
-            native_resolution, native_crs, native_crs,
-            None, None, valid_variables, default_variables,
-        )
+        if attrs is None:
+            attrs = ManagerAttributes(
+                category='undefined',
+                product='undefined',
+                source=os.path.abspath(filename),
+                description=f'Local raster file: {os.path.basename(filename)}',
+                native_crs_in=native_crs,
+                native_crs_out=native_crs,
+                native_resolution=native_resolution,
+                valid_variables=valid_variables,
+                default_variables=default_variables,
+            )
+        else:
+            # Fill in native properties derived from the file inspection.
+            attrs.native_crs_in = native_crs
+            attrs.native_crs_out = native_crs
+            attrs.native_resolution = native_resolution
+            attrs.valid_variables = valid_variables
+            attrs.default_variables = default_variables
+        super().__init__(attrs)
 
     def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
                         ) -> manager_dataset.ManagerDataset.Request:

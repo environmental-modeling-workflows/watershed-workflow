@@ -15,12 +15,12 @@ import pygeohydro.helpers
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager import ManagerAttributes
 from .manager_dataset_cached import in_memory_cached_manager
-from .cache_info import CacheInfo
 
 
 colors = {
-    0: ('None', (1., 1., 1.)),
+    -1: ('None', (1., 1., 1.)),
     11: ('Open Water', (0.27843137255, 0.41960784314, 0.62745098039)),
     12: ('Perrenial Ice/Snow', (0.81960784314, 0.86666666667, 0.97647058824)),
     21: ('Developed, Open Space', (0.86666666667, 0.78823529412, 0.78823529412)),
@@ -47,12 +47,7 @@ colors = {
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
-@in_memory_cached_manager(CacheInfo(
-    category='land_cover',
-    subcategory='nlcd',
-    name='pygeohydro',          # overridden per-instance in __init__
-    snap_resolution=0.001,
-))
+@in_memory_cached_manager
 class ManagerNLCD(manager_dataset.ManagerDataset):
     """National Land Cover Database manager for single-year snapshots.
 
@@ -76,7 +71,7 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
 
     def __init__(self, location='L48', year=None):
         """Initialize NLCD manager for specific location and year.
-        
+
         Parameters
         ----------
         location : str, optional
@@ -87,28 +82,25 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
         self.location = self._validateLocation(location)
         self.year = self._validateYear(year, location)
 
-        # NLCD is non-temporal - each instance represents one year snapshot
         native_crs = CRS.from_epsg(4326)  # WGS84 Geographic
-        super().__init__(
-            name=f'NLCD {self.year} {self.location}',
-            source='pygeohydro',
-            native_resolution=0.00027,  # ~30m in degrees (approximately 30m at mid-latitudes)
-            native_crs_in=native_crs,    # Expected input CRS
-            native_crs_out=native_crs,   # Output data CRS
-            native_start=None,           # Non-temporal data
-            native_end=None,             # Non-temporal data
+
+        attrs = ManagerAttributes(
+            category='land_cover',
+            product=f'NLCD {self.year} {self.location}',
+            source='pygeohydro MRLC',
+            description='National Land Cover Database land cover classification.',
+            product_short=f'NLCD_{self.location}_{self.year}',
+            source_short='pygeohydro_mrlc',
+            url='https://www.mrlc.gov/data',
+            license='public domain',
+            citation='Yang et al. 2018',
+            native_crs_in=native_crs,
+            native_crs_out=native_crs,
+            native_resolution=0.00027,  # ~30m in degrees
             valid_variables=['cover', 'impervious', 'canopy', 'descriptor'],
             default_variables=['cover'],
         )
-
-        # Override the class-level CacheInfo with a per-instance one that
-        # embeds year and location so different instances use different cache dirs.
-        self._cache_info = CacheInfo(
-            category='land_cover',
-            subcategory=f'nlcd_{self.location}_{self.year}',
-            name='pygeohydro',
-            snap_resolution=0.001,
-        )
+        super().__init__(attrs)
 
     def _validateLocation(self, location):
         """Validate location parameter."""
@@ -125,10 +117,10 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
             'HI': [2001],
             'PR': [2001]
         }
-        
+
         if year is None:
             return valid_years[location][0]  # Most recent
-        
+
         if year not in valid_years[location]:
             raise ValueError(f'NLCD invalid year "{year}" for location {location}, '
                             f'valid are: {valid_years[location]}')
@@ -213,6 +205,3 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
     def _loadDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Return the dataset stored on the request by ``_downloadDataset``."""
         return request._dataset
-    
-
-

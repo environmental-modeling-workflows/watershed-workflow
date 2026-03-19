@@ -43,24 +43,26 @@ def coweeta_date_range():
 
 def test_manager_properties(modis_manager):
     """Test basic manager properties and initialization."""
-    assert modis_manager.name == 'MODIS'
-    assert modis_manager.source == 'AppEEARS'
-    assert modis_manager.native_crs_in == CRS.from_epsg(4269)
-    assert modis_manager.native_crs_out == CRS.from_epsg(4269)
+    from watershed_workflow.sources.manager_modis_earthdata import _MODIS_SINU_CRS
+    assert modis_manager.product == 'MODIS'
+    assert modis_manager.source == 'NASA AppEEARS'
+    assert modis_manager.native_crs_in == CRS.from_epsg(4326)
+    assert watershed_workflow.crs.isEqual(modis_manager.native_crs_out, _MODIS_SINU_CRS)
     assert set(modis_manager.valid_variables) == {'LAI', 'LULC'}
     assert set(modis_manager.default_variables) == {'LAI', 'LULC'}
 
 
 def test_cache_dir_generation(modis_manager, tmp_path, monkeypatch):
-    """Test cache directory name generation via CacheInfo."""
+    """Test cache directory name generation via cacheDirname free function."""
     import watershed_workflow.utils.config
+    from watershed_workflow.sources.cache_info import cacheDirname
     monkeypatch.setitem(watershed_workflow.utils.config.rcParams['DEFAULT'],
                         'data_directory', str(tmp_path))
     bounds = (-83.5, 35.0, -83.4, 35.1)
-    dirpath = modis_manager._cache_info.cacheDirname(bounds, start_year=2010, end_year=2011)
+    dirpath = cacheDirname(modis_manager.attrs, bounds, start_year=2010, end_year=2011)
     dirname = os.path.basename(dirpath)
     assert '2010-2011' in dirname
-    assert 'modis_appeears' in dirname
+    assert 'nasa_appeears' in dirname
 
 
 def test_read_existing_lai_file(modis_manager, existing_lai_file):

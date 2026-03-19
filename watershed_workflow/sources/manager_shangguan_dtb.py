@@ -4,9 +4,10 @@ import xarray as xr
 import numpy as np
 
 import watershed_workflow.crs
-import watershed_workflow.utils.config
 
 from . import manager_raster
+from . import cache_info
+from .manager import ManagerAttributes
 
 
 _URL = 'http://globalchange.bnu.edu.cn/research/dtbd.jsp'
@@ -19,7 +20,7 @@ class ManagerShangguanDTB(manager_raster.ManagerRaster):
     .. note:: This dataset has no download API.  Download ``BDTICM_M_250m_ll.zip``
        from the URL below, unzip it, and place the resulting TIF at::
 
-           <data_directory>/soil_structure/Shangguan2017/BDTICM_M_250m_ll.tif
+           <data_directory>/soil_structure/Shangguan_DTB/bnu_globalchange_https/BDTICM_M_250m_ll.tif
 
     The returned ``band_1`` variable is depth to bedrock in **metres**.
 
@@ -32,13 +33,24 @@ class ManagerShangguanDTB(manager_raster.ManagerRaster):
     """
 
     def __init__(self):
-        data_dir = watershed_workflow.utils.config.rcParams['DEFAULT']['data_directory']
-        filename = os.path.join(data_dir, 'soil_structure', 'Shangguan2017', _FILENAME)
+        attrs = ManagerAttributes(
+            category='soil_structure',
+            product='Shangguan Depth-to-Bedrock',
+            product_short='Shangguan_DTB',
+            source='BNU GlobalChange',
+            source_short='bnu_globalchange_https',
+            url='https://doi.org/10.1002/2016MS000686',
+            license=None,
+            citation='Shangguan et al. 2017',
+            description='Global 250 m depth to bedrock from Shangguan et al. (2017).',
+        )
+        filename = cache_info.localFilePath(attrs, _FILENAME)
         super().__init__(
             filename,
             native_crs=watershed_workflow.crs.from_epsg(4326),
             native_resolution=0.002083333,  # ~250 m in degrees
             bands=['band_1'],
+            attrs=attrs,
         )
 
     def _downloadDataset(self, request: manager_raster.ManagerRaster.Request) -> None:
@@ -47,11 +59,8 @@ class ManagerShangguanDTB(manager_raster.ManagerRaster):
             raise FileNotFoundError(
                 f'ShangguanDTB file not found: {self.filename}\n'
                 f'Download BDTICM_M_250m_ll.zip from {_URL}, unzip, and place '
-                f'the TIF at <data_directory>/soil_structure/Shangguan2017/{_FILENAME}'
+                f'the TIF at <data_directory>/soil_structure/Shangguan_DTB/bnu_globalchange_https/{_FILENAME}'
             )
-
-    def _loadDataset(self, request: manager_raster.ManagerRaster.Request) -> xr.Dataset:
-        return super()._loadDataset(request)
 
     def _postprocessDataset(self, request, dataset):
         """Clip first, then convert dtype/nodata/units on the small clipped result."""

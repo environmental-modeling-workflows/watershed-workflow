@@ -28,16 +28,9 @@ import watershed_workflow.properties.soil
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager import ManagerAttributes
 from .manager_dataset_cached import cached_dataset_manager
-from .cache_info import CacheInfo, _snapBounds
-
-
-_CACHE_INFO = CacheInfo(
-    category='soil_structure',
-    subcategory='soilgrids',
-    name='soilgrids',
-    snap_resolution=0.1,
-)
+from .cache_info import snapBounds
 
 
 # SoilGrids 2.0 is delivered on the Homolosine grid (EPSG:152160 = IGH).
@@ -87,7 +80,7 @@ _LONG_NAMES = {
 }
 
 
-@cached_dataset_manager(_CACHE_INFO)
+@cached_dataset_manager
 class ManagerSoilGrids(manager_dataset.ManagerDataset):
     """SoilGrids 2.0 (250 m) soil property manager.
 
@@ -121,17 +114,23 @@ class ManagerSoilGrids(manager_dataset.ManagerDataset):
         force_download : bool, optional
             Re-download data even when a valid cached file already exists.
         """
-        super().__init__(
-            name='SoilGrids 2.0',
-            source='https://maps.isric.org',
-            native_resolution=0.002,            # ~250 m in degrees
+        attrs = ManagerAttributes(
+            category='soil_structure',
+            product='SoilGrids 2.0',
+            source='ISRIC WCS',
+            description='SoilGrids 2.0 gridded soil properties at 250 m resolution via ISRIC WCS.',
+            product_short='soilgrids',
+            source_short='isric_wcs',
+            url='https://maps.isric.org',
+            license='CC BY 4.0',
+            citation='Poggio et al. 2021',
             native_crs_in=CRS.from_epsg(4326),
             native_crs_out=CRS.from_epsg(4326),
-            native_start=None,
-            native_end=None,
+            native_resolution=0.002,            # ~250 m in degrees
             valid_variables=self.VALID_VARIABLES,
             default_variables=self.DEFAULT_VARIABLES,
         )
+        super().__init__(attrs)
         self.force_download = force_download
 
     def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
@@ -186,7 +185,7 @@ class ManagerSoilGrids(manager_dataset.ManagerDataset):
             Request with ``_download_path`` set. Files are written to
             ``request._download_path/{var}.nc`` for each variable.
         """
-        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        snapped_bounds = snapBounds(request.geometry.bounds, self.native_resolution)
         for var in request.variables:
             fname = os.path.join(request._download_path, f'{var}.nc')
             self._download(var, snapped_bounds, fname)

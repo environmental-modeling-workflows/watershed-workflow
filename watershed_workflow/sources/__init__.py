@@ -1,15 +1,18 @@
-"""This module provides a dictionary of sources, broken out by data type, and a
-dictionary of default sources.
+"""This module provides a unified dictionary of all data source managers,
+hierarchically keyed by category and product, plus a dictionary of defaults.
 
-These dictionaries are provided as module-local (singleton) variables.
+``sources`` is a two-level dict::
 
-* huc_sources : A dictionary of sources that provide USGS HUC boundaries.
-* hydrography_sources : A dictionary of sources that provide river reaches by HUC.
-* dem_sources : A dictionary of available digital elevation models.
-* soil_sources : A dictionary of available sources for soil properties.
-* land_cover_sources : A dictionary of available land cover datasets.
+    sources[category][product_short-source_short] = manager_instance
 
-# """
+where the key is derived from each manager's own ``attrs.product_short`` and
+``attrs.source_short``.  ``source_short`` is omitted for managers that do not
+use the cache directory system.
+
+``_default_sources`` maps a semantic role (e.g. ``'HUC'``, ``'DEM'``) to a
+``(category, key)`` tuple.  ``getDefaultSources()`` resolves these to manager
+instances.
+"""
 import logging
 from typing import Dict, Any
 
@@ -32,7 +35,6 @@ from .manager_shangguan_dtb import ManagerShangguanDTB
 from .manager_hf_hydrodata import ManagerHFHydrodata
 
 # Met data
-# -- DayMet THREDDS API is disabled -- this only works for previously-downloaded files!
 from .manager_daymet import ManagerDaymet
 from .manager_aorc import ManagerAORC
 
@@ -48,173 +50,133 @@ from .manager_ssebop import ManagerSSEBop
 from .manager_nwis import ManagerNWIS
 
 
-# available and default water boundary datasets
-huc_sources = {
-    'WBD' : ManagerWBD('WBD'),
-    'WaterData WBD' : ManagerWBD('WaterData'),
-}
-default_huc_source = 'WBD'
+def _key(manager) -> str:
+    """Derive the sources dict key from a manager's attrs."""
+    ps = manager.attrs.product_short or manager.attrs.product
+    ss = manager.attrs.source_short
+    return f'{ps}-{ss}' if ss else ps
 
-# available and default hydrography datasets
-hydrography_sources = { 'NHDPlus MR v2.1' : ManagerNHD('NHDPlus MR v2.1'),
-                        'NHD MR' : ManagerNHD('NHD MR'),
-                        'NHDPlus HR' : ManagerNHD('NHDPlus HR')
-                       }
-default_hydrography_source = 'NHDPlus MR v2.1'
 
-# available and default digital elevation maps
-dem_sources : Dict[str,Any] = {
-    '3DEP 60m': Manager3DEP(60),
-    '3DEP 30m': Manager3DEP(30),
-    '3DEP 10m': Manager3DEP(10),
-}
-default_dem_source = '3DEP 60m'
+def _register(*managers) -> Dict[str, Any]:
+    """Build a category sub-dict from a list of manager instances."""
+    return {_key(m): m for m in managers}
 
-# available and default soil survey datasets
-soil_sources : Dict[str,Any] = {
-    'NRCS SSURGO': ManagerNRCS(),
-    'GLHYMPS': ManagerGLHYMPS(),
-    'SoilGrids': ManagerSoilGrids(),
-    'POLARIS': ManagerPOLARIS(),
-    'HFHydrodata CONUS2': ManagerHFHydrodata(),
-}
-default_soil_source = 'NRCS SSURGO'
 
-dtb_sources : Dict[str,Any] = {
-    'Pelletier DTB': ManagerPelletierDTB(),
-    'Shangguan DTB': ManagerShangguanDTB(),
-    'SoilGrids2017': ManagerSoilGrids2017(),
+# ---------------------------------------------------------------------------
+# Unified sources dictionary:  sources[category][key]
+# ---------------------------------------------------------------------------
+sources: Dict[str, Dict[str, Any]] = {
+    'geometry': _register(
+        ManagerWBD('WBD'),
+        ManagerWBD('WaterData'),
+        ManagerNHD('NHDPlus MR v2.1'),
+        ManagerNHD('NHD MR'),
+        ManagerNHD('NHDPlus HR'),
+        Manager3DEP(60),
+        Manager3DEP(30),
+        Manager3DEP(10),
+    ),
+    'soil_structure': _register(
+        ManagerNRCS(),
+        ManagerGLHYMPS(),
+        ManagerSoilGrids(),
+        ManagerSoilGrids2017(),
+        ManagerSoilGrids2017('US'),
+        ManagerPOLARIS(),
+        ManagerPelletierDTB(),
+        ManagerShangguanDTB(),
+        ManagerHFHydrodata(),
+    ),
+    'meteorology': _register(
+        ManagerAORC(),
+        ManagerDaymet(),
+    ),
+    'land_cover': _register(
+        ManagerNLCD(location='L48'),
+        ManagerNLCD(location='AK'),
+        ManagerMODISAppEEARS(),
+        ManagerMODISEarthdata(),
+    ),
+    'evapotranspiration': _register(
+        ManagerSSEBop('daily'),   # key: SSEBop_daily-usgs_ssebop
+        ManagerSSEBop('8day'),    # key: SSEBop_8day-usgs_ssebop
+        ManagerSSEBop('monthly'), # key: SSEBop_monthly-usgs_ssebop
+        ManagerSSEBop('yearly'),  # key: SSEBop_yearly-usgs_ssebop
+    ),
+    'observations': _register(
+        ManagerNWIS(),
+    ),
 }
-default_dtb_source = 'Pelletier DTB'
 
-# available and default land cover
-land_cover_sources : Dict[str,Any] = {
-    'NLCD (L48)': ManagerNLCD(location='L48'),
-    'NLCD (AK)': ManagerNLCD(location='AK'),
-    'MODIS AppEEARs': ManagerMODISAppEEARS(),
-    'MODIS Earthdata': ManagerMODISEarthdata(),
-}
-default_land_cover = 'NLCD (L48)'
 
-lai_sources : Dict[str,Any] = {
-    'MODIS AppEEARs': ManagerMODISAppEEARS(),
-    'MODIS Earthdata': ManagerMODISEarthdata(),
+# ---------------------------------------------------------------------------
+# Defaults: semantic role -> (category, key)
+# Keys are product_short-source_short, derived from manager attrs.
+# ---------------------------------------------------------------------------
+_default_sources: Dict[str, tuple] = {
+    'HUC':                ('geometry',           'WBD-pygeohydro_wbd'),
+    'hydrography':        ('geometry',           'NHDPlusMR-pynhd_waterdata'),
+    'DEM':                ('geometry',           '3DEP_60m-py3dep_tnm'),
+    'soil structure':     ('soil_structure',     'SSURGO-nrcs'),
+    'geologic structure': ('soil_structure',     'GLHYMPS-dataverse_https'),
+    'depth to bedrock':   ('soil_structure',     'Pelletier_DTB-ornl_daac_https'),
+    'land cover':         ('land_cover',         'NLCD_L48_2021-pygeohydro_mrlc'),
+    'LAI':                ('land_cover',         'modis-nasa_earthdata_opendap'),
+    'meteorology':        ('meteorology',        'aorc-ornl_daac_zarr'),
+    'evapotranspiration': ('evapotranspiration', 'SSEBop_monthly-usgs_ssebop'),
+    'observations':       ('observations',       'NWIS-nwis'),
 }
-default_lai = 'MODIS Earthdata'
-
-# available and default evapotranspiration
-et_sources : Dict[str,Any] = {
-    'SSEBop daily': ManagerSSEBop('daily'),
-    'SSEBop 8day': ManagerSSEBop('8day'),
-    'SSEBop monthly': ManagerSSEBop('monthly'),
-    'SSEBop yearly': ManagerSSEBop('yearly'),
-}
-default_et = 'SSEBop monthly'
-
-# available and default meteorology
-met_sources : Dict[str,Any] = {
-    'AORC': ManagerAORC(),
-    'DayMet': ManagerDaymet(),
-}
-default_met = 'AORC'
 
 
 def getDefaultSources() -> Dict[str, Any]:
-    """Provides a default set of data sources.
-    
-    Returns a dictionary with default sources for each type.
-    """
-    sources : Dict[str,Any] = dict()
-    sources['HUC'] = huc_sources[default_huc_source]
-    sources['hydrography'] = hydrography_sources[default_hydrography_source]
-    sources['DEM'] = dem_sources[default_dem_source]
-    sources['soil structure'] = soil_sources['NRCS SSURGO']
-    sources['geologic structure'] = soil_sources['GLHYMPS']
-    sources['land cover'] = land_cover_sources[default_land_cover]
-    sources['LAI'] = lai_sources[default_lai]
-    sources['depth to bedrock'] = dtb_sources[default_dtb_source]
-    sources['meteorology'] = met_sources[default_met]
-    return sources
-
-
-def getSources(args) -> Dict[str, Any]:
-    """Parsers the command line argument struct from argparse and provides an
-    updated set of data sources.
-
-    Parameters
-    ----------
-    args : struct
-      A python struct generated from an argparse.ArgumentParser object with
-      source options set by watershed_workflow.ui.*_source_options
+    """Return a dictionary of default managers keyed by semantic role.
 
     Returns
     -------
-    sources : dict
-      Dictionary of defaults for each of "HUC", "hydrography", "DEM", "soil
-      type", and "land cover".
+    dict
+        Maps semantic role (e.g. ``'HUC'``, ``'DEM'``) to a manager instance.
     """
-    sources = getDefaultSources()
-    try:
-        source_huc = args.source_huc
-    except AttributeError:
-        pass
-    else:
-        sources['HUC'] = huc_sources[source_huc]
-
-    try:
-        source_hydrography = args.source_hydro
-    except AttributeError:
-        pass
-    else:
-        sources['hydrography'] = hydrography_sources[source_hydrography]
-
-    try:
-        source_dem = args.source_dem
-    except AttributeError:
-        pass
-    else:
-        sources['DEM'] = dem_sources[source_dem]
-
-    try:
-        source_soil = args.soil_structure
-    except AttributeError:
-        pass
-    else:
-        sources['soil structure'] = soil_sources[source_soil]
-
-    try:
-        source_geo = args.geologic_structure
-    except AttributeError:
-        pass
-    else:
-        sources['geologic structure'] = soil_sources[source_geo]
-
-    try:
-        source_dtb = args.dtb_structure
-    except AttributeError:
-        pass
-    else:
-        sources['depth to bedrock'] = dtb_sources[source_dtb]
-        
-    try:
-        land_cover = args.land_cover
-    except AttributeError:
-        pass
-    else:
-        sources['land cover'] = land_cover_sources[land_cover]
-
-    try:
-        met = args.meteorology
-    except AttributeError:
-        pass
-    else:
-        sources['meteorology'] = met_sources[met]
-
-    return sources
+    return {role: sources[cat][key] for role, (cat, key) in _default_sources.items()}
 
 
-def logSources(sources : Dict[str, Any]) -> None:
-    """Pretty print source dictionary to log."""
+def getSources(args) -> Dict[str, Any]:
+    """Parse argparse args and return an updated set of data sources.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed arguments with optional source override attributes.
+
+    Returns
+    -------
+    dict
+        Maps semantic role to a manager instance.
+    """
+    result = getDefaultSources()
+
+    _arg_map = {
+        'source_huc':         ('HUC',                'geometry'),
+        'source_hydro':       ('hydrography',         'geometry'),
+        'source_dem':         ('DEM',                 'geometry'),
+        'soil_structure':     ('soil_structure',      'soil_structure'),
+        'geologic_structure': ('geologic_structure',  'soil_structure'),
+        'dtb_structure':      ('depth_to_bedrock',    'soil_structure'),
+        'land_cover':         ('land_cover',          'land_cover'),
+        'meteorology':        ('meteorology',         'meteorology'),
+    }
+
+    for arg_name, (role, category) in _arg_map.items():
+        try:
+            key = getattr(args, arg_name)
+        except AttributeError:
+            continue
+        result[role] = sources[category][key]
+
+    return result
+
+
+def logSources(sources: Dict[str, Any]) -> None:
+    """Pretty-print a sources dictionary to the log."""
     logging.info('Using sources:')
     logging.info('--------------')
     for stype, s in sources.items():

@@ -53,16 +53,9 @@ import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager import ManagerAttributes
 from .manager_dataset_cached import cached_dataset_manager
-from .cache_info import CacheInfo, _snapBounds
-
-
-_CACHE_INFO = CacheInfo(
-    category='soil_structure',
-    subcategory='polaris',
-    name='polaris',
-    snap_resolution=0.1,
-)
+from .cache_info import snapBounds
 
 
 _BASE_URL = (
@@ -116,7 +109,7 @@ _LONG_NAMES = {
 }
 
 
-@cached_dataset_manager(_CACHE_INFO)
+@cached_dataset_manager
 class ManagerPOLARIS(manager_dataset.ManagerDataset):
     """POLARIS 30-m CONUS soil hydraulic properties manager.
 
@@ -167,17 +160,23 @@ class ManagerPOLARIS(manager_dataset.ManagerDataset):
             raise ValueError(
                 f"Invalid stat '{stat}'. Valid stats: {', '.join(sorted(_VALID_STATS))}"
             )
-        super().__init__(
-            name='POLARIS',
-            source='http://hydrology.cee.duke.edu/POLARIS/PROPERTIES/v1.0',
-            native_resolution=0.000278,   # ~30 m in degrees
+        attrs = ManagerAttributes(
+            category='soil_structure',
+            product='POLARIS',
+            source='Duke Hydrology Lab',
+            description='POLARIS 30-m probabilistic soil hydraulic properties for CONUS.',
+            product_short='polaris',
+            source_short='duke_polaris_https',
+            url='http://hydrology.cee.duke.edu/POLARIS/PROPERTIES/v1.0',
+            license='CC BY-NC 4.0',
+            citation='Chaney et al. 2019',
             native_crs_in=CRS.from_epsg(4326),
             native_crs_out=CRS.from_epsg(4326),
-            native_start=None,
-            native_end=None,
+            native_resolution=0.000278,   # ~30 m in degrees
             valid_variables=self.VALID_VARIABLES,
             default_variables=self.DEFAULT_VARIABLES,
         )
+        super().__init__(attrs)
         self.stat = stat
         self.force_download = force_download
 
@@ -221,7 +220,7 @@ class ManagerPOLARIS(manager_dataset.ManagerDataset):
         request: manager_dataset.ManagerDataset.Request,
     ) -> None:
         """Download each requested variable to the cache directory."""
-        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        snapped_bounds = snapBounds(request.geometry.bounds, self.native_resolution)
         for var in request.variables:
             fname = os.path.join(request._download_path, f'{var}_{self.stat}.nc')
             self._download(var, snapped_bounds, fname)

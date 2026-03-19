@@ -11,21 +11,12 @@ import watershed_workflow.crs
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager import ManagerAttributes
 from .manager_dataset_cached import cached_dataset_manager
-from .cache_info import CacheInfo, _snapBounds
+from .cache_info import snapBounds
 
 
-_CACHE_INFO = CacheInfo(
-    category='meteorology',
-    subcategory='aorc',
-    name='aorc',
-    snap_resolution=0.1,
-    is_temporal=True,
-    is_resampled=True,
-)
-
-
-@cached_dataset_manager(_CACHE_INFO)
+@cached_dataset_manager
 class ManagerAORC(manager_dataset.ManagerDataset):
     """AORC dataset.
 
@@ -104,17 +95,27 @@ class ManagerAORC(manager_dataset.ManagerDataset):
         native_crs = CRS.from_epsg(4326)
         native_resolution = 0.00833333  # 30 arc-second resolution
 
-        super().__init__(
-            name='AORC v1.1',
-            source='NOAA AWS S3 Zarr',
-            native_resolution=native_resolution,
+        attrs = ManagerAttributes(
+            category='meteorology',
+            product='AORC',
+            source='ORNL DAAC Zarr',
+            description='Analysis Of Record for Calibration (AORC) v1.1 hourly gridded meteorology.',
+            product_short='aorc',
+            source_short='ornl_daac_zarr',
+            url='https://doi.org/10.25923/w6n8-qs02',
+            license='public domain',
+            citation='Fall et al. 2023',
             native_crs_in=native_crs,
             native_crs_out=native_crs,
+            native_resolution=native_resolution,
             native_start=native_start,
             native_end=native_end,
             valid_variables=self.VALID_VARIABLES,
             default_variables=self.DEFAULT_VARIABLES,
+            is_temporal=True,
+            is_resampled=True,
         )
+        super().__init__(attrs)
 
     def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
         """Return True if the cache directory contains a complete AORC download.
@@ -161,7 +162,7 @@ class ManagerAORC(manager_dataset.ManagerDataset):
         end_year = request.end.year
 
         # Snap bounds for the spatial sel() call for cache-directory consistency.
-        xmin, ymin, xmax, ymax = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        xmin, ymin, xmax, ymax = snapBounds(request.geometry.bounds, self.native_resolution)
 
         dataset_years = list(range(start_year, end_year + 1))
         s3_out = s3fs.S3FileSystem(anon=True)

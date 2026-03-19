@@ -11,16 +11,32 @@ class ManagerWBD(manager_hyriver.ManagerHyRiver):
     """Leverages pygeohydro to download WBD data."""
     lowest_level = 12
 
-    def __init__(self, protocol_name : str = 'WBD'):
-        """Also valid is WaterData"""
+    def __init__(self, product_short : str = 'WBD'):
+        """Initialize WBD manager.
+
+        Parameters
+        ----------
+        product_short : str, optional
+            HyRiver product: ``'WBD'`` (default) or ``'WaterData'``.
+        """
         self._level : Optional[int] = None
-        
-        # WBD data is typically in lat/lon coordinates
-        native_crs_in = watershed_workflow.crs.from_epsg(4269)
-        native_resolution = 0.001  # ~100m at mid-latitudes
-        
-        super().__init__(protocol_name, native_crs_in, native_resolution)
-        self.name = 'WBD'
+
+        from .manager import ManagerAttributes
+        attrs = ManagerAttributes(
+            category='geometry',
+            product='Watershed Boundary Dataset',
+            product_short=product_short,
+            source='hyriver',
+            url='https://www.usgs.gov/national-hydrography/watershed-boundary-dataset',
+            license='public domain',
+            citation='USGS WBD',
+            description='USGS Watershed Boundary Dataset (WBD) hydrologic unit polygons.',
+            native_crs_in=watershed_workflow.crs.from_epsg(4269),
+            native_resolution=0.001,
+            valid_variables=['huc2'],
+            default_variables=['huc2'],
+        )
+        super().__init__(attrs)
 
     def set(self, **kwargs):
         if 'level' in kwargs:
@@ -28,12 +44,12 @@ class ManagerWBD(manager_hyriver.ManagerHyRiver):
         
     def setLevel(self, level : int) -> None:
         self._level = level
-        if self._protocol_name == 'WBD':
-            self._layer = f'huc{level}'
-            self._id_name = self._layer
+        if self.attrs.product_short == 'WBD':
+            self.attrs.default_variables[0] = f'huc{level}'
+            self.attrs.native_id_field = self.attrs.default_variables[0]
         else:
-            self._layer = f'wbd{level:02d}'
-            self._id_name = f'huc{level}'
+            self.attrs.default_variables[0] = f'wbd{level:02d}'
+            self.attrs.native_id_field = f'huc{level}'
         
     def _getShapesByID(self,
                       hucs : List[str]) -> gpd.GeoDataFrame:
@@ -70,8 +86,8 @@ class ManagerWBD(manager_hyriver.ManagerHyRiver):
             GeoDataFrame with standard column names added.
         """
         # Add ID column from current ID field (set by setLevel)
-        if hasattr(self, '_id_name') and self._id_name in df.columns:
-            df[names.ID] = df[self._id_name].astype('string')
+        if self.attrs.native_id_field is not None and self.attrs.native_id_field in df.columns:
+            df[names.ID] = df[self.attrs.native_id_field].astype('string')
         
         # Add WBD-specific standard name mappings
         if 'areasqkm' in df.columns:

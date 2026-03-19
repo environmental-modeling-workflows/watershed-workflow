@@ -3,7 +3,6 @@
 Provides base classes for a Task object, used to store requests for
 datasets in a non-blocking way, and for a ManagerDataset, used to do
 the fetching.
-
 """
 
 import abc
@@ -26,6 +25,9 @@ import watershed_workflow.crs
 import watershed_workflow.utils.warp
 import watershed_workflow.utils.data
 
+from .manager import Manager, ManagerAttributes
+
+
 class RequestState(enum.Enum):
     """State machine for a dataset request."""
     SERVER_PENDING = 'server_pending'
@@ -34,7 +36,7 @@ class RequestState(enum.Enum):
     READY = 'ready'
 
 
-class ManagerDataset(abc.ABC):
+class ManagerDataset(Manager, abc.ABC):
     """Managers that provide xarray Datasets should inherit from this class.
 
     There are three possible use patterns for this class:
@@ -73,8 +75,8 @@ class ManagerDataset(abc.ABC):
 
     Developer notes: derived classes must implement:
 
-    - __init__() : Constructor that supplies native data properties as
-      parameters by calling super().__init__()
+    - __init__() : Constructor that creates a ManagerAttributes instance and
+      passes it to super().__init__(attrs).
 
     - Request _requestDataset(Request) : Abstract method that establishes the
       request and returns as quickly as possible. Should set
@@ -120,48 +122,15 @@ class ManagerDataset(abc.ABC):
 
     _poll_interval: int = 120
 
-    def __init__(self,
-                 name: str,
-                 source: str,
-                 native_resolution: float,
-                 native_crs_in: CRS,
-                 native_crs_out: CRS,
-                 native_start: cftime._cftime.datetime | None,
-                 native_end: cftime._cftime.datetime | None,
-                 valid_variables: List[str] | None,
-                 default_variables: List[str] | None):
-        """Initialize dataset manager with native data properties.
+    def __init__(self, attrs: ManagerAttributes):
+        """Initialize dataset manager with a ManagerAttributes instance.
 
         Parameters
         ----------
-        name : str
-            Name of the dataset manager.
-        source : str
-            Data source or API used to retrieve the data.
-        native_resolution : float
-            Inherent resolution of the data in native_crs_in units.
-        native_crs_in : CRS or None
-            Expected CRS of the incoming geometry.
-        native_crs_out : CRS or None
-            CRS of the data fetched.
-        native_start : cftime._cftime.datetime or None
-            Earliest start date of the data, None for non-temporal data.
-        native_end : cftime._cftime.datetime or None
-            Latest end date of the data, None for non-temporal data.
-        valid_variables : list of str or None
-            Valid variable names, None for single-variable datasets.
-        default_variables : list of str or None
-            Default variables to retrieve, None for single-variable datasets.
+        attrs : ManagerAttributes
+            Plain-data object holding all metadata for this manager.
         """
-        self.name = name
-        self.source = source
-        self.native_resolution = native_resolution
-        self.native_crs_in = native_crs_in
-        self.native_crs_out = native_crs_out
-        self.native_start = native_start
-        self.native_end = native_end
-        self.valid_variables = valid_variables
-        self.default_variables = default_variables
+        super().__init__(attrs)
 
         # Detect calendar from native dates
         self.native_calendar = self._detectCalendar()
@@ -316,9 +285,6 @@ class ManagerDataset(abc.ABC):
 
     #
     # Helper functions
-    #
-    # These need to be moved into a time utils or something -- don't
-    # we already do most of this in utils.data?
     #
     def _detectCalendar(self) -> str:
         """Detect the calendar type from native start/end dates.
@@ -526,6 +492,7 @@ class ManagerDataset(abc.ABC):
         dataset = dataset.rio.clip_box(*clip_bounds,
                                        crs=watershed_workflow.crs.to_rasterio(self.native_crs_out))
 
+
         # Convert and clip all time dimensions.
         # Detect by index type (CFTimeIndex or DatetimeIndex) rather than by
         # name: more robust and handles per-variable dims like 'time_LAI'.
@@ -566,8 +533,8 @@ class ManagerDataset(abc.ABC):
             if len(y_vals) > 1 and y_vals[0] > y_vals[-1]:
                 dataset = dataset.isel({y_dim: slice(None, None, -1)})
 
-        # Add name and source to dataset attributes
-        dataset.attrs['name'] = self.name
+        # Add product and source to dataset attributes
+        dataset.attrs['product'] = self.product
         dataset.attrs['source'] = self.source
 
         return dataset

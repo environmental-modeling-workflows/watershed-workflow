@@ -3,7 +3,6 @@
 Provides base classes for managers that fetch geospatial data as
 GeoDataFrames, ensuring consistent interfaces and standard naming
 conventions across all shape-based data sources.
-
 """
 
 import abc
@@ -18,6 +17,7 @@ import watershed_workflow.utils.warp
 
 from . import standard_names as names
 from . import manager
+from . import cache_info as ci
 
 
 class ManagerShapes(manager.Manager):
@@ -38,8 +38,8 @@ class ManagerShapes(manager.Manager):
 
     Developer notes: derived classes must implement:
 
-    - __init__() : Constructor that supplies native data properties as
-      parameters by calling super().__init__()
+    - __init__() : Constructor that creates a ManagerAttributes instance and
+      passes it to super().__init__(attrs).
 
     - gpd.GeoDataFrame _getShapesByGeometry(geometry) :
       Abstract method that fetches shapes for the given geometry in native_crs_in
@@ -51,50 +51,15 @@ class ManagerShapes(manager.Manager):
       Abstract method that converts native column names to standard names
     """
 
-    def __init__(self,
-                 name: str,
-                 source: str,
-                 native_crs_in: CRS,
-                 native_resolution: float,
-                 native_id_field: str,
-                 cache_category: str | None = None,
-                 cache_extension: str = 'shp',
-                 short_name: str | None = None):
-        """Initialize shape manager with native data properties.
+    def __init__(self, attrs: manager.ManagerAttributes):
+        """Initialize shape manager with a ManagerAttributes instance.
 
         Parameters
         ----------
-        name : str
-            Name of the shape manager.
-        source : str
-            Data source or API used to retrieve the shapes.
-        native_crs_in : CRS
-            Expected CRS of the incoming geometry for API queries.
-        native_resolution : float
-            Native resolution of the data in native_crs_in units, used for buffering.
-        native_id_field : str
-            Name of the ID field in the native data.
-        cache_category : str or None, optional
-            Top-level cache folder group, e.g. ``'soil_structure'``.  Pass
-            ``None`` (default) to opt out of the standard cache system.
-        cache_extension : str, optional
-            File extension for cache files.  Default ``'shp'``.
-        short_name : str, optional
-            Short, filesystem-safe name used as the leaf cache directory and
-            filename prefix (e.g. ``'NRCS'``).
+        attrs : ManagerAttributes
+            Plain-data object holding all metadata for this manager.
         """
-        super().__init__(
-            name=name,
-            source=source,
-            native_crs_in=native_crs_in,
-            native_resolution=native_resolution,
-            cache_category=cache_category,
-            cache_extension=cache_extension,
-            has_varname=False,   # shapes managers never split by variable
-            is_temporal=False,   # shapes managers are never temporal
-            short_name=short_name,
-        )
-        self.native_id_field = native_id_field
+        super().__init__(attrs)
 
 
     def getShapes(self,
@@ -161,20 +126,8 @@ class ManagerShapes(manager.Manager):
 
         # Buffer for cache stability; keep filter_polygon un-buffered for clipping
         buffered_polygon = geometry_gdf.union_all().buffer(3 * self.native_resolution)
-        snapped_bounds = self._snapBounds(buffered_polygon.bounds)
+        snapped_bounds = ci.snapBounds(buffered_polygon.bounds, self.native_resolution)
         logging.info(f'  Shapes manager: buffered+snapped query box = {snapped_bounds}')
-
-        # Check for a cached superset before downloading
-        superset = self._checkCache(
-            geometry_bounds=buffered_polygon.bounds,
-            snapped_bounds=snapped_bounds)
-        if superset is not None:
-            logging.info(f'  Using superset cache: {superset}')
-            df = gpd.read_file(superset)
-            df = self._addStandardNames(df)
-            df = self._postprocessShapes(df, filter_polygon, filter_crs, out_crs, digits,
-                                         remove_third_dimension)
-            return df
 
         # Build query GeoDataFrame from snapped bounds
         query_polygon = shapely.geometry.box(*snapped_bounds)
@@ -296,7 +249,7 @@ class ManagerShapes(manager.Manager):
 
         df = df.set_geometry(orig_geometry)
 
-        df.attrs['name'] = self.name
+        df.attrs['product'] = self.product
         df.attrs['source'] = self.source
 
         if hasattr(df.index, 'name') and df.index.name == names.ID:

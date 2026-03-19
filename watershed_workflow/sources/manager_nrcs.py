@@ -26,6 +26,8 @@ import watershed_workflow.properties.soil
 from . import utils as source_utils
 from . import standard_names as names
 from . import manager_shapes
+from .manager import ManagerAttributes
+from . import cache_info as ci
 
 _query_template_props = """
 SELECT
@@ -275,26 +277,27 @@ class ManagerNRCS(manager_shapes.ManagerShapes):
     def __init__(self, force_download : bool=False):
         self.force_download = force_download
 
-        # Initialize base class
-        super().__init__(
-            name='National Resources Conservation Service Soil Survey (NRCS Soils)',
-            source='USDA NRCS SSURGO Database',
+        attrs = ManagerAttributes(
+            category='soil_structure',
+            product='SSURGO',
+            source='USDA NRCS Web Soil Survey',
+            description='NRCS SSURGO soil survey geographic database.',
+            product_short='SSURGO',
+            source_short='nrcs',
+            url='https://websoilsurvey.nrcs.usda.gov/',
+            license='public domain',
+            citation='Soil Survey Staff, NRCS, USDA',
             native_crs_in=watershed_workflow.crs.from_epsg('4326'),
-            native_resolution=0.001,  # ~100m at mid-latitudes in degrees
+            native_resolution=0.001,
             native_id_field='mukey',
-            cache_category='soil_structure',
-            cache_extension='gpkg',
-            short_name='SSURGO',
         )
+        super().__init__(attrs)
 
         #self.url_spatial = 'https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDMWGS84Geographic.wfs'
         #self.url_spatial = 'https://SDMDataAccess.nrcs.usda.gov/Spatial/SDMWGS84Geographic.wfs'
         self.url_spatial = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
         self.url_data = 'https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest'
 
-        os.makedirs(self._cacheFolder(), exist_ok=True)
-
-        
     def _getShapes(self):
         """Fetch all shapes in a dataset.
 
@@ -319,10 +322,11 @@ class ManagerNRCS(manager_shapes.ManagerShapes):
         gpd.GeoDataFrame
             GeoDataFrame with native column names including soil properties.
         """
-        snapped_bounds = tuple(geometry_gdf.total_bounds)
-        filename = self._cacheFilename(snapped_bounds)
+        cache_dir = ci.cacheDirname(self.attrs, tuple(geometry_gdf.total_bounds))
+        filename = os.path.join(cache_dir, 'shapes.gpkg')
 
         if not os.path.exists(filename) or self.force_download:
+            os.makedirs(cache_dir, exist_ok=True)
             union_geometry = geometry_gdf.union_all()
             try:
                 shapes = self._download(union_geometry)
@@ -344,8 +348,8 @@ class ManagerNRCS(manager_shapes.ManagerShapes):
             assert shapes.crs is not None
 
             # Fetch and merge properties
-            data_filename = filename[:-5] + '_properties.csv'
-            props = self._getProperties(shapes['mukey'], data_filename)
+            props_filename = os.path.join(cache_dir, 'properties.csv')
+            props = self._getProperties(shapes['mukey'], props_filename)
             df = shapes.merge(props, on='mukey')
             df.to_file(filename, driver='GPKG')
 

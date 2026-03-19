@@ -12,6 +12,7 @@ from basin3d.core.schema.query import QueryMonitoringFeature
 from basin3d.core.schema.enum import FeatureTypeEnum
 
 from watershed_workflow.sources.manager_shapes import ManagerShapes
+from watershed_workflow.sources.manager import ManagerAttributes
 import watershed_workflow.crs
 import watershed_workflow.sources.standard_names as names
 
@@ -77,13 +78,17 @@ class ManagerBasin3D(ManagerShapes):
             raise RuntimeError(f"Failed to register Basin3D plugins: {e}")
         
         # Initialize parent class
-        super().__init__(
-            name=f"Basin3D-{'-'.join(self.data_sources)}",
+        attrs = ManagerAttributes(
+            category='observations',
+            product='Basin3D',
             source=f"Basin3D with plugins: {', '.join(self.data_sources)}",
-            native_crs_in=watershed_workflow.crs.from_epsg(4326),  # Basin3D uses WGS84
-            native_resolution=0.001,  # Approximate degrees for point data
-            native_id_field='id'
+            description='Basin3D monitoring features from environmental data synthesis framework.',
+            native_crs_in=watershed_workflow.crs.from_epsg(4326),
+            native_resolution=0.001,
+            native_id_field='id',
+            license='varies',
         )
+        super().__init__(attrs)
 
         
     def _getShapes(self):

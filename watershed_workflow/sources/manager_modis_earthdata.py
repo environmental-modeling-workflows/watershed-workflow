@@ -55,8 +55,9 @@ import cftime
 import watershed_workflow.crs
 
 from . import manager_dataset
+from .manager import ManagerAttributes
 from .manager_dataset_cached import cached_dataset_manager
-from .cache_info import CacheInfo, _snapBounds
+from .cache_info import snapBounds
 
 
 # ---------------------------------------------------------------------------
@@ -75,15 +76,6 @@ _MODIS_SINU_CRS = watershed_workflow.crs.from_string(
 #: Pyproj Transformer from WGS84 geographic to MODIS sinusoidal.
 _WGS84_TO_SINU = pyproj.Transformer.from_crs(
     'EPSG:4326', _MODIS_SINU_CRS.to_wkt(), always_xy=True
-)
-
-
-_CACHE_INFO = CacheInfo(
-    category='land_cover',
-    subcategory='modis',
-    name='earthdata',
-    snap_resolution=0.01,
-    is_temporal=True,
 )
 
 
@@ -123,7 +115,7 @@ _HDF_DATE_RE = re.compile(r'\.A(\d{4})(\d{3})\.')
 
 # Colour table (same product as the AppEEARS manager).
 _COLORS = {
-    -1: ('Unclassified', (0, 0, 0)),
+    -1: ('Unclassified', (255, 255, 255)),
     0:  ('Open Water', (140, 219, 255)),
     1:  ('Evergreen Needleleaf Forests', (38, 115, 0)),
     2:  ('Evergreen Broadleaf Forests', (82, 204, 77)),
@@ -261,7 +253,7 @@ def _sinosBoundsFromWgs84(snapped_bounds_deg: tuple) -> tuple:
 # Manager class
 # ---------------------------------------------------------------------------
 
-@cached_dataset_manager(_CACHE_INFO)
+@cached_dataset_manager
 class ManagerMODISEarthdata(manager_dataset.ManagerDataset):
     """MODIS LAI and LULC products via NASA earthaccess (synchronous).
 
@@ -316,17 +308,26 @@ class ManagerMODISEarthdata(manager_dataset.ManagerDataset):
         # 500 m / (pi/180 * 6 371 007.181 m/deg) ≈ 4.49e-3 deg
         native_resolution = 500.0 / (math.pi / 180.0 * 6_371_007.181)
         
-        super().__init__(
-            name='MODIS',
-            source='earthaccess/LP DAAC',
-            native_resolution=native_resolution,
+        attrs = ManagerAttributes(
+            category='land_cover',
+            product='MODIS',
+            source='NASA Earthdata',
+            description='MODIS LAI and LULC products via NASA earthaccess (synchronous).',
+            product_short='modis',
+            source_short='nasa_earthdata_opendap',
+            url='https://urs.earthdata.nasa.gov',
+            license='public domain',
+            citation='Didan et al.',
             native_crs_in=native_crs_in,
             native_crs_out=native_crs_out,
+            native_resolution=native_resolution,
             native_start=native_start,
             native_end=native_end,
             valid_variables=list(_PRODUCTS.keys()),
             default_variables=list(_PRODUCTS.keys()),
+            is_temporal=True,
         )
+        super().__init__(attrs)
         self.force_download = force_download
         self._session = None   # earthaccess HTTPS session, set on first use
 
@@ -391,7 +392,7 @@ class ManagerMODISEarthdata(manager_dataset.ManagerDataset):
         """
         start_year = request.start.year
         end_year = request.end.year
-        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        snapped_bounds = snapBounds(request.geometry.bounds, self.native_resolution)
 
         for var in request.variables:
             target = os.path.join(request._download_path, f'{var}.nc')
@@ -400,6 +401,11 @@ class ManagerMODISEarthdata(manager_dataset.ManagerDataset):
                 continue
             self._downloadVar(var, snapped_bounds, start_year, end_year, target)
 
+
+    _NODATA = {
+        'LULC': -1,
+    }
+            
     def _loadDataset(
         self,
         request: manager_dataset.ManagerDataset.Request,
@@ -814,23 +820,37 @@ class ManagerMODISEarthdata(manager_dataset.ManagerDataset):
             for d in dates
         ]
 
-        data_stack = np.stack(time_slices, axis=0).astype(product_info['dtype'])
+        data_stack = np.stack(time_slices, axis=0)
+        # Replace NaN with the nodata sentinel before casting to the target
+        # dtype — astype() silently converts NaN to 0, which is a valid
+        # LULC class.
+        if np.issubdtype(product_info['dtype'], np.integer):
+            nodata = -1
+            data_stack = np.where(np.isnan(data_stack), nodata, data_stack)
+        else:
+            nodata = np.nan
+        data_stack = data_stack.astype(product_info['dtype'])
+
+        var_attrs = {
+            'long_name': product_info['long_name'],
+            'units': product_info['units'],
+            'scale_factor_applied': 1,
+        }
+        if var in self._NODATA:
+            var_attrs['nodata'] = self._NODATA[var]
 
         da = xr.DataArray(
             data_stack,
             dims=['time', 'y', 'x'],
             coords={'time': time_coords, 'y': ys, 'x': xs},
-            attrs={
-                'long_name': product_info['long_name'],
-                'units': product_info['units'],
-                'scale_factor_applied': 1,
-            },
+            attrs=var_attrs,
         )
+
         ds = xr.Dataset({var: da})
         ds = ds.rio.write_crs(self.native_crs_out)
         ds.attrs['source'] = self.source
         ds.attrs['variable'] = var
 
         os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        logging.info(f'    Writing {var} to: {cache_path}')
         ds.to_netcdf(cache_path)
-        logging.info(f'    Written to: {cache_path}')

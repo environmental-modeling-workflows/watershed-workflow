@@ -17,20 +17,12 @@ import watershed_workflow.utils.data
 
 from . import utils as source_utils
 from . import manager_dataset
+from .manager import ManagerAttributes
 from .manager_dataset_cached import cached_dataset_manager
-from .cache_info import CacheInfo, _snapBounds
+from .cache_info import snapBounds
 
 
-_CACHE_INFO = CacheInfo(
-    category='meteorology',
-    subcategory='daymet',
-    name='daymet',
-    snap_resolution=1000.0,
-    is_temporal=True,
-)
-
-
-@cached_dataset_manager(_CACHE_INFO)
+@cached_dataset_manager
 class ManagerDaymet(manager_dataset.ManagerDataset):
     """Daymet meterological datasets.
 
@@ -77,23 +69,32 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
         native_resolution = 1000.0  # 1km in meters
         native_start = cftime.datetime(1980, 1, 1, calendar='noleap')
         native_end = cftime.datetime(2023, 12, 31, calendar='noleap')
-        native_crs_daymet = CRS.from_proj4(
+        native_crs_daymet = watershed_workflow.crs.from_string(
             '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
         )
         valid_variables = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
         default_variables = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
 
-        super().__init__(
-            name='DayMet 1km',
-            source='ORNL DAAC THREDDS API',
-            native_resolution=native_resolution,
+        attrs = ManagerAttributes(
+            category='meteorology',
+            product='DayMet 1km',
+            source='ORNL DAAC THREDDS',
+            description='Daily surface weather data on a 1-km grid for North America.',
+            product_short='daymet',
+            source_short='ornl_daac_thredds',
+            url='https://daymet.ornl.gov',
+            license='public domain',
+            citation='Thornton et al. 2022',
             native_crs_in=CRS.from_epsg(4326),
             native_crs_out=native_crs_daymet,
+            native_resolution=native_resolution,
             native_start=native_start,
             native_end=native_end,
             valid_variables=valid_variables,
             default_variables=default_variables,
+            is_temporal=True,
         )
+        super().__init__(attrs)
 
     def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
         """Return True if all per-variable, per-year files exist in the cache directory.
@@ -140,7 +141,7 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
         end_year = (request.end - datetime.timedelta(days=1)).year
 
         # Snap bounds in WGS84 degrees for use in the THREDDS URL parameters.
-        snapped_bounds = _snapBounds(request.geometry.bounds, _CACHE_INFO.snap_resolution)
+        snapped_bounds = snapBounds(request.geometry.bounds, self.native_resolution)
 
         for var in request.variables:
             for year in range(start_year, end_year + 1):

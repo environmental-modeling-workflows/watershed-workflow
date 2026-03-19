@@ -19,8 +19,7 @@ def soilgrids_us():
 
 def test_constructor(soilgrids):
     """Test basic constructor and properties."""
-    assert soilgrids.name == 'SoilGrids2017'
-    assert soilgrids.source == manager_soilgrids.ManagerSoilGrids2017.URL
+    assert soilgrids.product_short == 'SoilGrids2017'
     assert soilgrids.native_crs_in == watershed_workflow.crs.from_epsg(4326)
     assert soilgrids.native_crs_out == watershed_workflow.crs.from_epsg(4326)
     assert soilgrids.native_start is None
@@ -30,8 +29,7 @@ def test_constructor(soilgrids):
 
 def test_constructor_us_variant(soilgrids_us):
     """Test US variant constructor."""
-    assert soilgrids_us.name == 'SoilGrids2017_US'
-    assert soilgrids_us.source == manager_soilgrids.ManagerSoilGrids2017.URL
+    assert soilgrids_us.product_short == 'SoilGrids2017_US'
     assert soilgrids_us.default_variables == ['BDTICM']
 
 

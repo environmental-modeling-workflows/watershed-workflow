@@ -6,10 +6,11 @@ import xarray as xr
 import rioxarray
 
 import watershed_workflow.crs
-import watershed_workflow.utils.config
 
 from . import utils as source_utils
 from . import manager_dataset
+from . import cache_info
+from .manager import ManagerAttributes
 
 
 #: Layered variables — each has 7 depth layers (sl1–sl7).
@@ -138,23 +139,29 @@ class ManagerSoilGrids2017(manager_dataset.ManagerDataset):
         valid_variables.extend(SINGLE_VARIABLES.keys())
 
         if variant == 'US':
-            self._name = 'SoilGrids2017_US'
+            product_short = 'SoilGrids2017_US'
             self._file_suffix = '250m_ll_us.tif'
         else:
-            self._name = 'SoilGrids2017'
+            product_short = 'SoilGrids2017'
             self._file_suffix = '250m_ll.tif'
 
-        super().__init__(
-            name=self._name,
-            source=self.URL,
-            native_resolution=250.0 / 111320.0,
+        attrs = ManagerAttributes(
+            category='soil_structure',
+            product='SoilGrids 2017',
+            source='ISRIC HTTPS',
+            description='SoilGrids 250m (2017) global gridded soil information.',
+            product_short=product_short,
+            source_short='isric_https',
+            url='https://www.isric.org/explore/soilgrids/faq-soilgrids-2017',
+            license='CC BY 4.0',
+            citation='Hengl et al. 2017',
             native_crs_in=watershed_workflow.crs.from_epsg(4326),
             native_crs_out=watershed_workflow.crs.from_epsg(4326),
-            native_start=None,
-            native_end=None,
+            native_resolution=250.0 / 111320.0,
             valid_variables=valid_variables,
             default_variables=['BDTICM'],
         )
+        super().__init__(attrs)
 
     def getDataset(self, geometry, geometry_crs, start=None, end=None,
                    variables=None, out_crs=None, temporal_resampling=None):
@@ -227,8 +234,7 @@ class ManagerSoilGrids2017(manager_dataset.ManagerDataset):
         return True
 
     def _folder(self):
-        data_dir = watershed_workflow.utils.config.rcParams['DEFAULT']['data_directory']
-        return os.path.join(data_dir, 'soil_structure', self._name)
+        return cache_info.cacheFolder(self.attrs)
 
     def _filename(self, base_var, layer):
         soillevel = '' if layer is None else f'sl{layer}_'
