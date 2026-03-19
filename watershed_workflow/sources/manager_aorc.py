@@ -98,7 +98,8 @@ class ManagerAORC(manager_dataset.ManagerDataset):
 
     def __init__(self):
         native_start = cftime.datetime(1980, 1, 1, calendar='standard')
-        native_end = cftime.datetime(2024, 12, 31, calendar='standard')
+        _today = datetime.date.today()
+        native_end = cftime.datetime(_today.year, _today.month, _today.day, calendar='standard')
         native_crs = CRS.from_epsg(4326)
         native_resolution = 0.00833333  # 30 arc-second resolution
 
