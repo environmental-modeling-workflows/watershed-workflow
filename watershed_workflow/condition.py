@@ -246,7 +246,7 @@ def singlePitDepth(p):
 def plotPitFilling(m2: Mesh2D,
                    old_pits : List[Tuple[int, str, float, float]],
                    new_pits : List[Tuple[int, str, float, float]],
-                   old_z_verts: np.ndarray,
+                   old_verts: np.ndarray,
                    method_name: str,
                    ax : Optional[Any] = None,
                    metrics: Optional[Dict] = None,
@@ -272,8 +272,8 @@ def plotPitFilling(m2: Mesh2D,
         List of pits before filling
     new_pits : List[Tuple[int, str, float, float]]
         List of pits after filling
-    old_z_verts : np.ndarray
-        Copy of original vertex elevations before modification
+    old_verts : np.ndarray
+        Copy of original vertex before modification
     method_name : str
         Name of the algorithm (for title)
     ax : array of matplotlib axes, optional
@@ -326,13 +326,14 @@ def plotPitFilling(m2: Mesh2D,
             new_pit_depths_dense[p[0]] = _metricPitDepth(p)
 
     # Extract vertex elevations
+    old_z_verts = old_verts[:, 2]
     new_z_verts = m2.coords[:, 2]
     dz_verts = new_z_verts - old_z_verts
 
     # Extract cell centroid elevations
     old_z_cells = np.array([
-        watershed_workflow.utils.computeCentroid([old_z_verts[v] for v in m2.conn[c]])
-        for c in range(m2.num_cells)])
+        watershed_workflow.utils.computeCentroid([old_verts[v] for v in m2.conn[c]])
+        for c in range(m2.num_cells)])[:, 2]
     new_centroids = m2.centroids
     new_z_cells = new_centroids[:, 2]
     dz_cells = new_z_cells - old_z_cells
@@ -1456,7 +1457,7 @@ def fillPits(m2: Mesh2D,
 
     # Store state before running the first algorithm
     pits_initial = _findPits(m2, *args_cells)
-    elevs_initial = m2.coords[:,2].copy()
+    coords_initial = m2.coords.copy()
 
     logging.info("")
     logging.info(f"Running {method_name}: {len(pits_initial)} initial pits")
@@ -1474,7 +1475,7 @@ def fillPits(m2: Mesh2D,
     m2.clearGeometryCache()
 
     # Compute elevation change statistics
-    elev_stats = computeChangeStatistics(elevs_initial, m2.coords[:,2], metric='all')
+    elev_stats = computeChangeStatistics(coords_initial[:,2], m2.coords[:,2], metric='all')
 
     # Store results
     result = {
@@ -1508,7 +1509,7 @@ def fillPits(m2: Mesh2D,
             }
         plot_metrics.update(elev_stats)
         output, fig, ax, scaler = plotPitFilling(m2, pits_initial, pits_final,
-                                         elevs_initial, method_name, metrics=plot_metrics)
+                                         coords_initial, method_name, metrics=plot_metrics)
         result['output'] = output
         result['fig'] = fig
         result['ax'] = ax
