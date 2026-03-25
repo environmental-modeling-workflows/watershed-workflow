@@ -1055,6 +1055,15 @@ if ELM_SOILCOLUMN:
 		surf_vars+=',ORGANIC'
 		surf_from_atsm2['ORGANIC'] = vardata['ocd']*0.1 #but not sure if 'ocd' in kgC or kgSOM ???
 	
+	# ELM LandUnit and PFT crosswalk from NLCD (already aligned with m2 mesh)
+	if 'land_cover'in m2.cell_data.keys():
+		nlcd_xr = m2.cell_data['land_cover']
+		surf_lupft = elm_mksrfdata.mksrfdata_lupft_fromNLCD(ncfin, nlcd_xr, 
+							natvegLUonly=True, defaultPFT=True, grid_aggregated=False)
+		for v_lupft in surf_lupft.keys():
+			surf_vars+=','+v_lupft
+			surf_from_atsm2[v_lupft] = surf_lupft[v_lupft]
+	
 	#
 	# write all in 'surf_vars' to surfdata.nc
 	print('usr-provided varables: ', surf_vars)
@@ -1062,10 +1071,11 @@ if ELM_SOILCOLUMN:
 						fsurfnc_out=output_filenames['elmsurfdata'], \
 						user_srf_data=surf_from_atsm2, \
 						user_srf_vars=surf_vars)
+	
 	# TODO - updating landuse_timeseries data 
 	
 
-
+if ELM_SOILCOLUMN:
     # visualizing ELM data, as needed
 	elmvar = 'TOPO'
 	if True:
