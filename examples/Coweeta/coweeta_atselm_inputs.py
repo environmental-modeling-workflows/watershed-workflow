@@ -62,6 +62,7 @@ import cftime, datetime
 pd.options.display.max_columns = None
 
 import shutil
+from rvt import vis as rvtvis
 
 #--- provide paths to relevant packages for mesh and input file generation 
 
@@ -371,7 +372,10 @@ m2 = m2.partition(8, True)
 dem = sources['DEM'].getDataset(watershed.exterior.buffer(100), watershed.crs)['dem']
 if os.path.exists('./dem_raw.tif'):
 	os.makedirs(os.path.join(data_dir, 'topography'), exist_ok=True)
-	shutil.move('./dem_raw.tif', os.path.join(data_dir, 'topography'))
+	if os.path.exists(os.path.join(data_dir, 'topography')+'/dem_raw.tif'): 
+		os.system('rm -f '+os.path.join(data_dir, 'topography')+'/dem_raw.tif')		
+	shutil.move('./dem_raw.tif', os.path.join(data_dir, 'topography'),)
+	
 
 #--- provide surface mesh elevations
 watershed_workflow.elevate(m2, dem)
@@ -907,23 +911,34 @@ if ELM_SOILCOLUMN:
 	
 	# from ATS
 	surf_vars+='TOPO'
-	surf_from_atsm2['TOPO'] = m2.centroids[:,2]  # elevation
+	surf_from_atsm2['TOPO'] = m2.centroids[:,2]  # elevation already alligned with m2
 
 	topo_raster = os.path.join(data_dir,'topography','basin_slope.tif')
 	if os.path.exists(topo_raster):
 		topo = watershed_workflow.sources.ManagerRaster(topo_raster). \
 				getDataset(watershed.exterior.buffer(10), watershed.crs)['band_1']
-		m2.cell_data['SLOPE'] = watershed_workflow.getDatasetOnMesh(m2, topo, method='linear')
-		surf_vars+=',SLOPE'
-		surf_from_atsm2['SLOPE'] = m2.cell_data['SLOPE'].to_numpy()
-		
+	else:
+		#'rvtvis' tools to cal. slope/aspect raw DEM (not yet alligned with m2)
+		slp = rvtvis.slope_aspect(dem, output_units="degree")['slope']
+		topo = dem.copy(deep=True)        # make a deep copy of geopanda xr so that have coords as dem
+		topo.data = slp	                  # data re-assign 	
+	m2.cell_data['SLOPE'] = watershed_workflow.getDatasetOnMesh(m2, topo, method='linear')
+	surf_vars+=',SLOPE'
+	surf_from_atsm2['SLOPE'] = m2.cell_data['SLOPE'].to_numpy()		
 
 	topo_raster = os.path.join(data_dir,'topography','basin_aspect.tif')
 	if os.path.exists(topo_raster):
 		topo = watershed_workflow.sources.ManagerRaster(topo_raster). \
 				getDataset(watershed.exterior.buffer(10), watershed.crs)['band_1']
-		m2.cell_data['ASPECT'] = watershed_workflow.getDatasetOnMesh(m2, topo, method='linear')	
-	
+	else:
+		#'rvtvis' tools to cal. slope/aspect from raw DEM (not yet alligned with m2)
+		asp = rvtvis.slope_aspect(dem, output_units="degree")['aspect']
+		topo = dem.copy(deep=True)
+		topo.data = asp		
+	m2.cell_data['ASPECT'] = watershed_workflow.getDatasetOnMesh(m2, topo, method='linear')
+	surf_vars+=',ASPECT'
+	surf_from_atsm2['ASPECT'] = m2.cell_data['ASPECT'].to_numpy()		
+		
 	if 'SLOPE' in m2.cell_data.keys() and 'ASPECT' in m2.cell_data.keys():
 		surf_vars+=',SINSL_SINAS' #sin(SLOPE)*sin(ASPECT) 
 		surf_from_atsm2['SINSL_SINAS'] = np.sin(m2.cell_data['SLOPE'].to_numpy())* \
@@ -937,9 +952,16 @@ if ELM_SOILCOLUMN:
 	if os.path.exists(topo_raster):
 		topo = watershed_workflow.sources.ManagerRaster(topo_raster). \
 				getDataset(watershed.exterior.buffer(10), watershed.crs)['band_1']
-		m2.cell_data['SKY_VIEW'] = watershed_workflow.getDatasetOnMesh(m2, topo, method='linear')
-		surf_vars+=',SKY_VIEW'
-		surf_from_atsm2['SKY_VIEW'] = m2.cell_data['SKY_VIEW'].to_numpy()
+	else:
+		#'rvtvis' tools to cal. skyview factor from raw DEM (not yet alligned with m2)
+		resx = np.nanmean(np.diff(dem.coords['x']))
+		resy = np.nanmean(np.diff(dem.coords['y']))
+		svf = rvtvis.sky_view_factor(dem, resolution=min(abs(resx),abs(resy)))['svf']
+		topo = dem.copy(deep=True)
+		topo.data = svf
+	m2.cell_data['SKY_VIEW'] = watershed_workflow.getDatasetOnMesh(m2, topo, method='linear')
+	surf_vars+=',SKY_VIEW'
+	surf_from_atsm2['SKY_VIEW'] = m2.cell_data['SKY_VIEW'].to_numpy()
 
 	#
 	#TERRAIN_CONFIG: may be estimated, according to Lee et al. (2011) (Eq. (4)), as following: 
