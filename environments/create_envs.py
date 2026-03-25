@@ -9,6 +9,7 @@ PACKAGES_BASE=['python<3.13',           # limited for cert issues in docker cont
                'xarray',
                'dask',
                'rioxarray',
+               'rvt_py',                # conda installed RVT (PyPy, rvt-py)
                'requests',
                'sortedcontainers',
                'attrs',
@@ -77,6 +78,7 @@ PACKAGES_TOOLS=['cmake',
 
 # channels needed to find these packages
 CHANNELS=['conda-forge',
+          'rvtpy',         # for rvt_py package
           ]
 
 PACKAGE_MANAGER = 'conda'
