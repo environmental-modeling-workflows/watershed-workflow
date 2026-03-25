@@ -9,6 +9,284 @@ import xarray as xr
 import rasterio
 from rasterio.transform import Affine
 
+# default PFT classes by ELM
+natural_pfts={'pftname':[
+                    "not_vegetated                           ",
+                    "needleleaf_evergreen_temperate_tree     ",
+                    "needleleaf_evergreen_boreal_tree        ",
+                    "needleleaf_deciduous_boreal_tree        ",
+                    "broadleaf_evergreen_tropical_tree       ",
+                    "broadleaf_evergreen_temperate_tree      ",
+                    "broadleaf_deciduous_tropical_tree       ",
+                    "broadleaf_deciduous_temperate_tree      ",
+                    "broadleaf_deciduous_boreal_tree         ",
+                    "broadleaf_evergreen_shrub               ",
+                    "broadleaf_deciduous_temperate_shrub     ",
+                    "broadleaf_deciduous_boreal_shrub        ",
+                    "c3_arctic_grass                         ",
+                    "c3_non-arctic_grass                     ",
+                    "c4_grass                                ",
+                    "c3_crop                                 ",  # called generic crop, will drop off if create_crop_landunit = .true.
+                    "c3_irrigated                            "   # called generic crop, will drop off if create_crop_landunit = .true.
+                    ],
+             'pftnum': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+            };
+    
+# the cfts when 'create_crop_landunit' is on in ELM option,
+# and surfdata includes two dims of natpft, 0-14, and cft, 15-16/24/50.
+cfts       ={'pftname':[
+                    "c3_crop                                 ",  # called generic crop
+                    "c3_irrigated                            "   # called generic crop
+                    "corn                                    ",
+                    "irrigated_corn                          ",
+                    "spring_temperate_cereal                 ",
+                    "irrigated_spring_temperate_cereal       ",
+                    "winter_temperate_cereal                 ",
+                    "irrigated_winter_temperate_cereal       ",
+                    "soybean                                 ",
+                    "irrigated_soybean                       "
+                    ],
+             'pftnum': [15,16,17,18,19,20,21,22,23,24]
+            };
+
+
+fates_pfts ={'pftname':[
+                    "broadleaf_evergreen_tropical_tree",
+                    "needleleaf_evergreen_extratrop_tree",
+                    "needleleaf_colddecid_extratrop_tree",
+                    "broadleaf_evergreen_extratrop_tree",
+                    "broadleaf_hydrodecid_tropical_tree",
+                    "broadleaf_colddecid_extratrop_tree",
+                    "broadleaf_evergreen_extratrop_shrub",
+                    "broadleaf_hydrodecid_extratrop_shrub",
+                    "broadleaf_colddecid_extratrop_shrub",
+                    "broadleaf_evergreen_arctic_shrub",
+                    "broadleaf_colddecid_arctic_shrub",
+                    "arctic_c3_grass",
+                    "cool_c3_grass",
+                    "c4_grass"
+                    ],
+             'pftnum': [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+            };
+
+# NLCD LC indices and names
+nlcd_lc = {
+    11: ('Open Water'),
+    12: ('Perrenial Ice/Snow'),
+    21: ('Developed, Open Space'),
+    22: ('Developed, Low Intensity'),
+    23: ('Developed, Medium Intensity'),
+    24: ('Developed, High Intensity',),
+    31: ('Barren Land'),
+    41: ('Deciduous Forest'),
+    42: ('Evergreen Forest'),
+    43: ('Mixed Forest'),
+    51: ('Dwarf Scrub'),
+    52: ('Shrub/Scrub'),
+    71: ('Grassland/Herbaceous'),
+    72: ('Sedge/Herbaceous'),
+    73: ('Lichens'),
+    74: ('Moss'),
+    81: ('Pasture/Hay'),
+    82: ('Cultivated Crops'),
+    90: ('Woody Wetlands'),
+    95: ('Emergent Herbaceous Wetlands'),
+}
+    
+#--- # land cover type of nlcd <==> ELM default PFTs and landunits
+def mksrfdata_lupft_fromNLCD(fsurfnc_in, nlcd_xr, natvegLUonly=False, 
+                             defaultPFT=True, grid_aggregated=False):
+    
+    '''
+        fsurfnc_in - a standard ELM surfdata file, matching with nlcd data spatial extent and resolution
+        nlcd_xf    - xarray of nlcd data
+        natvegLUonly    - (optional) assign all nlcd data as so-called naturally-vegetated land unit
+        defaultPFT      - (optional) standard ELM PFTs of 17 types. User-provided PFTs not yet (TODO)
+        grid_aggregated - (optional) in case, resolution and spatial extent are different. (TODO)
+        
+    '''
+    
+    # Rooting profiles of nlcd -> pft from WW's default 
+    # 41: Deciduous Forest → BDT Temperate
+    # 42: Evergreen Forest → NET Temperate
+    # 43: Mixed Forest → NET Temperate (per your instruction)
+    # 51: Dwarf Scrub → BDS Boreal
+    # 52: Shrub/Scrub → BDS Temperate
+    # 82: Cultivated Crops → Crop (all crop PFTs share same values)
+    # 90: Woody Wetlands → BDT Temperate
+
+    # stomatal max. resis -> pft from WW's default 
+    # 21: Developed Open Space → C3 grass
+    # 22: Developed Low Intensity → C3 grass
+    # 41: Deciduous Forest → BDT Temperate
+    # 42: Evergreen Forest → NET Temperate
+    # 43: Mixed Forest → NET Temperate
+    # 51: Dwarf Scrub → BDS Boreal
+    # 52: Shrub/Scrub → BDS Temperate
+    # 71: Grassland/Herbaceous → C3/C4 grass
+    # 81: Pasture/Hay → C3 grass
+    # 82: Crops → Crop PFT
+    # 90: Woody Wetlands → BDT Temperate
+    # 95: Herbaceous Wetlands → C3 grass
+    # rest: Barren/impervious NLCD types
+    
+    '''
+    ELM's LandUnit: 
+      ! --------------------------------------------------------
+      !   1  => (istsoil)    soil (vegetated or bare soil landunit) --> PCT_NATVEG,  PCT_NAT_PFT(17 or 15)
+      !   2  => (istcrop)    crop (only for crop configuration)     --> PCT_CROP,    PCT_CFT(0 or 2+)
+      !   3  => (istice)     land ice                               --> PCT_GLACIER
+      !   4  => (istice_mec) land ice (multiple elevation classes)  
+      !   5  => (istdlak)    deep lake                              --> PCT_LAKE
+      !   6  => (istwet)     wetland                                --> PCT_WETLAND                     
+      !   7  => (isturb_tbd) urban tbd                              --> PCT_URBAN(3)  
+      !   8  => (isturb_hd)  urban hd
+      !   9  => (isturb_md)  urban md
+      !
+      
+    '''
+    
+    # assuming input 'fsrfnc_in' includes climatezone info implicitly in PCT_NAT_PFT
+    with Dataset(fsurfnc_in,'r') as src:
+        pct_nat_pft0 = src.variables['PCT_NAT_PFT'][...]
+        if defaultPFT:
+            # 17 default PFTs, classified into 5 likely distributed climate zones:
+            #  0 = any zone, 1 = tropical, 2 = temperate, 3 = boreal, 4 = arctic
+            # NOTE: this is NOT geographical concept rather geo-climate-veg-terrain complex
+            trop =                  pct_nat_pft0[4,]+pct_nat_pft0[6,]
+            tmpr = pct_nat_pft0[1,]+pct_nat_pft0[5,]+pct_nat_pft0[7,]+pct_nat_pft0[10,]
+            borl = pct_nat_pft0[2,]+pct_nat_pft0[3,]+pct_nat_pft0[8,]+pct_nat_pft0[11,]
+            tndr = pct_nat_pft0[12,]
+            # likely the 5 geo-climate-veg zones have overlaps.
+            cz_arr=np.zeros(np.append(5,pct_nat_pft0.shape[1:]))
+            cz_arr[0,] = cz_arr[0,]+0.01 # 0.01 would allow all zone indices, which all 4 above summed to near zero
+            cz_arr[1,] = trop
+            cz_arr[2,] = tmpr
+            cz_arr[3,] = borl
+            cz_arr[4,] = tndr
+            # Currently assumping each grid cell only has one single NLCD lclu-type
+            # so, the max. fraction of domainate zone would be used
+            climatezone = np.argmax(cz_arr,axis=0)
+    
+    #
+    srf_lu_pft = {}
+    if not grid_aggregated:
+        # single land unit and PFT for exactly surface grids as in nlcd_xr
+        srf_lu_pft['PCT_NATVEG']  = np.zeros(pct_nat_pft0.shape[1:], dtype=float)
+        srf_lu_pft['PCT_CROP']    = np.zeros(pct_nat_pft0.shape[1:], dtype=float)
+        srf_lu_pft['PCT_GLACIER'] = np.zeros(pct_nat_pft0.shape[1:], dtype=float)
+        srf_lu_pft['PCT_LAKE']    = np.zeros(pct_nat_pft0.shape[1:], dtype=float)
+        srf_lu_pft['PCT_WETLAND'] = np.zeros(pct_nat_pft0.shape[1:], dtype=float)
+        srf_lu_pft['PCT_URBAN']   = np.zeros(np.append(3, pct_nat_pft0.shape[1:]), dtype=float)
+        srf_lu_pft['PCT_NAT_PFT'] = np.zeros(pct_nat_pft0.shape, dtype=float)
+
+        for lcidx, lcname in nlcd_lc.items():
+            lc_xy = (nlcd_xr==lcidx)
+            if not any(lc_xy): continue  #skip
+            
+            if lcidx == 11: # Open Water  - LAKE
+                if natvegLUonly: 
+                    srf_lu_pft['PCT_NATVEG'][lc_xy] = 100.0
+                else:
+                    srf_lu_pft['PCT_LAKE'][lc_xy]   = 100.0
+                srf_lu_pft['PCT_NAT_PFT'][0][lc_xy] = 100.0   # not_vegetaged, not used in ELM but just in case
+            elif lcidx == 12: # Perrenial ICE/SNOW - GLACIER (land ice)?
+                if natvegLUonly: 
+                    srf_lu_pft['PCT_NATVEG'][lc_xy] = 100.0
+                else:
+                    srf_lu_pft['PCT_GLACIER'][lc_xy]= 100.0
+                srf_lu_pft['PCT_NAT_PFT'][0][lc_xy] = 100.0   # not_vegetaged
+            
+            elif lcidx == 82: # crop
+                if natvegLUonly: 
+                    srf_lu_pft['PCT_NATVEG'][lc_xy] = 100.0
+                else:
+                    srf_lu_pft['PCT_CROP'][lc_xy]   = 100.0
+                srf_lu_pft['PCT_NAT_PFT'][15][lc_xy]= 100.0  # in c3 crop, non-irrigated 
+            
+            #wetland ? (TODO - currently assigned to NATVEG)
+            
+            else: # naturally-vegetaged or barren land
+                srf_lu_pft['PCT_NATVEG'][lc_xy] = 100.0
+                
+                #barrens
+                if lcidx == 31: 
+                    srf_lu_pft['PCT_NAT_PFT'][0][lc_xy] = 100.0
+                
+                #graminoids  
+                elif lcidx == 21 or lcidx == 22 \
+                    or lcidx == 71 or lcidx == 72 or lcidx == 73 or lcidx == 74 \
+                    or lcidx ==81 or lcidx == 95: 
+                    # all above - C3 grass
+                    tndr_xy = (tndr>1.0)
+                    srf_lu_pft['PCT_NAT_PFT'][12][(lc_xy & tndr_xy)] = 100.0
+                    srf_lu_pft['PCT_NAT_PFT'][13][(lc_xy & ~tndr_xy)] = 100.0
+                
+                # trees
+                elif lcidx == 41 or lcidx == 90:
+                    # to broadleaf deciduous trees (BDT)
+                    trop_xy = (climatezone==1)
+                    tmpr_xy = (climatezone==2)
+                    borl_xy = (climatezone==3)
+                    srf_lu_pft['PCT_NAT_PFT'][6][(lc_xy & trop_xy)] = 100.0
+                    srf_lu_pft['PCT_NAT_PFT'][7][(lc_xy & tmpr_xy)] = 100.0
+                    srf_lu_pft['PCT_NAT_PFT'][8][(lc_xy & borl_xy)] = 100.0
+                    # maybe none in climatezone 
+                    if not any(trop_xy) and not any(tmpr_xy) and not any(borl_xy):
+                        srf_lu_pft['PCT_NAT_PFT'][7][lc_xy] = 100.0 # assign to BDT temperate                    
+                elif lcidx == 42:
+                    # to needleleaf evergreen trees (NET)
+                    tmpr_xy = (climatezone==2)
+                    borl_xy = (climatezone==3)
+                    srf_lu_pft['PCT_NAT_PFT'][1][(lc_xy & tmpr_xy)] = 100.0
+                    srf_lu_pft['PCT_NAT_PFT'][2][(lc_xy & borl_xy)] = 100.0
+                    # maybe none in climatezone 
+                    if not any(tmpr_xy) and not any(borl_xy):
+                        srf_lu_pft['PCT_NAT_PFT'][1][lc_xy] = 100.0 # assign all to NET temperate
+                elif lcidx == 43:
+                    # to either needleleaf deciduous or broadleaf evergreen trees
+                    trop_xy = (climatezone==1)
+                    tmpr_xy = (climatezone==2)
+                    borl_xy = (climatezone==3)
+                    srf_lu_pft['PCT_NAT_PFT'][3][(lc_xy & borl_xy)] = 100.0 # needleleaf deciduous boreal 
+                    srf_lu_pft['PCT_NAT_PFT'][4][(lc_xy & trop_xy)] = 100.0 # broadleaf evergreen tropical
+                    srf_lu_pft['PCT_NAT_PFT'][5][(lc_xy & tmpr_xy)] = 100.0 # broadleaf evergreen temperate
+                    # maybe none in climatezone 
+                    if not any(tmpr_xy) and not any(borl_xy):
+                        srf_lu_pft['PCT_NAT_PFT'][5][lc_xy] = 100.0         # assign all to broadleaf evergreen temperate
+                    
+                #shrubs
+                elif lcidx == 51 or lcidx == 52:
+                    # to broadleaf deciduous boreal shrub 
+                    tmpr_xy = (climatezone==2)
+                    borl_xy = (climatezone==3)
+                    srf_lu_pft['PCT_NAT_PFT'][10][(lc_xy & tmpr_xy)] = 100.0
+                    srf_lu_pft['PCT_NAT_PFT'][11][(lc_xy & borl_xy)] = 100.0
+                    # maybe none in climatezone 
+                    if not any(tmpr_xy) and not any(borl_xy):
+                        srf_lu_pft['PCT_NAT_PFT'][9][lc_xy] = 100.0 # assign all to broadleaf evergreen shrub
+                 
+                # whatever missed (just in case)
+                else:
+                    srf_lu_pft['PCT_NAT_PFT'][0][lc_xy] = 100.0
+        #
+    else:
+        print('TODO!')
+    #
+       
+    # 100% checking
+    lu_sum100 = srf_lu_pft['PCT_NATVEG']+srf_lu_pft['PCT_CROP']+ \
+            srf_lu_pft['PCT_LAKE']+srf_lu_pft['PCT_WETLAND']+ \
+            srf_lu_pft['PCT_GLACIER']+np.sum(srf_lu_pft['PCT_URBAN'],axis=0)
+
+    pft_sum100 = np.sum(srf_lu_pft['PCT_NAT_PFT'],axis=0)
+    if any(abs(pft_sum100-100.0)>1.0e-8):
+        print('Error: grid summed Land Units not 100%:', np.where(abs(pft_sum100-100.0)>1.0e-8))
+        exit(-1)
+    
+    return srf_lu_pft
+    
+
 #--- # downloading a boxed SoilGrid data (v2.0.1)
 # 
 # Poggio, L., de Sousa, L. M., Batjes, N. H., Heuvelink, G. B. M., Kempen, B., Ribeiro, E., and Rossiter, D.: 
@@ -140,44 +418,14 @@ def mksrfdata_soilcolumn_interp(srf_soildata=np.empty((0)), srf_soilnode=np.empt
 #--- # 
 # 
 def mksrfdata_updatevals(fsurfnc_in, fsurfnc_out=None, \
-                         user_srf_data={}, user_srfnc_file=None, user_srf_vars=None, OriginPFTclass=True):
+                         user_srf_data={}, user_srfnc_file=None, user_srf_vars=None):
     
     print('#--------------------------------------------------#')
     print("Replacing values in surface data by merging user-provided dataset")
     if fsurfnc_out==None: fsurfnc_out ='./'+fsurfnc_in.split('/')[-1]+'-merged'
     
-    
-    #---------------------------------------------------------------------------------------
-    #
-    # Arctic PFT classes in B. Sulman et al (2021) paper: 12 arctic PFTs + 2 additional tree PFTs   
-    user_pfts={'pftname':[
-                    "non_vegetated",
-                    "arctic_lichen",
-                    "arctic_bryophyte",
-                    "arctic_needleleaf_tree",
-                    "arctic_broadleaf_tree",
-                    "arctic_evergreen_shrub",
-                    "arctic_evergreen_tall_shrub",
-                    "arctic_deciduous_dwarf_shrub",
-                    "arctic_deciduous_low_shrub",
-                    "arctic_low_to_tall_willowbirch_shrub",
-                    "arctic_low_to_tall_alder_shrub",
-                    "arctic_forb",
-                    "arctic_dry_graminoid",
-                    "arctic_wet_graminoid"
-                    ],
-                'pftnum': [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
-               };
-    
-    
-    if OriginPFTclass:
-        # lichen as not_vegetated (0), moss/forb/graminoids as c3 arctic grass (12),
-        # evergreen shrub(9), deci. boreal_shrub(11),
-        # evergreen boreal tree(2), deci boreal tree (3)
-        user_pfts['pftnum'] = [0,0,12,2,3,9,9,11,11,11,11,12,12,12]
-        natpft = np.asarray(range(17))
-    else:
-        natpft = np.asarray(range(max(user_pfts['pftnum'])+1)) # this is the real arcticpft order number 
+       
+    natpft = np.asarray(range(max(natural_pfts['pftnum'])+1))
  
     #---------------------------------------------------------------------------------------
 
@@ -187,8 +435,14 @@ def mksrfdata_updatevals(fsurfnc_in, fsurfnc_out=None, \
         f=Dataset(user_srfnc_file)
         if 'gridcell' in f.dimensions.items(): UNSTRUCTURED = True
         
+        # in case natpft is different in user_srfnc_file than in fsurfnc_in
+        if 'natpft' in f.dimensions.items(): 
+            natpft = np.asarray(range(f.dimensions['natpft'].size))
+        
         user_srf = {}
         user_srf['LATIXY'] = f.variables['LATIXY']
+        user_srf['LONGXY'] = f.variables['LONGXY']
+        user_srf['AREA'] = f.variables['AREA']
         
         if user_srf_vars==None:
             user_vname = user_srf_vars.keys()
@@ -200,10 +454,16 @@ def mksrfdata_updatevals(fsurfnc_in, fsurfnc_out=None, \
         if len(np.squeeze(user_srf_data['LATIXY']).shape)==1:
             UNSTRUCTURED = True            
         if user_srf_vars==None:
-            user_vname = user_srf_vars.keys()
+            user_vname = user_srf_data.keys()
         else:
             user_vname = user_srf_vars.split(',')
         user_srf = user_srf_data
+
+        # in case natpft is different in user_srf_data (list)
+        if 'PCT_NAT_PFT' in user_srf_data.keys():
+            # PCT_NAT_PFT in srf_data either in (natpft, gridcell) or (natpft, lsmlat, lsmlon)
+            shp = user_srf_data['PCT_NAT_PFT'].shape
+            natpft = np.asarray(range(shp[0]))
         
     #---------------------------------------------------------------------------------------
     #                    
@@ -213,7 +473,7 @@ def mksrfdata_updatevals(fsurfnc_in, fsurfnc_out=None, \
         # new surfdata dimensions
         for dname, dimension in src.dimensions.items():
             if dname == 'natpft':
-                len_dimension = len(natpft)            # dim length from new data
+                len_dimension = len(natpft)            # dim length from new data or original
             elif dname == 'gridcell':
                 len_dimension = user_srf['LATIXY'].flatten().size
             elif dname in ['lsmlat','lat']:
@@ -270,12 +530,14 @@ def test(surf_from_atsm2={}, surf_vars=''):
     input_path  = './'
     output_path = './'
     
+    '''
     mksrfdata_updatevals(os.path.joint((input_path, \
                          'surfdata_2687x1pt_simyr1850_c240308_TOP-coweeta.nc')), \
                          user_srf_data=surf_from_atsm2, \
                          user_srf_vars=surf_vars)
+    '''
     
-      
+     
 #if __name__ == '__main__':
 #    test()
 
