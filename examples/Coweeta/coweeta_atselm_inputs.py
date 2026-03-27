@@ -1077,9 +1077,9 @@ if ELM_SOILCOLUMN:
 
 if ELM_SOILCOLUMN:
     # visualizing ELM data, as needed
-	elmvar = 'TOPO'
+	elmvar = 'PCT_NAT_PFT'
 	if True:
-		m2.cell_data[elmvar] = surf_from_atsm2[elmvar]
+		m2.cell_data[elmvar] = surf_from_atsm2[elmvar][5]
 
 		# simply plotting
 		elmvar_gons = m2.plot(facecolors=m2.cell_data[elmvar], cmap='RdBu', edgecolors=None)
