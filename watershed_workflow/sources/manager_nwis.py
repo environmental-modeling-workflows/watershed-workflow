@@ -231,7 +231,7 @@ class ManagerNWIS(manager_shapes.ManagerShapes):
             streamflow = streamflow.dropna(axis='columns', thresh=min_obs)
         kept_ids = pd.Index([col.replace('USGS-', '') for col in streamflow.columns])
         gages = df[df[names.ID].isin(kept_ids)].drop_duplicates(subset=names.ID).copy()
-        streamflow = streamflow[[f'USGS-{i}' for i in gages[names.ID]]]
+        streamflow = streamflow[[f'USGS-{i}' for i in gages[names.ID]]] * 0.0283168 # convert to m^3 / s
         return gages, streamflow
 
     def addCOMIDs(self, df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
