@@ -174,12 +174,12 @@ def _migrate_source(src: str) -> tuple[str, int]:
         ('readVTK(',                             'readMeshVTK('),
         ('writeVTK(',                            'writeMeshVTK('),
         # warp function renames (flat names -> camelCase verbs)
-        ('.warp.shplys(',                        '.warp.warpShplys('),
-        ('.warp.shply(',                         '.warp.warpShply('),
-        ('.warp.points(',                        '.warp.warpPoints('),
-        ('.warp.bounds(',                        '.warp.warpBounds('),
-        ('.warp.dataset(',                       '.warp.warpDataset('),
-        ('.warp.xy(',                            '.warp.warpXY('),
+        ('.utils.shplys(',                        '.utils.warpShplys('),
+        ('.utils.shply(',                         '.utils.warpShply('),
+        ('.utils.points(',                        '.utils.warpPoints('),
+        ('.utils.bounds(',                        '.utils.warpBounds('),
+        ('.utils.dataset(',                       '.utils.warpDataset('),
+        ('.utils.xy(',                            '.utils.warpXY('),
     ]:
         if old in new_src:
             count = new_src.count(old)

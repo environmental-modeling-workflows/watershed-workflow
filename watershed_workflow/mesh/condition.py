@@ -18,6 +18,7 @@ import watershed_workflow.utils.data
 
 __all__ = [
     'findPits',
+    'fillPits',
     'conditionMesh',
     'conditionRiverMeshes',
     'setProfileByDEM',
