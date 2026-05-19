@@ -498,13 +498,70 @@ class Mesh2D:
 
     @property
     @_cache
+    def normals(self):
+        """Area-weighted unit normal vector for each cell, shape (ncells, 3).
+
+        Requires 3D coordinates (coords.shape[1] == 3).  Each cell is
+        decomposed into a triangle fan from vertex 0; cross-product
+        normals are accumulated (naturally area-weighted) then normalized.
+        For a horizontal cell the result is (0, 0, 1).
+        """
+        assert self.coords.shape[1] == 3, \
+            "normals requires 3D coordinates (coords.shape[1] == 3)"
+        result = np.zeros((self.num_cells, 3))
+        for i, conn in enumerate(self.conn):
+            verts = self.coords[conn]
+            v0 = verts[0]
+            for j in range(1, len(conn) - 1):
+                result[i] += np.cross(verts[j] - v0, verts[j + 1] - v0)
+        norms = np.linalg.norm(result, axis=1, keepdims=True)
+        return result / norms
+
+    @property
+    @_cache
+    def slopes(self):
+        """Mean slope angle of each cell in degrees, shape (ncells,).
+
+        Requires 3D coordinates.  Derived from cell normals; 0 degrees
+        means horizontal.
+        """
+        n = self.normals
+        return np.degrees(np.arctan2(np.sqrt(n[:, 0]**2 + n[:, 1]**2), n[:, 2]))
+
+    @property
+    @_cache
+    def aspects(self):
+        """Mean aspect of each cell in degrees from north, clockwise, shape (ncells,).
+
+        Requires 3D coordinates.  Assumes +x=east, +y=north in the
+        projected CRS.  Range is [0, 360).
+        """
+        n = self.normals
+        return np.degrees(np.arctan2(n[:, 0], n[:, 1])) % 360.0
+
+    @property
+    @_cache
+    def cell_areas(self):
+        """Cell areas in square metres, shape (ncells,).
+
+        Computed from the 2D projected (x, y) coordinates, so the result
+        is in the same length units as coords (assumed metres).  For 3D
+        meshes the z component is ignored.
+        """
+        return np.array([
+            watershed_workflow.utils.utils.computeArea([self.coords[v, 0:2] for v in conn])
+            for conn in self.conn
+        ])
+
+    @property
+    @_cache
     def edge_centroids(self):
         """Edge centroids."""
         return {e: watershed_workflow.utils.utils.computeMidpoint(self.coords[e[0]],
                                                            self.coords[e[1]])
                 for e in self.edges}
 
-    
+
     def clearGeometryCache(self) -> None:
         """If coordinates are changed, any computed, cached geometry must be
         recomputed.  It is the USER's responsibility to call this
@@ -513,6 +570,14 @@ class Mesh2D:
         # toss geometry cache
         if hasattr(self, '_centroids'):
             del self._centroids
+        if hasattr(self, '_normals'):
+            del self._normals
+        if hasattr(self, '_slopes'):
+            del self._slopes
+        if hasattr(self, '_aspects'):
+            del self._aspects
+        if hasattr(self, '_cell_areas'):
+            del self._cell_areas
         if hasattr(self, '_edge_centroids'):
             del self._edge_centroids
             
@@ -1561,7 +1626,13 @@ class Mesh3D:
             e.put_face_node_conn(i_blk + 1, np.array(face_raveled) + 1)
 
         # set up variables
-        if hasattr(self, 'cell_data') and 'partition' in self.cell_data:
+        # partition is only meaningful in "one block" mode where cell order is preserved;
+        # in "material id" mode cells are reordered by block so the partition variable
+        # would be silently wrong and cause ATS to mis-assign cells to ranks.
+        write_partition = (element_block_mode == "one block" and
+                           hasattr(self, 'cell_data') and
+                           'partition' in self.cell_data)
+        if write_partition:
             e.set_element_variable_number(1)
             e.put_element_variable_name('partition', 1)
             e.put_time(1, 0.0)
@@ -1577,7 +1648,7 @@ class Mesh3D:
             e.put_elem_face_conn(elem_blk_id, np.array(elems_raveled) + 1)
 
             # add cell_data as variables
-            if hasattr(self, 'cell_data') and 'partition' in self.cell_data:
+            if write_partition:
                 logging.info(f'writing partition data as variable')
                 values = list(self.cell_data['partition'].astype(float))
                 e.put_element_variable_values(elem_blk_id, 'partition', 1, values)

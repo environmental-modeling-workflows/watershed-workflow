@@ -59,8 +59,12 @@ def computeVanGenuchtenModel_Rosetta(data: np.ndarray) -> pd.DataFrame:
     else:
         data_l = [list(entry) for entry in data.transpose()]
 
-    soildata = rosetta.SoilData.from_array(data_l)
-    result_mean, result_std, codes = rosetta.rosetta(3, soildata)
+    soildata = rosetta.SoilData.from_iter(data_l)
+    try:
+        result_mean, result_std, codes = rosetta.rosetta(3, soildata, estimate_type="log")
+    except TypeError:
+        # old rosetta API (rosetta-soil < 0.3) always returns log10 values
+        result_mean, result_std, codes = rosetta.rosetta(3, soildata)
     logging.info(f'  ... done')
     result_mean = np.array(result_mean)
 

@@ -26,7 +26,141 @@ __all__ = [
     'removeNullLAI',
     'plotLAI',
     'getDefaultProperties',
+    'mapNLCDToPFT',
+    'ELM_PFT_NAMES',
 ]
+
+# ELM natural PFT index → name (indices 0-16 in natpft; pftvarcon.F90 expected_pftnames).
+ELM_PFT_NAMES = {
+    0:  'not_vegetated',
+    1:  'needleleaf_evergreen_temperate_tree',
+    2:  'needleleaf_evergreen_boreal_tree',
+    3:  'needleleaf_deciduous_boreal_tree',
+    4:  'broadleaf_evergreen_tropical_tree',
+    5:  'broadleaf_evergreen_temperate_tree',
+    6:  'broadleaf_deciduous_tropical_tree',
+    7:  'broadleaf_deciduous_temperate_tree',
+    8:  'broadleaf_deciduous_boreal_tree',
+    9:  'broadleaf_evergreen_shrub',
+    10: 'broadleaf_deciduous_temperate_shrub',
+    11: 'broadleaf_deciduous_boreal_shrub',
+    12: 'c3_arctic_grass',
+    13: 'c3_non-arctic_grass',
+    14: 'c4_grass',
+    15: 'c3_crop',
+    16: 'c3_irrigated',
+}
+
+# NLCD code → ELM natural PFT index, keyed by climate zone.
+#
+# 'temperate' covers the majority of US watersheds.  'boreal' shifts
+# evergreen/deciduous forests and shrubs to their boreal counterparts
+# and is appropriate for Alaska or high-latitude northern sites.
+#
+# Notes:
+#  - NLCD 82 (Cultivated Crops): PFT 15/16 belong in the crop land unit;
+#    using c3_non-arctic_grass (13) is the best approximation within the
+#    natural-vegetation column required by ATS-ELM (PCT_NATVEG=100).
+#  - NLCD 11/12/31/73/74: mapped to not_vegetated (0); ELM has no PFT
+#    for open water, ice, lichens, or mosses.
+#  - NLCD 21/22 (developed open/low): treated as managed C3 grass because
+#    PCT_URBAN=0 in ATS-ELM; impervious fraction is unrepresented.
+#  - NLCD 23/24 (developed medium/high): predominantly impervious → bare.
+_NLCD_TO_ELM_PFT = {
+    'temperate': {
+        11: 0,   # Open Water         → not_vegetated
+        12: 0,   # Perennial Ice/Snow → not_vegetated
+        21: 13,  # Developed, Open Space    → c3_non-arctic_grass (managed lawn)
+        22: 13,  # Developed, Low Intensity → c3_non-arctic_grass
+        23: 0,   # Developed, Medium Intensity → not_vegetated (impervious)
+        24: 0,   # Developed, High Intensity   → not_vegetated (impervious)
+        31: 0,   # Barren Land        → not_vegetated
+        41: 7,   # Deciduous Forest   → broadleaf_deciduous_temperate_tree
+        42: 1,   # Evergreen Forest   → needleleaf_evergreen_temperate_tree
+        43: 7,   # Mixed Forest       → broadleaf_deciduous_temperate_tree
+        51: 10,  # Dwarf Scrub        → broadleaf_deciduous_temperate_shrub
+        52: 10,  # Shrub/Scrub        → broadleaf_deciduous_temperate_shrub
+        71: 13,  # Grassland/Herbaceous        → c3_non-arctic_grass
+        72: 13,  # Sedge/Herbaceous (wetland)  → c3_non-arctic_grass
+        73: 0,   # Lichens            → not_vegetated
+        74: 0,   # Moss               → not_vegetated
+        81: 13,  # Pasture/Hay        → c3_non-arctic_grass
+        82: 13,  # Cultivated Crops   → c3_non-arctic_grass (see note above)
+        90: 7,   # Woody Wetlands              → broadleaf_deciduous_temperate_tree
+        95: 13,  # Emergent Herbaceous Wetlands → c3_non-arctic_grass
+    },
+    'boreal': {
+        11: 0,
+        12: 0,
+        21: 13,
+        22: 13,
+        23: 0,
+        24: 0,
+        31: 0,
+        41: 8,   # Deciduous Forest   → broadleaf_deciduous_boreal_tree
+        42: 2,   # Evergreen Forest   → needleleaf_evergreen_boreal_tree
+        43: 8,   # Mixed Forest       → broadleaf_deciduous_boreal_tree
+        51: 11,  # Dwarf Scrub        → broadleaf_deciduous_boreal_shrub
+        52: 11,  # Shrub/Scrub        → broadleaf_deciduous_boreal_shrub
+        71: 13,
+        72: 13,
+        73: 0,
+        74: 0,
+        81: 13,
+        82: 13,
+        90: 8,   # Woody Wetlands     → broadleaf_deciduous_boreal_tree
+        95: 13,
+    },
+}
+
+
+def mapNLCDToPFT(nlcd_index, climate_zone: str = 'temperate') -> np.ndarray:
+    """Map NLCD land cover codes to ELM natural PFT indices.
+
+    Returns the dominant ELM PFT index for each NLCD code.  The mapping
+    assumes ATS-ELM conventions: PCT_NATVEG=100, PCT_URBAN/CROP/LAKE/
+    WETLAND/GLACIER=0, and a single dominant PFT per gridcell.
+
+    Parameters
+    ----------
+    nlcd_index : int or array-like of int
+        NLCD land cover code(s).  Valid values are the standard NLCD codes:
+        11, 12, 21-24, 31, 41-43, 51-52, 71-74, 81-82, 90, 95.
+    climate_zone : {'temperate', 'boreal'}, optional
+        Controls the forest and shrub PFT selection.  'temperate' (default)
+        covers most US watersheds.  'boreal' shifts evergreen/deciduous
+        tree and shrub types to their boreal counterparts, appropriate
+        for Alaska or high-latitude northern sites.
+
+    Returns
+    -------
+    np.ndarray of int
+        ELM PFT index (0-16) for each input code.  Unknown NLCD codes
+        raise a KeyError.
+
+    Raises
+    ------
+    ValueError
+        If climate_zone is not 'temperate' or 'boreal'.
+    KeyError
+        If an NLCD code is not in the mapping table.
+    """
+    if climate_zone not in _NLCD_TO_ELM_PFT:
+        raise ValueError(
+            f"climate_zone must be 'temperate' or 'boreal', got {climate_zone!r}")
+
+    table = _NLCD_TO_ELM_PFT[climate_zone]
+    arr = np.asarray(nlcd_index, dtype=int)
+    scalar_input = arr.ndim == 0
+    codes = arr.ravel()
+    result = np.empty(len(codes), dtype=int)
+    for i, code in enumerate(codes):
+        if code not in table:
+            raise KeyError(f"NLCD code {code} not in mapNLCDToPFT mapping table")
+        result[i] = table[code]
+    if scalar_input:
+        return int(result[0])
+    return result.reshape(arr.shape)
 
 
 def computeTimeSeries(lai: xarray.DataArray,
