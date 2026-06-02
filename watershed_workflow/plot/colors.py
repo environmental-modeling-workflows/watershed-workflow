@@ -39,6 +39,7 @@ __all__ = [
     'createIndexedColorbar',
     'createNLCDColormap',
     'createMODISColormap',
+    'createPFTColormap',
 ]
 
 #
@@ -627,6 +628,34 @@ def createNLCDColormap(indices=None, formatted=False):
 def createMODISColormap(indices=None, formatted=False):
     import watershed_workflow.sources.manager_modis_appeears
     return _createColormapCreator('MODIS', watershed_workflow.sources.manager_modis_appeears.colors)(indices, formatted)
+
+
+# ELM PFT index → (short label, RGB color)
+# Colors chosen to reflect vegetation character: dark greens for evergreen trees,
+# lighter greens for deciduous, tans/yellows for grasses and shrubs, grey for bare.
+_pft_colors: Dict[int, Tuple[str, Color]] = {
+    0:  ('not_vegetated',                         '#b0b0b0'),
+    1:  ('NE temperate tree',                     '#005a00'),
+    2:  ('NE boreal tree',                        '#003d00'),
+    3:  ('ND boreal tree',                        '#6aab6a'),
+    4:  ('BE tropical tree',                      '#007d00'),
+    5:  ('BE temperate tree',                     '#2e8b57'),
+    6:  ('BD tropical tree',                      '#74c474'),
+    7:  ('BD temperate tree',                     '#52a552'),
+    8:  ('BD boreal tree',                        '#a8d4a8'),
+    9:  ('BE shrub',                              '#8b6914'),
+    10: ('BD temperate shrub',                    '#c4a35a'),
+    11: ('BD boreal shrub',                       '#d4bf8a'),
+    12: ('c3 arctic grass',                       '#b0d48b'),
+    13: ('c3 non-arctic grass',                   '#d4c84a'),
+    14: ('c4 grass',                              '#e8a020'),
+    15: ('c3 crop',                               '#f0e068'),
+    16: ('c3 irrigated',                          '#a0d0f0'),
+}
+
+
+def createPFTColormap(indices=None, formatted=False):
+    return _createColormapCreator('PFT', _pft_colors)(indices, formatted)
 
 
 def createIndexedColorbar(ncolors: int,
