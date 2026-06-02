@@ -615,22 +615,20 @@ class Mesh2D:
         kwargs.setdefault('linewidth', 0.5)
         kwargs.setdefault('linewidth', 0.5)
 
-        if isinstance(facecolors, str) and facecolors == 'elevation':
-            facecolors = self.centroids[:, -1]
-            if cmap is None:
-                cmap = 'terrain'
+        # facecolors can be a str -- either elevation or a cell_data entry
+        if isinstance(facecolors, str):
+            if facecolors == 'elevation':
+                facecolors = self.centroids[:, -1]
+                if cmap is None:
+                    cmap = 'terrain'
+            else:
+                facecolors = self.cell_data[facecolors]
 
-        # if facecolors is not None and len(facecolors) == len(self.conn):
-        #     # convert from an array to a list of colors, using a cmap
-        #     array = facecolors
-        #     if norm is None:
-        #         norm = plt.Normalize(vmin=vmin, vmax=vmax)
-        #     if isinstance(cmap, str):
-        #         cmap = plt.colormaps[cmap]
-
-        #     facecolors = cmap(norm(facecolors))
+        # define a norm, or use [vmin,vmax]
         if norm is None:
             norm = plt.Normalize(vmin=vmin, vmax=vmax)
+
+        # get a colormap
         if isinstance(cmap, str):
             cmap = plt.colormaps[cmap]
 

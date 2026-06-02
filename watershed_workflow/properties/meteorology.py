@@ -1,7 +1,7 @@
-"""Manipulate DayMet data structures.
+"""Manipulate meteorological data structures.
 
-DayMet is downloaded in box mode based on watershed bounds, then it can be converted to
-hdf5 files that models can read.
+Data are downloaded in box mode based on watershed bounds, then converted to
+formats that models can read.
 """
 from typing import Tuple
 
@@ -16,6 +16,7 @@ __all__ = [
     'allocatePrecipitation',
     'convertDayMetToATS',
     'convertAORCToATS',
+    'convertAORCToELM',
     'computeTypicalYear',
 ]
 
@@ -155,6 +156,64 @@ def convertAORCToATS(dat: xr.Dataset,
     dout['time'] = watershed_workflow.utils.data.convertTimesToCFTime(dout['time'].values)
     if remove_leap_day:
         dout = watershed_workflow.utils.data.filterLeapDay(dout)
+
+    return dout
+
+
+def convertAORCToELM(dat: xr.Dataset) -> xr.Dataset:
+    """Convert raw AORC xarray.Dataset to ELM CPL_BYPASS variable names and units.
+
+    AORC → ELM variable mapping:
+
+    ========================== ============= ======= ========= =======
+    AORC variable              AORC units    ELM var ELM units Notes
+    ========================== ============= ======= ========= =======
+    TMP_2maboveground          °C            TBOT    K         +273.15
+    SPFH_2maboveground         g/g           QBOT    kg/kg     1 g/g = 1 kg/kg
+    UGRD_10maboveground +
+    VGRD_10maboveground        m/s           WIND    m/s       magnitude
+    DLWRF_surface              W/m²          FLDS    W/m²
+    DSWRF_surface              W/m²          FSDS    W/m²
+    PRES_surface               Pa            PSRF    Pa
+    APCP_surface               mm/hr         PRECTmms mm/s     ÷ 3600
+    ========================== ============= ======= ========= =======
+
+    Parameters
+    ----------
+    dat : xr.Dataset
+        Raw AORC dataset as returned by ``ManagerAORC.getDataset()``.
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset with ELM CPL_BYPASS variable names and units.
+    """
+    logging.info('Converting AORC to ELM CPL_BYPASS met input')
+
+    dout = xr.Dataset(coords=dat.coords, attrs=dat.attrs.copy())
+
+    dout['TBOT'] = dat['TMP_2maboveground'] + 273.15
+    dout['TBOT'].attrs = {'units': 'K', 'long_name': 'air temperature at 2 m'}
+
+    # AORC SPFH is g/g which equals kg/kg — no numeric conversion needed
+    dout['QBOT'] = dat['SPFH_2maboveground']
+    dout['QBOT'].attrs = {'units': 'kg/kg', 'long_name': 'specific humidity at 2 m'}
+
+    dout['WIND'] = np.sqrt(dat['UGRD_10maboveground']**2 + dat['VGRD_10maboveground']**2)
+    dout['WIND'].attrs = {'units': 'm/s', 'long_name': 'wind speed at 10 m'}
+
+    dout['FLDS'] = dat['DLWRF_surface']
+    dout['FLDS'].attrs = {'units': 'W/m^2', 'long_name': 'incident longwave radiation'}
+
+    dout['FSDS'] = dat['DSWRF_surface']
+    dout['FSDS'].attrs = {'units': 'W/m^2', 'long_name': 'incident shortwave radiation'}
+
+    dout['PSRF'] = dat['PRES_surface']
+    dout['PSRF'].attrs = {'units': 'Pa', 'long_name': 'surface pressure'}
+
+    # AORC APCP is mm/hr; ELM CPL_BYPASS expects mm/s
+    dout['PRECTmms'] = dat['APCP_surface'] / 3600.0
+    dout['PRECTmms'].attrs = {'units': 'mm/s', 'long_name': 'total precipitation rate'}
 
     return dout
 
