@@ -38,6 +38,7 @@ cmake \
     -D Netcdf_INCLUDE_DIRS:PATH=${CONDA_PREFIX}/include \
     -D HDF5_ROOT:PATH=${CONDA_PREFIX} \
     -D HDF5_NO_SYSTEM_PATHS=ON \
+    -D TPL_HDF5_LIBRARIES:STRING="${CONDA_PREFIX}/lib/libhdf5.so;${CONDA_PREFIX}/lib/libhdf5_hl.so" \
 ${SEACAS_SRC_DIR}
 
 
