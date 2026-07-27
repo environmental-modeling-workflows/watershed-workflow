@@ -13,7 +13,7 @@ zorder argument, an int which controls the order of drawing, with larger being
 later (on top) of smaller values.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Iterable
+from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Iterable, TYPE_CHECKING
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
@@ -23,12 +23,16 @@ import shapely
 from mpl_toolkits.mplot3d import Axes3D
 import geopandas as gpd
 import itertools
+import xarray
 
 import watershed_workflow.utils.utils
 import watershed_workflow.crs
 import watershed_workflow.plot.colors
 
-__all__ = []
+if TYPE_CHECKING:
+    from watershed_workflow.mesh.mesh import Mesh2D, Edge
+
+__all__ = ['findCell', 'plotCellContext']
 
 
 def _is_iter(obj: Any) -> bool:
@@ -407,3 +411,254 @@ def basemap(crs: Optional[Any] = None,
         # these seem a bit broken?
         ax.add_feature(country)
     return ax
+
+
+def findCell(m2 : 'Mesh2D',
+            cell : Optional[int] = None,
+            edge : Optional[Any] = None,
+            coordinate : Optional[Tuple[float, float]] = None,
+            ) -> int:
+    """Resolve a cell, edge, or coordinate to a single cell index.
+
+    Exactly one of cell, edge, or coordinate must be provided.
+
+    Parameters
+    ----------
+    m2 : Mesh2D
+        The mesh to search.
+    cell : int, optional
+        A cell index -- returned as-is.
+    edge : Edge or Tuple[int,int], optional
+        An edge (pair of vertex indices) -- returns one of its
+        neighboring cells (the first, if a boundary edge with only one).
+    coordinate : Tuple[float, float], optional
+        An (x,y) point in the mesh's CRS -- returns the cell whose
+        centroid is nearest to the point.
+
+    Returns
+    -------
+    int
+        The resolved cell index.
+    """
+    from watershed_workflow.mesh.mesh import Edge
+
+    provided = [v is not None for v in (cell, edge, coordinate)]
+    if sum(provided) != 1:
+        raise ValueError('findCell(): exactly one of cell, edge, or coordinate must be provided.')
+
+    if cell is not None:
+        return cell
+    elif edge is not None:
+        cells = m2.edge_cells[Edge(edge)]
+        return cells[0]
+    else:
+        dists = np.linalg.norm(m2.centroids[:, 0:2] - np.asarray(coordinate), axis=1)
+        return int(np.argmin(dists))
+
+
+def plotCellContext(m2 : 'Mesh2D',
+                    cell : Optional[int] = None,
+                    edge : Optional[Any] = None,
+                    coordinate : Optional[Tuple[float, float]] = None,
+                    context_rings : int = 3,
+                    dem : Optional[xarray.DataArray] = None,
+                    dem_sm : Optional[xarray.DataArray] = None,
+                    ax : Optional[Any] = None,
+                    title : Optional[str] = None,
+                    ) -> Tuple[Any, Any, int]:
+    """Plot a cell zoomed in with its surrounding context, optionally against DEM(s).
+
+    Useful for debugging mesh elevations/topology at a specific
+    location. Exactly one of cell, edge, or coordinate must identify
+    the location of interest. Shows, left to right:
+
+    - Full mesh, colored by elevation, with a box showing where the
+      zoomed-in panel sits and a marker at the target cell.
+    - A zoomed-in view of the target cell highlighted against its
+      neighbors' elevations, with per-vertex elevations annotated and
+      the mesh outline drawn.
+    - (if dem provided) The source DEM, cropped to the same zoom
+      region, with the mesh outline overlaid in light gray.
+    - (if dem_sm provided) A second DEM (e.g. smoothed), cropped to the
+      same region, with the mesh outline overlaid.
+
+    All elevation panels (mesh and DEM) share a single color scale, so
+    DEM noise/features can be compared directly against mesh elevations.
+
+    Parameters
+    ----------
+    m2 : Mesh2D
+        The mesh, with current elevations in m2.coords[:,2].
+    cell : int, optional
+        Cell index to plot.
+    edge : Edge or Tuple[int,int], optional
+        An edge identifying the cell to plot (one of its neighbors).
+    coordinate : Tuple[float, float], optional
+        An (x,y) point (mesh CRS) -- the nearest cell is plotted.
+    context_rings : int, optional
+        Number of rings of neighbors (breadth-first, via
+        cell_to_cells) to include around the target cell for context in
+        the zoomed-in mesh panel. Default is 3.
+    dem : xr.DataArray, optional
+        A DEM (same CRS as m2). If provided, adds a panel showing it
+        cropped to the local context.
+    dem_sm : xr.DataArray, optional
+        A second DEM, e.g. a smoothed version of dem. If provided, adds
+        a panel showing it cropped to the same region.
+    ax : array-like of matplotlib.Axes, optional
+        Axes to plot on -- length 2, 3, or 4 depending on whether dem /
+        dem_sm are provided. If None, creates a new figure.
+    title : str, optional
+        Title for the zoomed-in panel. Defaults to "cell {id}".
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    ax : array-like of matplotlib.Axes
+    c0 : int
+        The resolved cell index that was plotted.
+    """
+    c0 = findCell(m2, cell=cell, edge=edge, coordinate=coordinate)
+
+    # gather local context: BFS out from the target cell through cell_to_cells
+    context_cells = {c0}
+    frontier = {c0}
+    for _ in range(context_rings):
+        next_frontier = set()
+        for c in frontier:
+            next_frontier.update(m2.cell_to_cells[c])
+        next_frontier -= context_cells
+        context_cells.update(next_frontier)
+        frontier = next_frontier
+
+    context_cells = sorted(context_cells)
+    context_conn = [m2.conn[c] for c in context_cells]
+    context_verts = sorted(set(v for c in context_cells for v in m2.conn[c]))
+
+    # compute the zoom region bounds, with a small margin
+    xs = [m2.coords[v, 0] for v in context_verts]
+    ys = [m2.coords[v, 1] for v in context_verts]
+    dx = max(xs) - min(xs)
+    dy = max(ys) - min(ys)
+    margin = 0.05 * max(dx, dy, 1.0)
+    xlim = (min(xs) - margin, max(xs) + margin)
+    ylim = (min(ys) - margin, max(ys) + margin)
+
+    # crop the DEM(s) to the zoom region, if provided.  xarray's .sel()
+    # with a slice requires bounds ordered to match the coordinate's own
+    # ordering (many rasters store y descending, but this isn't
+    # guaranteed) -- so order each slice using the coordinate's actual
+    # first/last values rather than assuming.
+    def _cropToZoom(da):
+        y_ascending = da.y[0].item() < da.y[-1].item()
+        y_slice = slice(ylim[0], ylim[1]) if y_ascending else slice(ylim[1], ylim[0])
+        x_ascending = da.x[0].item() < da.x[-1].item()
+        x_slice = slice(xlim[0], xlim[1]) if x_ascending else slice(xlim[1], xlim[0])
+        cropped = da.sel(x=x_slice, y=y_slice)
+        if cropped.size == 0:
+            raise ValueError(
+                f'plotCellContext(): cropping the DEM to the zoom region ({xlim}, {ylim}) '
+                f'returned an empty array. Check that the DEM and mesh share the same CRS '
+                f'and overlap spatially (DEM x range: {float(da.x.min())}-{float(da.x.max())}, '
+                f'y range: {float(da.y.min())}-{float(da.y.max())}).')
+        return cropped
+
+    dem_crops = []
+    if dem is not None:
+        dem_crops.append(('DEM', _cropToZoom(dem)))
+    if dem_sm is not None:
+        dem_crops.append(('DEM (smoothed)', _cropToZoom(dem_sm)))
+
+    n_panels = 2 + len(dem_crops)
+    if ax is None:
+        fig, ax = plt.subplots(1, n_panels, figsize=(8 * n_panels, 8))
+    else:
+        fig = ax[0].figure
+    if n_panels == 1:
+        ax = [ax]
+    ax_full, ax_zoom = ax[0], ax[1]
+    ax_dems = ax[2:]
+
+    # shared elevation color scale across ALL elevation panels (mesh and DEM)
+    context_centroids = m2.centroids[context_cells]
+    context_vert_z = m2.coords[context_verts, 2]
+    logging.info(f'plotCellContext: mesh local elevation range = '
+                 f'[{np.nanmin(context_vert_z):.2f}, {np.nanmax(context_vert_z):.2f}] masl '
+                 f'(vertices), [{np.nanmin(context_centroids[:,2]):.2f}, '
+                 f'{np.nanmax(context_centroids[:,2]):.2f}] masl (cell centroids)')
+    for label, crop in dem_crops:
+        logging.info(f'plotCellContext: {label} local range = '
+                     f'[{float(np.nanmin(crop.values)):.2f}, {float(np.nanmax(crop.values)):.2f}] masl')
+
+    all_vals = [context_centroids[:, 2], context_vert_z]
+    for _, crop in dem_crops:
+        all_vals.append(crop.values.ravel())
+    vmin = float(np.nanmin([np.nanmin(v) for v in all_vals]))
+    vmax = float(np.nanmax([np.nanmax(v) for v in all_vals]))
+    cmap = 'gist_earth'
+
+    # -- panel 0: full mesh, with a box showing the zoom region --
+    m2.plot(facecolors='elevation', ax=ax_full, colorbar=True, cmap=cmap, vmin=vmin, vmax=vmax)
+    ax_full.plot(*m2.centroids[c0, 0:2], marker='*', color='red', markersize=15,
+                 markeredgecolor='k', zorder=6)
+    rect = plt.Rectangle((xlim[0], ylim[0]), xlim[1] - xlim[0], ylim[1] - ylim[0],
+                          facecolor='none', edgecolor='red', linewidth=2, zorder=5)
+    ax_full.add_patch(rect)
+    ax_full.set_aspect('equal', adjustable='box')
+    ax_full.set_title('Full mesh (red box = zoom region)')
+
+    # -- panel 1: zoomed-in local context, colored by elevation --
+    norm = plt.Normalize(vmin=vmin, vmax=vmax)
+    verts = [[m2.coords[i, 0:2] for i in conn] for conn in context_conn]
+    facecolors = context_centroids[:, 2]
+    gons = pltc.PolyCollection(verts, array=facecolors, cmap=cmap, norm=norm,
+                               edgecolors='grey', linewidth=0.5)
+    ax_zoom.add_collection(gons)
+    plt.colorbar(gons, ax=ax_zoom, label='elevation [masl]')
+
+    # highlight the target cell itself with a heavy outline
+    cell_poly = pltc.PolyCollection([[m2.coords[i, 0:2] for i in m2.conn[c0]]],
+                                    facecolor='none', edgecolors='red', linewidth=3)
+    ax_zoom.add_collection(cell_poly)
+
+    # mark the target cell's neighbors, to make the local topology explicit
+    for n in m2.cell_to_cells[c0]:
+        ax_zoom.plot(*m2.centroids[n, 0:2], marker='o', color='cyan', markersize=6, zorder=5)
+        ax_zoom.plot([m2.centroids[c0, 0], m2.centroids[n, 0]],
+                     [m2.centroids[c0, 1], m2.centroids[n, 1]],
+                     color='cyan', linewidth=1, zorder=4)
+
+    # annotate vertex elevations
+    for v in context_verts:
+        x, y, z = m2.coords[v]
+        ax_zoom.annotate(f'{z:.2f}', (x, y), fontsize=7, color='k',
+                         ha='center', va='center',
+                         bbox=dict(boxstyle='round,pad=0.1', fc='white', alpha=0.7, ec='none'))
+
+    # mark the target cell's centroid
+    ax_zoom.plot(*m2.centroids[c0, 0:2], marker='*', color='red', markersize=20,
+                 markeredgecolor='k', zorder=6, label='target cell')
+
+    ax_zoom.set_aspect('equal', adjustable='box')
+    ax_zoom.legend(loc='upper right')
+    ax_zoom.set_title(title if title is not None else f'cell {c0}')
+    ax_zoom.set_xlim(*xlim)
+    ax_zoom.set_ylim(*ylim)
+
+    # -- remaining panels: cropped DEM(s), same color scale, mesh overlaid --
+    cell_xy = m2.centroids[c0, 0:2]
+    mesh_verts = [[m2.coords[i, 0:2] for i in conn] for conn in context_conn]
+    for ax_dem, (label, crop) in zip(ax_dems, dem_crops):
+        crop.plot.imshow(ax=ax_dem, cmap=cmap, vmin=vmin, vmax=vmax, add_colorbar=True)
+        mesh_outline = pltc.PolyCollection(mesh_verts, facecolor='none',
+                                          edgecolors='lightgray', linewidth=0.5, zorder=4)
+        ax_dem.add_collection(mesh_outline)
+        ax_dem.plot(*cell_xy, marker='*', color='red', markersize=15,
+                    markeredgecolor='k', zorder=6)
+        ax_dem.set_title(label)
+        ax_dem.set_aspect('equal', adjustable='box')
+        ax_dem.set_xlim(*xlim)
+        ax_dem.set_ylim(*ylim)
+
+    fig.tight_layout()
+    return fig, ax, c0

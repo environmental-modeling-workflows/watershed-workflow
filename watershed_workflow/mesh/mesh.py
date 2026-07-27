@@ -420,6 +420,12 @@ class Mesh2D:
 
     @property
     @_cache
+    def boundary_edges_set(self):
+        """Set of boundary edges, for O(1) membership tests (boundary_edges is an ordered list)."""
+        return set(self.boundary_edges)
+
+    @property
+    @_cache
     def boundary_vertices(self):
         return list(set(v for e in self.boundary_edges for v in e))
 
@@ -2185,26 +2191,27 @@ def refineTriangle(m2 : Mesh2D, c : int) -> Mesh2D:
     - whose neighboring cells are also triangles
 
     """
-    if len(m2.labeled_sets) != 0:
-        raise ValueError("This algorithm does not correctly deal with labeled sets.")
     if len(m2.conn[c]) != 3:
         raise ValueError("Only triangles may be refined.")
-    if any(e in m2.boundary_edges for e in m2.cell_edges[c]):
+    if any(e in m2.boundary_edges_set for e in m2.cell_edges[c]):
         raise ValueError("Only non-boundary triangles may be refined.")
     if not all(len(m2.conn[n]) == 3 for n in m2.cell_to_cells[c]):
         raise ValueError("Only triangles whose neighbors are also triangles may be refined.")
 
     old_edges = list(m2.cell_edges[c])
-    
+
     new_coords = np.array([(m2.coords[e[0]] + m2.coords[e[1]])/ 2. for e in old_edges])
     assert len(new_coords) == 3 # only triangles please!
     all_coords = np.concatenate([m2.coords, new_coords])
-   
+
+    # map from each old edge that gets split to (new edge, new edge, midpoint vertex)
+    edge_splits : Dict[Edge, Tuple[Edge, Edge, int]] = dict()
+
     # this triangle gets split into 4
     new_conn = []
     # the center triangle...
     new_conn.append(list(range(len(m2.coords), len(m2.coords)+3)))
-    
+
     # the three external ones, one per vertex
     for i,e1 in enumerate(old_edges):
         e2 = old_edges[(i+1)%3]
@@ -2212,11 +2219,14 @@ def refineTriangle(m2 : Mesh2D, c : int) -> Mesh2D:
         v2 = len(m2.coords) + (i + 1)%3
         v3 = e1[0] if e1[0] in e2 else e1[1]
         assert v3 in e2
-        new_conn.append([v1, v2, v3])        
+        new_conn.append([v1, v2, v3])
 
     # refine neighboring cells -- each a triangle that gets split in 2
     neighbors = m2.cell_to_cells[c]
     for i, e in enumerate(old_edges):
+        vm = len(m2.coords) + i
+        edge_splits[e] = (Edge(e[0], vm), Edge(e[1], vm), vm)
+
         # find the neighbor through edge e
         ecells = m2.edge_cells[e]
         assert len(ecells) == 2
@@ -2226,19 +2236,84 @@ def refineTriangle(m2 : Mesh2D, c : int) -> Mesh2D:
         for v in m2.conn[n]:
             if v not in e:
                 # add the two new conn
-                new_conn.append([e[0], len(m2.coords) + i, v])
-                new_conn.append([e[1], len(m2.coords) + i, v])
+                new_conn.append([e[0], vm, v])
+                new_conn.append([e[1], vm, v])
 
-    # remove the old cells
+    # remove the old cells, tracking which new cells replace which old cell
     all_conn = copy.copy(m2.conn)
     removed_cells = [c,] + neighbors
     for cc in reversed(sorted(removed_cells)):
         all_conn.pop(cc)
+
+    # the first 4 entries of new_conn (1 center + 3 corner) replace c;
+    # each subsequent pair of entries replaces one neighbor
+    cell_splits : Dict[int, List[int]] = dict()
+    base = len(all_conn)
+    cell_splits[c] = list(range(base, base + 4))
+    for i, n in enumerate(neighbors):
+        cell_splits[n] = [base + 4 + 2*i, base + 4 + 2*i + 1]
+
     all_conn.extend(new_conn)
+
+    # carry labeled sets through the refinement.  Sets can be large (e.g.
+    # thousands of preserved_pits cells), and refineTriangle is called
+    # once per refined triangle, so this must avoid O(len(ls.ent_ids))
+    # work per call wherever possible -- only a handful of entries (at
+    # most 4 cells / 6 edges / vertices) can actually be affected.
+    removed_cells_sorted = sorted(removed_cells)
+    new_labeled_sets = []
+    for ls in m2.labeled_sets:
+        if ls.entity == 'CELL':
+            ent_ids = np.asarray(ls.ent_ids)
+            # shift = count of removed_cells strictly less than each id
+            shift = np.searchsorted(removed_cells_sorted, ent_ids, side='left')
+            affected_mask = np.isin(ent_ids, list(cell_splits.keys()))
+            if not affected_mask.any() and not shift.any():
+                # nothing in removed_cells' index range touches this set
+                new_labeled_sets.append(ls)
+                continue
+            new_ids = list((ent_ids - shift)[~affected_mask])
+            for cell in ent_ids[affected_mask]:
+                new_ids.extend(cell_splits[int(cell)])
+            new_labeled_sets.append(LabeledSet(ls.name, ls.setid, ls.entity, sorted(new_ids), ls.to_extrude))
+        elif ls.entity == 'FACE':
+            if any(Edge(e) in edge_splits for e in ls.ent_ids):
+                new_ids = []
+                for e in ls.ent_ids:
+                    edge = Edge(e)
+                    if edge in edge_splits:
+                        ea, eb, _ = edge_splits[edge]
+                        new_ids.extend([ea, eb])
+                    else:
+                        new_ids.append(edge)
+                new_labeled_sets.append(LabeledSet(ls.name, ls.setid, ls.entity, sorted(new_ids), ls.to_extrude))
+            else:
+                new_labeled_sets.append(ls)
+        elif ls.entity == 'VERTEX':
+            ent_ids_set = set(ls.ent_ids)
+            new_vertices = [vm for ((v0, v1), (_, _, vm)) in edge_splits.items()
+                            if v0 in ent_ids_set and v1 in ent_ids_set]
+            if new_vertices:
+                new_ids = sorted(ent_ids_set | set(new_vertices))
+                new_labeled_sets.append(LabeledSet(ls.name, ls.setid, ls.entity, new_ids, ls.to_extrude))
+            else:
+                new_labeled_sets.append(ls)
+        else:
+            new_labeled_sets.append(ls)
 
     logging.debug(f' ... removing {len(removed_cells)}, adding {len(new_conn)} cells')
     logging.debug(f' ... adding {len(new_coords)} vertices')
-    return watershed_workflow.mesh.mesh.Mesh2D(all_coords, all_conn, crs=m2.crs)
+
+    # Skip the full-mesh handedness check (O(num_cells), and this
+    # function is called once per refined triangle -- O(num_cells) per
+    # call adds up fast). Cells copied verbatim from m2 are already
+    # correctly handed; only the newly created cells need checking, and
+    # there are always exactly 10 of them.
+    mesh = watershed_workflow.mesh.mesh.Mesh2D(all_coords, all_conn, new_labeled_sets, crs=m2.crs,
+                                                check_handedness=False)
+    for conn in all_conn[-len(new_conn):]:
+        mesh.checkHandedness(conn)
+    return mesh
         
 
 def refineTriangles(m2 : Mesh2D, to_refine : List[int]) -> Mesh2D:
@@ -2254,20 +2329,143 @@ def refineTriangles(m2 : Mesh2D, to_refine : List[int]) -> Mesh2D:
 
     """
     logging.info(f'Refining {len(to_refine)} triangles -- topology will change!')
-    # make sure they are nonoverlapping
+
+    # validate each target and collect its 4-cell neighborhood, all
+    # against the ORIGINAL mesh's (cached) topology -- this function
+    # processes all refinements in one pass rather than calling
+    # refineTriangle() in a loop, because each such call would
+    # construct a brand-new Mesh2D and re-derive cell_to_cells /
+    # edge_cells / cell_edges from scratch (O(num_cells)); since those
+    # properties are cached per-instance, doing this len(to_refine)
+    # times is O(len(to_refine) * num_cells).
     affected = []
+    neighbors_of = {}
     for c in to_refine:
+        if len(m2.conn[c]) != 3:
+            raise ValueError("Only triangles may be refined.")
+        if any(e in m2.boundary_edges_set for e in m2.cell_edges[c]):
+            raise ValueError("Only non-boundary triangles may be refined.")
+        neighbors = list(m2.cell_to_cells[c])
+        if not all(len(m2.conn[n]) == 3 for n in neighbors):
+            raise ValueError("Only triangles whose neighbors are also triangles may be refined.")
+        neighbors_of[c] = neighbors
         affected.append(c)
-        affected.extend(list(m2.cell_to_cells[c]))
-        
+        affected.extend(neighbors)
+
     if len(set(affected)) != 4 * len(to_refine):
         raise ValueError('Cells in to_refine plus their neighbors are not distinct.')
-    
-    to_refine_conn = [m2.conn[c] for c in to_refine]
-    m2r = m2
-    for conn in to_refine_conn:
-        c = next(i for (i, test_conn) in enumerate(m2r.conn) if len(conn) == len(test_conn) and all( j == k for (j,k) in zip(conn, test_conn)))   
-        m2r = refineTriangle(m2r, c)
+
+    n_old_coords = len(m2.coords)
+    new_coords_list = []
+    new_conn_list : List[List[int]] = []
+    removed_cells : List[int] = []
+    cell_splits : Dict[int, List[int]] = dict()
+    edge_splits : Dict[Edge, Tuple[Edge, Edge, int]] = dict()
+
+    for k, c in enumerate(to_refine):
+        neighbors = neighbors_of[c]
+        old_edges = list(m2.cell_edges[c])
+
+        vbase = n_old_coords + 3 * k
+        new_coords_list.append(
+            np.array([(m2.coords[e[0]] + m2.coords[e[1]]) / 2. for e in old_edges]))
+
+        this_new_conn = []
+        # the center triangle
+        this_new_conn.append([vbase, vbase + 1, vbase + 2])
+
+        # the three external ones, one per vertex
+        for i, e1 in enumerate(old_edges):
+            e2 = old_edges[(i + 1) % 3]
+            v1 = vbase + i
+            v2 = vbase + (i + 1) % 3
+            v3 = e1[0] if e1[0] in e2 else e1[1]
+            assert v3 in e2
+            this_new_conn.append([v1, v2, v3])
+
+        # refine neighboring cells -- each a triangle that gets split in 2
+        for i, e in enumerate(old_edges):
+            vm = vbase + i
+            edge_splits[e] = (Edge(e[0], vm), Edge(e[1], vm), vm)
+
+            ecells = m2.edge_cells[e]
+            assert len(ecells) == 2
+            n = ecells[0] if ecells[1] == c else ecells[1]
+
+            for v in m2.conn[n]:
+                if v not in e:
+                    this_new_conn.append([e[0], vm, v])
+                    this_new_conn.append([e[1], vm, v])
+
+        removed_here = [c,] + neighbors
+        removed_cells.extend(removed_here)
+        new_conn_list.extend(this_new_conn)
+
+        # placeholder cell ids, corrected below once we know the final
+        # base offset (total removed cells across all refinements)
+        cell_splits[c] = [('rel', 10 * k + j) for j in range(4)]
+        for i, n in enumerate(neighbors):
+            cell_splits[n] = [('rel', 10 * k + 4 + 2*i), ('rel', 10 * k + 4 + 2*i + 1)]
+
+    all_coords = np.concatenate([m2.coords,] + new_coords_list)
+
+    all_conn = copy.copy(m2.conn)
+    for cc in sorted(set(removed_cells), reverse=True):
+        all_conn.pop(cc)
+
+    base = len(all_conn)
+    for key, rel_ids in cell_splits.items():
+        cell_splits[key] = [base + j for (_, j) in rel_ids]
+
+    all_conn.extend(new_conn_list)
+
+    # carry labeled sets through all refinements at once
+    removed_cells_sorted = sorted(removed_cells)
+    new_labeled_sets = []
+    for ls in m2.labeled_sets:
+        if ls.entity == 'CELL':
+            ent_ids = np.asarray(ls.ent_ids)
+            shift = np.searchsorted(removed_cells_sorted, ent_ids, side='left')
+            affected_mask = np.isin(ent_ids, list(cell_splits.keys()))
+            if not affected_mask.any() and not shift.any():
+                new_labeled_sets.append(ls)
+                continue
+            new_ids = list((ent_ids - shift)[~affected_mask])
+            for cell in ent_ids[affected_mask]:
+                new_ids.extend(cell_splits[int(cell)])
+            new_labeled_sets.append(LabeledSet(ls.name, ls.setid, ls.entity, sorted(new_ids), ls.to_extrude))
+        elif ls.entity == 'FACE':
+            if any(Edge(e) in edge_splits for e in ls.ent_ids):
+                new_ids = []
+                for e in ls.ent_ids:
+                    edge = Edge(e)
+                    if edge in edge_splits:
+                        ea, eb, _ = edge_splits[edge]
+                        new_ids.extend([ea, eb])
+                    else:
+                        new_ids.append(edge)
+                new_labeled_sets.append(LabeledSet(ls.name, ls.setid, ls.entity, sorted(new_ids), ls.to_extrude))
+            else:
+                new_labeled_sets.append(ls)
+        elif ls.entity == 'VERTEX':
+            ent_ids_set = set(ls.ent_ids)
+            new_vertices = [vm for ((v0, v1), (_, _, vm)) in edge_splits.items()
+                            if v0 in ent_ids_set and v1 in ent_ids_set]
+            if new_vertices:
+                new_ids = sorted(ent_ids_set | set(new_vertices))
+                new_labeled_sets.append(LabeledSet(ls.name, ls.setid, ls.entity, new_ids, ls.to_extrude))
+            else:
+                new_labeled_sets.append(ls)
+        else:
+            new_labeled_sets.append(ls)
+
+    logging.debug(f' ... removing {len(removed_cells)}, adding {len(new_conn_list)} cells')
+    logging.debug(f' ... adding {sum(len(c) for c in new_coords_list)} vertices')
+
+    m2r = watershed_workflow.mesh.mesh.Mesh2D(all_coords, all_conn, new_labeled_sets, crs=m2.crs,
+                                               check_handedness=False)
+    for conn in all_conn[-len(new_conn_list):]:
+        m2r.checkHandedness(conn)
 
     return m2r, affected
 
@@ -2423,8 +2621,8 @@ def refineCorridorTriangles(m2 : Mesh2D,
     # create and return the mesh
     logging.info(f' ... split {count} spanning or junction triangles')
     if count == 0:
-        return m2
+        return m2, to_split
     else:
-        return watershed_workflow.mesh.mesh.Mesh2D(np.array(new_coords), new_conns, crs=m2.crs)
+        return watershed_workflow.mesh.mesh.Mesh2D(np.array(new_coords), new_conns, crs=m2.crs), to_split
 
     

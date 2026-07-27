@@ -719,8 +719,17 @@ def tessalateRiverAligned(hucs : Watershed,
     # We could now recover the polygon linestrings in Watershed, but don't... TBD --ETC
     m2 = watershed_workflow.mesh.mesh.Mesh2D(coords, elems, crs=hucs.crs)
 
-    logging.info('Fixing corridor-spanning triangles...')
-    m2 = watershed_workflow.mesh.mesh.refineCorridorTriangles(m2, river_corridors)
+    # refine spanning triangles -- triangles that bridge the ridge
+    # between two corridors.  Note this may need to happen multiple
+    # times, but we put a limit of 5 to avoid degenerate casees?  It's
+    # unclear whether that should happen if the code is correct, so
+    # this limit of 5 is arbitrary.
+    to_split = [-1]
+    i = 0
+    while len(to_split) > 0 and i < 5:
+        i += 1
+        logging.info('Fixing corridor-spanning triangles...')
+        m2, to_split = watershed_workflow.mesh.mesh.refineCorridorTriangles(m2, river_corridors)
 
     if len(tri_res) > 2:
         return m2, *tri_res[2:]
@@ -739,10 +748,11 @@ def elevate(m2 : watershed_workflow.mesh.mesh.Mesh2D,
         Mesh coordinate system.
     dem : xr.DataArray
         2D array forming an elevation raster.
-    algorithm : str, optional
-        Algorithm used for interpolation.  One of:
+    method : str, optional
+        Interpolation method, passed to interpolateValues(). One of:
+        * "linear" for piecewise bilinear interpolation (default)
         * "nearest" for nearest-neighbor pixels
-        * "piecewise bilinear" for interpolation (default)
+        * "cubic" for cubic interpolation
 
     Returns
     -------
@@ -750,8 +760,9 @@ def elevate(m2 : watershed_workflow.mesh.mesh.Mesh2D,
         Array of triangle vertices, including a z-dimension.
 
     """
+    kwargs.setdefault('method', 'linear')
     mesh_points = m2.coords
-    
+
     # index the i,j of the points, pick the elevations
     elev = watershed_workflow.utils.data.interpolateValues(mesh_points, m2.crs, dem, **kwargs)
 

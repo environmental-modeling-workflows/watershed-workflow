@@ -88,6 +88,61 @@ def test_reorder():
         assert m2newpart.cell_data.loc[i-1, 'partition'] <= m2newpart.cell_data.loc[i,'partition']
 
     
+def test_refine_triangle_labeled_sets():
+    # a center triangle (cell 0) surrounded by 3 triangle neighbors,
+    # plus one untouched triangle glued onto neighbor cell 1, so
+    # something survives refinement unmodified.
+    coords = np.array([
+        [0, 0, 0],
+        [2, 0, 0],
+        [1, 2, 0],
+        [1, -2, 0],
+        [3, 1, 0],
+        [-1, 1, 0],
+        [1, -4, 0],
+    ], dtype=float)
+    conn = [
+        [0, 1, 2],  # c = 0, the cell to refine
+        [0, 3, 1],  # neighbor across edge (0,1)
+        [1, 4, 2],  # neighbor across edge (1,2)
+        [2, 5, 0],  # neighbor across edge (2,0)
+        [3, 6, 1],  # untouched, glued onto neighbor cell 1
+    ]
+    m2 = watershed_workflow.mesh.mesh.Mesh2D(coords, conn, check_handedness=True)
+
+    # VERTEX set with both endpoints of edge (0,1) -- midpoint should be added
+    m2.labeled_sets.append(
+        watershed_workflow.mesh.mesh.LabeledSet('myverts', 1, 'VERTEX', [0, 1]))
+    # FACE set containing edge (0,1) -- should split into its two new edges
+    m2.labeled_sets.append(
+        watershed_workflow.mesh.mesh.LabeledSet(
+            'myfaces', 2, 'FACE', [watershed_workflow.mesh.mesh.Edge(0, 1)]))
+    # CELL set containing only the untouched cell -- should shift index, not split
+    m2.labeled_sets.append(
+        watershed_workflow.mesh.mesh.LabeledSet('mycells', 3, 'CELL', [4]))
+
+    m2r = watershed_workflow.mesh.mesh.refineTriangle(m2, 0)
+
+    assert m2r.num_cells == 4 - 4 + 10 + 1  # 4 removed, 10 added, 1 untouched survivor
+    assert len(m2r.coords) == len(coords) + 3
+
+    ls_by_name = {ls.name: ls for ls in m2r.labeled_sets}
+
+    # the new midpoint vertex on edge (0,1) is the first of the 3 new vertices
+    vm = len(coords)
+    assert set(ls_by_name['myverts'].ent_ids) == { 0, 1, vm }
+
+    ea = watershed_workflow.mesh.mesh.Edge(0, vm)
+    eb = watershed_workflow.mesh.mesh.Edge(1, vm)
+    assert set(ls_by_name['myfaces'].ent_ids) == { ea, eb }
+
+    # the untouched cell (originally index 4) survives, now at index 0
+    # because all 4 refined cells (indices 0-3) were removed first
+    assert ls_by_name['mycells'].ent_ids == [0]
+    assert np.allclose(m2r.centroids[ls_by_name['mycells'].ent_ids[0], 0:2],
+                        m2.centroids[4, 0:2], 1.e-10)
+
+
 def test_write():
     m2 = watershed_workflow.mesh.mesh.Mesh2D.from_Transect(np.array([0, 10, 20]),
                                                       np.array([0, 0, 0]),

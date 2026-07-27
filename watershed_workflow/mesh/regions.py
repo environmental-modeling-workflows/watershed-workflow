@@ -19,6 +19,7 @@ import watershed_workflow.utils.utils
 __all__ = [
     'addSurfaceRegions',
     'addPolygonalRegions',
+    'addOutletRegion',
     'addWatershedAndOutletRegions',
     'addRiverCorridorRegions',
     'addStreamOrderRegions',
@@ -124,6 +125,16 @@ def addPolygonalRegions(m2 : Mesh2D,
         return partitions
     return None
 
+
+def addOutletRegion(m2 : Mesh2D,
+                    outlet_edge : Edge,
+                    ls_name : str = 'outlet',
+                    ):
+    """Adds a region for a single outlet edge."""
+    setid = m2.getNextAvailableLabeledSetID()
+    ls = watershed_workflow.mesh.mesh.LabeledSet(ls_name, setid, 'FACE', [outlet_edge,])
+    m2.labeled_sets.append(ls)
+    
 
 def addWatershedAndOutletRegions(m2 : Mesh2D,
                                   hucs : Watershed,
@@ -239,6 +250,11 @@ def addRiverCorridorRegions(m2 : Mesh2D,
     labels: list(str), optional
       List of names, one per river.
     """
+    assert 'partition' not in m2.cell_data, \
+        "addRiverCorridorRegions() uses reach[ELEMS_GID_START]/ELEMS, which are only " \
+        "valid against the mesh as it existed at tessalateRiverAligned() time -- m2 " \
+        "has already been partitioned (which permutes vertex/cell indices), so these " \
+        "indices are stale. Call this before partition()."
     if labels is None:
         labels = [f'river corridor {i}' for (i,r) in enumerate(rivers)]
     else:
@@ -265,6 +281,11 @@ def addStreamOrderRegions(m2 : Mesh2D,
     rivers : List[watershed_workflow.hydro.river.River]
       River used to create the river corridors.
     """
+    assert 'partition' not in m2.cell_data, \
+        "addStreamOrderRegions() uses reach[ELEMS_GID_START]/ELEMS, which are only " \
+        "valid against the mesh as it existed at tessalateRiverAligned() time -- m2 " \
+        "has already been partitioned (which permutes vertex/cell indices), so these " \
+        "indices are stale. Call this before partition()."
     from collections import defaultdict
 
     regions : Dict[int, List[int]] = defaultdict(list)
@@ -295,6 +316,11 @@ def addReachIDRegions(m2 : Mesh2D,
       list of NHDID IDs to be labeled.
     """
 
+    assert 'partition' not in m2.cell_data, \
+        "addReachIDRegions() uses reach[ELEMS_GID_START]/ELEMS, which are only " \
+        "valid against the mesh as it existed at tessalateRiverAligned() time -- m2 " \
+        "has already been partitioned (which permutes vertex/cell indices), so these " \
+        "indices are stale. Call this before partition()."
     from collections import defaultdict
 
     regions : Dict[str, List[int]] = defaultdict(list)

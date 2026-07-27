@@ -12,7 +12,7 @@ import ipywidgets as widgets
 
 import watershed_workflow.sources.standard_names as names
 import watershed_workflow.utils.utils
-from .mesh import Mesh2D, Edge
+from .mesh import Mesh2D, Edge, LabeledSet
 from watershed_workflow.hydro.river import River
 import watershed_workflow.utils.data
 
@@ -22,6 +22,7 @@ __all__ = [
     'conditionRiverMeshes',
     'setProfileByDEM',
     'smoothProfile',
+    'plotWorstPit',
 ]
 
 
@@ -78,7 +79,7 @@ def _computePitDepth(m2 : Mesh2D,
     if len(m2.cell_to_cells[c]) < len(m2.conn[c]):
         # at least one boundary edge!
         be_z = min((m2.coords[e[0],2] + m2.coords[e[1],2]) / 2 \
-                   for e in m2.cell_edges[c] if e in m2.boundary_edges)
+                   for e in m2.cell_edges[c] if e in m2.boundary_edges_set)
         be_pit_depth = be_z - my_z
 
     return other_z - my_z, be_pit_depth
@@ -406,6 +407,83 @@ def plotPitFilling(m2: Mesh2D,
     return output, fig, ax, scaler
 
 
+def plotWorstPit(m2 : Mesh2D,
+                 pits : List[Tuple[int, str, float, float]],
+                 context_rings : int = 3,
+                 dem : Optional[xarray.DataArray] = None,
+                 dem_sm : Optional[xarray.DataArray] = None,
+                 ax : Optional[Any] = None,
+                 cell : Optional[int] = None,
+                 ):
+    """Plot the deepest pit in pits, zoomed in with its surrounding context.
+
+    Useful for debugging why a particular cell is (or remains) a pit.
+    A thin, pit-specific wrapper around
+    watershed_workflow.plot.plotCellContext() -- see that function for
+    the panel layout (full mesh + zoomed context, optionally with DEM(s)).
+
+    Parameters
+    ----------
+    m2 : Mesh2D
+        The mesh, with current elevations in m2.coords[:,2].
+    pits : List[Tuple[int, str, float, float]]
+        Pit list as returned by findPits()/fillPits() -- entries are
+        (cell, cause, internal_depth, boundary_depth).
+    context_rings : int, optional
+        Number of rings of neighbors around the pit cell for context.
+        Default is 3.
+    dem : xr.DataArray, optional
+        The source DEM (same CRS as m2). If provided, adds a panel
+        showing the DEM cropped to the pit's local context.
+    dem_sm : xr.DataArray, optional
+        A smoothed version of dem (e.g. from smooth2D). If provided,
+        adds a panel showing it cropped to the same region.
+    ax : array-like of matplotlib.Axes, optional
+        Axes to plot on -- length 2, 3, or 4 depending on whether dem /
+        dem_sm are provided. If None, creates a new figure.
+    cell : int, optional
+        TEMPORARY: if provided, plot this cell instead of the worst pit
+        in pits (useful for tracking a specific location across
+        multiple stages of a pipeline). Default is None, which uses the
+        worst (deepest) pit in pits, as before. If cell is not itself
+        in pits, cause/depths are reported as unavailable.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    ax : array-like of matplotlib.Axes
+    worst_pit : Tuple[int, str, float, float]
+        The pit entry that was plotted (the one with max depth, or the
+        entry for `cell` if it was found in pits, or a placeholder
+        entry (cell, 'n/a', nan, nan) if cell was given but not found
+        in pits).
+    """
+    import watershed_workflow.plot.plot
+
+    if cell is not None:
+        c0 = cell
+        try:
+            worst_pit = next(p for p in pits if p[0] == c0)
+        except StopIteration:
+            worst_pit = (c0, 'n/a', np.nan, np.nan)
+    else:
+        if len(pits) == 0:
+            raise ValueError('plotWorstPit() called with an empty pits list.')
+        worst_pit = max(pits, key=_metricPitDepth)
+        c0 = worst_pit[0]
+    _, cause, internal_depth, boundary_depth = worst_pit
+
+    metric_depth = _metricPitDepth(worst_pit) if cause != 'n/a' else np.nan
+    label = 'cell' if cell is not None and cause == 'n/a' else 'Worst pit: cell'
+    title = (f'{label} {c0} ({cause})\n'
+             f'internal depth={internal_depth:.3f}, boundary depth={boundary_depth:.3f}, '
+             f'metric depth={metric_depth:.3f}')
+
+    fig, ax, c0 = watershed_workflow.plot.plot.plotCellContext(
+        m2, cell=c0, context_rings=context_rings, dem=dem, dem_sm=dem_sm, ax=ax, title=title)
+    return fig, ax, worst_pit
+
+
 def _partitionOutletEdges(m2 : Mesh2D,
                           forced_outlet_edges : Iterable[Edge] | None,
                           optional_outlet_edges : Iterable[Edge] | None,
@@ -694,7 +772,7 @@ def conditionCell(m2: Mesh2D,
         # Boundary cell - determine fixed vertices and raises
         cell_vertices = set(m2.conn[c])
         cell_edges = set(m2.cell_edges[c])
-        boundary_cell_edges = cell_edges & set(m2.boundary_edges)
+        boundary_cell_edges = cell_edges & m2.boundary_edges_set
 
         if cause == 'forced outlet':
             logging.debug(f" ... forced -- raising internally")
@@ -711,10 +789,13 @@ def conditionCell(m2: Mesh2D,
             # Water flowing outward - raise ONLY boundary vertices directly
             vertex_raises = {}
             raise_amount = -boundary_depth + epsilon
-            for v in cell_vertices:
+            divide_vertices = set()
+            for edge in boundary_cell_edges:
+                if edge in divide_edges:
+                    divide_vertices.update(edge)
+            for v in divide_vertices:
                 if v not in additional_fixed_vertices:
-                    if any(v in edge for edge in divide_edges if edge in cell_edges):
-                        vertex_raises[v] = raise_amount
+                    vertex_raises[v] = raise_amount
 
         elif cause == 'divide internal':
             # Internally trapped - fix nothing, raise centroid
@@ -726,8 +807,8 @@ def conditionCell(m2: Mesh2D,
             logging.debug(f" ... optional -- raising all")
             # May drain either way - fix vertices on optional_outlet_edges, raise centroid
             fixed_vertices = set()
-            for edge in optional_outlet_edges:
-                if edge in cell_edges:
+            for edge in boundary_cell_edges:
+                if edge in optional_outlet_edges:
                     fixed_vertices.update(edge)
             fixed_vertices.update(additional_fixed_vertices)
             vertex_raises = raiseCellCentroid(m2, c, boundary_depth + epsilon, fixed_vertices)
@@ -752,6 +833,9 @@ def _fillPits_iterator_decorator(func, method_name):
                       increase_ok : bool = False,
                       **kwargs,
                       ) -> Mesh2D:
+        forced_outlet_cells, optional_outlet_cells, divide_cells = \
+            _partitionOutletCells(m2, forced_outlet_edges, optional_outlet_edges, divide_edges)
+
         for itr in range(max_iterations):
             n_pits = len(pits)
             if n_pits == 0:
@@ -760,10 +844,16 @@ def _fillPits_iterator_decorator(func, method_name):
 
             m2 = func(m2, pits, preserved_pits, forced_outlet_edges, optional_outlet_edges, divide_edges,
                  epsilon, tol, **kwargs)
-            pits_final = _findPits(m2, preserved_pits, forced_outlet_edges, optional_outlet_edges, divide_edges,
+            pits_final = _findPits(m2, preserved_pits, forced_outlet_cells, optional_outlet_cells, divide_cells,
                                 epsilon, tol)
             if max_iterations < 10 or itr%10 == 0:
-                logging.info(f" ... iteration {itr} of {method_name}: {len(pits_final)} pits")
+                if pits_final:
+                    depths = np.array([singlePitDepth(p) for p in pits_final])
+                    depth_stats = (f'depth max={depths.max():.3f}, '
+                                    f'mean={depths.mean():.3f}, median={np.median(depths):.3f}')
+                else:
+                    depth_stats = 'depth n/a'
+                logging.info(f" ... iteration {itr} of {method_name}: {len(pits_final)} pits, {depth_stats}")
 
             if not increase_ok and len(pits_final) > n_pits:
                 logging.info(f" ... done iterating in {itr} iterations due to increasing number of pits.")
@@ -1224,12 +1314,32 @@ def fillPits_marching(m2: Mesh2D,
     fixed_vertices = set()  # Vertices in waterway cells (incrementally updated)
     border = sortedcontainers.SortedList(key=lambda entry : entry[0])
 
+    # auxiliary indices into border, kept in sync with all mutations of
+    # border, to avoid O(len(border)) scans on the hot path:
+    #  - border_z: cell -> current z, doubles as an O(1) membership test
+    #  - vertex_to_border: vertex -> set of border cells containing it
+    border_z : Dict[int, float] = dict()
+    vertex_to_border : Dict[int, Set[int]] = collections.defaultdict(set)
+
+    def _borderAdd(z, c):
+        border.add((z, c))
+        border_z[c] = z
+        for v in m2.conn[c]:
+            vertex_to_border[v].add(c)
+
+    def _borderPop(idx):
+        (z, c) = border.pop(idx)
+        del border_z[c]
+        for v in m2.conn[c]:
+            vertex_to_border[v].discard(c)
+        return z, c
+
     # pre-fix preserved pits so they cannot change when conditioning
     if preserved_pits_are_fixed:
         for c in preserved_pits:
             fixed_vertices.update(m2.conn[c])
-    
-    
+
+
     def measureAndConditionCell(c, rel_to_waterway=True) -> bool:
         """Returns whether the elevation was raised or not."""
         raised = False
@@ -1249,16 +1359,19 @@ def fillPits_marching(m2: Mesh2D,
                 for v, val in to_raise.items():
                     m2.coords[v,2] += val
 
-                # recompute elevation of affected cells in the border
-                to_replace = []
-                for i,(z,bc) in enumerate(border): # make a copy
-                    if any(v in m2.conn[bc] for v in to_raise.keys()):
-                        to_replace.append(i)
+                # recompute elevation of affected cells in the border --
+                # only cells touching a raised vertex can be affected
+                to_replace = set()
+                for v in to_raise.keys():
+                    to_replace.update(vertex_to_border[v])
 
-                for i in reversed(to_replace):
-                    (z, bc) = border.pop(i)
+                for bc in to_replace:
+                    z = border_z[bc]
+                    border.remove((z, bc))
+                    del border_z[bc]
                     z_new = m2.computeCentroid(bc)[2]
                     border.add((z_new, bc))
+                    border_z[bc] = z_new
                     logging.debug(f'REPLACING bc {bc}, recomputed elev from {z} to {z_new}')
                 raised = True
         return raised
@@ -1266,14 +1379,14 @@ def fillPits_marching(m2: Mesh2D,
     def addToBorder(c):
         if c in waterway:
             return
-        if any(c == entry[1] for entry in border):
+        if c in border_z:
             return
-        
+
         # condition upon adding
         if conditioning_policy == 'border':
             measureAndConditionCell(c, True)
 
-        border.add((m2.computeCentroid(c)[2], c))
+        _borderAdd(m2.computeCentroid(c)[2], c)
 
         if fixing_policy == 'border':
             if c not in preserved_pits:
@@ -1346,7 +1459,7 @@ def fillPits_marching(m2: Mesh2D,
     # start marching
     while len(border) > 0:
         # pop the lowest border cell and add it to the waterway
-        (z,bc) = border.pop(0)
+        (z,bc) = _borderPop(0)
         added = addToWaterway(bc, replace_upon_conditioning)
         if added:
             for nc in m2.cell_to_cells[bc]:
@@ -1537,6 +1650,7 @@ def conditionMesh(m2 : Mesh2D,
                   plot: bool = False,
                   ) -> Tuple[Mesh2D, List[Dict[str,Any]]]:
     """The recommended algorithm for filling pits away from the river."""
+    preserved_pits = set(preserved_pits) if preserved_pits else set()
     args = [preserved_pits, forced_outlet_edges, optional_outlet_edges,
             divide_edges, epsilon, tol]
     m2, res1 = fillPits(m2, 'marching', *args, max_iterations=3)
@@ -1560,22 +1674,23 @@ def conditionMesh(m2 : Mesh2D,
                     affected.extend(local_affected)    
     # refine
     if len(nonoverlapping) > 0:
+        # tag preserved_pits as a labeled set so refineTriangles carries it
+        # through the cell renumbering (including cells that are themselves
+        # refined away, which get mapped to their replacement cells)
+        preserved_pits_setid = m2.getNextAvailableLabeledSetID()
+        m2.labeled_sets.append(
+            LabeledSet('__preserved_pits__', preserved_pits_setid, 'CELL', list(preserved_pits)))
+
         m2_r, removed_cells = watershed_workflow.mesh.refineTriangles(m2, nonoverlapping)
+
+        preserved_pits_ls = next(ls for ls in m2_r.labeled_sets if ls.setid == preserved_pits_setid)
+        preserved_pits = set(preserved_pits_ls.ent_ids)
+        m2.labeled_sets.remove(next(ls for ls in m2.labeled_sets if ls.setid == preserved_pits_setid))
+        m2_r.labeled_sets.remove(preserved_pits_ls)
     else:
-        m2_r, removed_cells = m, list()
+        m2_r = m2
 
-    # remap preserved_pits.  Note that edges are fine
-    #
-    # removed_cells provides a list of cells, in the original numbering, that were removed
-    preserved_pits_old = list(preserved_pits)
-    preserved_pits_new = []
-    for c in preserved_pits_old:
-        # count the number of cells in removed_cells that have an id less than preserved_pits
-        new_c = c - sum(1 for r in removed_cells if r < c)
-        assert m2.conn[c] == m2_r.conn[new_c]
-        preserved_pits_new.append(new_c)
-
-    args = [set(preserved_pits_new), forced_outlet_edges, optional_outlet_edges,
+    args = [preserved_pits, forced_outlet_edges, optional_outlet_edges,
             divide_edges, epsilon, tol]
 
     # marching
@@ -1684,6 +1799,7 @@ def setProfileByDEM(rivers : List[River],
                     **kwargs) -> None:
     """Set the z-coordinate of the reach linestring from a DEM dataset."""
     assert len(rivers) > 0
+    kwargs.setdefault('method', 'linear')
     points = np.array([c for river in rivers for reach in river for c in reach.linestring.coords])
     elevs = watershed_workflow.utils.data.interpolateValues(points, rivers[0].crs, dem, **kwargs)
 
@@ -1806,6 +1922,11 @@ def burnInRiver(river : River,
 def distributeProfileToMesh(m2 : Mesh2D,
                             river : River) -> None:
     """Take reach profile elevations and move them out to the mesh vertices."""
+    assert 'partition' not in m2.cell_data, \
+        "distributeProfileToMesh() uses reach['elems'], which are only valid against " \
+        "the mesh as it existed at tessalateRiverAligned() time -- m2 has already been " \
+        "partitioned (which permutes vertex/cell indices), so these indices are stale. " \
+        "Call this before partition()."
     for reach in river:
         for i, elem in enumerate(reach['elems']):
             m2.coords[elem[1:-1], 2] = reach.linestring.coords[i][2]
@@ -1818,6 +1939,11 @@ def enforceBankIntegrity(m2 : Mesh2D,
                          river : River,
                          bank_integrity_elevation : float) -> None:
     """Forces banks at least bank_integrity_elevation higher than the channel elevation."""
+    assert 'partition' not in m2.cell_data, \
+        "enforceBankIntegrity() uses reach['elems'], which are only valid against " \
+        "the mesh as it existed at tessalateRiverAligned() time -- m2 has already been " \
+        "partitioned (which permutes vertex/cell indices), so these indices are stale. " \
+        "Call this before partition()."
     # collecting IDs of all vertices in the river/stream
     river_corr_ids = set(vertex_id for reach in river for elem in reach['elems'] for vertex_id in elem)
 

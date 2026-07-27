@@ -247,9 +247,9 @@ class ManagerNWIS(manager_shapes.ManagerShapes):
         Returns
         -------
         gpd.GeoDataFrame
-            Copy of ``df`` with ``names.COMID`` and ``names.MEASURE``
+            Copy of ``df`` with ``comid`` and ``measure``
             columns added.  Sites not found in NLDI will have ``NaN``.
-            ``names.COMID`` is cast to ``Int64`` (nullable integer).
+            ``comid`` is cast to ``Int64`` (nullable integer).
         """
         import pynhd
         nldi = pynhd.NLDI()
@@ -257,6 +257,6 @@ class ManagerNWIS(manager_shapes.ManagerShapes):
         features = nldi.getfeature_byid('nwissite', nldi_ids)
         features = features.set_index(features['identifier'].str.replace('USGS-', '', regex=False))
         df = df.copy()
-        df[names.COMID] = df[names.ID].map(features['comid']).astype('Int64')
-        df[names.MEASURE] = df[names.ID].map(features['measure'])
+        df['comid'] = df[names.ID].map(features['comid']).astype('Int64')
+        df['measure'] = df[names.ID].map(features['measure'])
         return df
