@@ -17,40 +17,32 @@ RUN echo "TARGETARCH=${TARGETARCH}" && \
     uname -m && \
     conda info | grep platform
 
-# copy over create_envs
+# copy over create_envs and requirements.txt (pip-installed by create_envs.py itself)
 WORKDIR /ww/tmp
-COPY environments/create_envs.py /ww/tmp/create_envs.py 
+COPY environments/create_envs.py /ww/tmp/create_envs.py
+COPY requirements.txt /ww/tmp/requirements.txt
 RUN mkdir environments
 
-# Create the environment
+# set compilers from watershed_workflow_tools environment -- this must happen
+# BEFORE create_envs.py runs, since it also pip-installs requirements.txt
+# (meshpy has no linux-aarch64 wheel and must build from source there, which
+# needs g++/gcc from the tools env on PATH)
+ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools
+ENV PATH="${COMPILERS}/bin:${PATH}"
+
+# Create the environment (also pip-installs requirements.txt, constrained
+# against the conda env's own package versions -- see create_envs.py)
 RUN --mount=type=cache,target=/opt/conda/pkgs \
     /opt/conda/bin/python create_envs.py --OS=Linux --manager=${CONDA_BIN}  \
     --env-type=CI --with-tools-env=watershed_workflow_tools ${env_name}
 
 # test the environment
-RUN ${CONDA_BIN} run --name ${env_name} python -c "import pymetis; import geopandas"
-
-# set compilers from watershed_workflow_tools environment
-ENV COMPILERS=/opt/conda/envs/watershed_workflow_tools 
-ENV PATH="${COMPILERS}/bin:${PATH}"
+RUN ${CONDA_BIN} run --name ${env_name} python -c "import pymetis; import geopandas; import meshpy"
 
 #
-# Stage 2 -- add in the pip
+# Stage 2 -- add in Exodus
 #
-FROM ww_env_base_ci AS ww_env_pip_ci
-
-WORKDIR /ww/tmp
-COPY requirements.txt /ww/tmp/requirements.txt
-
-RUN ${CONDA_BIN} run --name ${env_name} python -m pip install -r requirements.txt
-
-# test the environment
-RUN ${CONDA_BIN} run --name ${env_name} python -c "import meshpy"
-
-#
-# Stage 3 -- add in Exodus
-#
-FROM ww_env_pip_ci AS ww_env_exodus_ci
+FROM ww_env_base_ci AS ww_env_exodus_ci
 
 ENV SEACAS_DIR="/opt/conda/envs/${env_name}"
 ENV CONDA_PREFIX="/opt/conda/envs/${env_name}"
