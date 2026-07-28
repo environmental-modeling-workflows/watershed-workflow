@@ -28,6 +28,6 @@ RUN conda run -n watershed_workflow_CI python -m pytest watershed_workflow/test
 RUN conda run -n watershed_workflow_CI python -m pytest watershed_workflow/sources/test
 
 # run the notebook examples
-RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/coweeta_stream_aligned_mesh.ipynb
+RUN conda run -n watershed_workflow_CI pytest --nbmake --nbmake-kernel=python3 examples/coweeta_stream_aligned_mesh.ipynb examples/toy_problem_stream_aligned_mesh.ipynb
 
 
