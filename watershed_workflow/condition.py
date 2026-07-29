@@ -193,12 +193,14 @@ def findPits(m2: Mesh2D,
     where depth is from computePitDepth().
 
     Boundary edge partitioning:
+
     - All boundary edges are categorized into forced_outlet_edges,
       optional_outlet_edges, or divide_edges
     - Unspecified edges default to optional_outlet_edges
     - forced_outlet_edges take precedence in overlaps
 
     Pit criteria by cell type:
+
     - Internal cells: isPit(internal_depth)
     - Forced outlet cells: isPit(boundary_depth)
     - Divide edge cells: isPit(internal_depth) OR NOT isPit(boundary_depth)
@@ -891,16 +893,16 @@ def fillPits_marching_old(m2: Mesh2D,
 
     Starting from an outlet, it adds cells to the waterway by picking
     the lowest elevation cell that currently borders the existing
-    waterway.  It conditions upon adding the cell to the _boundary_.
+    waterway.  It conditions upon adding the cell to the *boundary*.
 
     Conditioning a cell requires that this cell is higher that at
-    least one of its neighbors that is _already in the waterway_.
+    least one of its neighbors that is *already in the waterway*.
     Note that this is more aggressive because it requires the lower
     cell to be in the waterway, not just any neighbor.
 
     If a cell has a lower cell that is NOT in the waterway, and has a
     valid, monotonically decreasing pathway to the waterway, then that
-    pathway has a cell that _is_ in the boundary of the current
+    pathway has a cell that *is* in the boundary of the current
     waterway, and that cell's elevation is lower than this cell, and
     therefore would have been selected before this cell.
     Contradiction; therefore the downhill path must lead to a pit or
@@ -1123,12 +1125,12 @@ def fillPits_marching(m2: Mesh2D,
 
     A cell must be conditioned before it can be added to the waterway.
     Conditioning a cell enforces that this cell has a higher elevation
-    than at least one of its neighbors that is _already in the
-    waterway_.
+    than at least one of its neighbors that is *already in the
+    waterway*.
 
     If a cell has a lower cell that is NOT in the waterway, and has a
     valid, monotonically decreasing pathway to the waterway, then that
-    pathway has a cell that _is_ in the border of the current
+    pathway has a cell that *is* in the border of the current
     waterway, and that cell's elevation is lower than this cell, and
     therefore would have been selected before this cell.
     Contradiction; therefore the downhill path must lead to a pit or
@@ -1600,11 +1602,11 @@ def conditionRiverMesh(m2 : Mesh2D,
                        network_burn_in_depth : Optional[Callable[[River,], float]] = None,
                        known_depressions : Optional[List[int]] = None) -> None:
     """Condition, IN PLACE, the elevations of stream-corridor elements
-   to ensure connectivity throgh culverts, skips ponds, maintain
-   monotonicity, or otherwise enforce depths of constructed channels.
+    to ensure connectivity throgh culverts, skips ponds, maintain
+    monotonicity, or otherwise enforce depths of constructed channels.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     m2: watershed_workflow.mesh.Mesh2D object
         2D mesh with 3D coordinates.
     river: watershed_workflow.river_tree.River object

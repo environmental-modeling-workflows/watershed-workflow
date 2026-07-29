@@ -2229,6 +2229,7 @@ def refineTriangles(m2 : Mesh2D, to_refine : List[int]) -> Mesh2D:
     """Refine a set of triangles, making a new mesh.
 
     Note that cell in to_refine must be:
+
     - a triangle
     - that is not on the boundary
     - whose neighboring cells are also triangles

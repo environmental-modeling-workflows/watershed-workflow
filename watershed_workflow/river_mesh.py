@@ -762,9 +762,9 @@ def projectTwoClampedMiter(p_up: np.ndarray,
       180): the miter direction becomes unreliable; fall back to the
       bisector direction with the average width, similarly capped.
     - theta <= 90 deg (sharp bend): the miter direction is reliable; cap
-      |m - p| to 3/4 * min(|p_up - p|, |p_dn - p|) to prevent overshoot.
+      ``|m - p|`` to 3/4 * min(``|p_up - p|``, ``|p_dn - p|``) to prevent overshoot.
 
-    In both cases the fallback also triggers when |m - p| already exceeds
+    In both cases the fallback also triggers when ``|m - p|`` already exceeds
     the cap (e.g. parallel segments where _projectTwoMiter returns a
     perpendicular).
 

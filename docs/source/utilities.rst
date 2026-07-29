@@ -1,15 +1,19 @@
 Utilities
 ~~~~~~~~~
 
+.. _crs:
+
 CRS
 +++
 .. automodule:: watershed_workflow.crs
-    :members:               
+    :members:
+
+.. _package configuration:
 
 Package Configuration
 +++++++++++++++++++++
 .. automodule:: watershed_workflow.config
-    :members:                
+    :members:
        
 Plotting
 ++++++++

@@ -261,7 +261,7 @@ def create_and_dump_env_local(env_type, os_name, packages, env_name=None, dump_o
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Helper script to (re-)create environments and dump them to file.')
-    parser.add_argument('--env-type', type=str, default='CI', choices=['STANDARD', 'USER', 'CI'],
+    parser.add_argument('--env-type', type=str, default='CI', choices=['STANDARD', 'USER', 'CI', 'DEV'],
                         help='Type of environment to build, one of:\n'
                              '  - "STANDARD" - the default WW libraries\n'
                              '  - "CI"       - minimal build of libraries for CI\n'

@@ -23,10 +23,12 @@ from . import manager_dataset
 class ManagerSoilGrids2017(manager_dataset.ManagerDataset):
     """SoilGrids 250m (2017) datasets.
 
-    SoilGrids 2017 maintains, to date, the only complete
-    characterization of all soil properties needed for a hydrologic
-    model.  The resolution is decent, and the accuracy is ok, but most
-    importantly it is complete.
+    SoilGrids 2017 [SoilGrids2017]_ maintains, to date, the only
+    complete characterization of all soil properties needed for a
+    hydrologic model.  The resolution is decent, and the accuracy is
+    ok, but most importantly it is complete.  See
+    [hengl2014soilgrids]_ and [hengl2017soilgrids]_ for details of the
+    underlying mapping methodology.
 
     .. [SoilGrids2017] https://www.isric.org/explore/soilgrids/faq-soilgrids-2017
 
