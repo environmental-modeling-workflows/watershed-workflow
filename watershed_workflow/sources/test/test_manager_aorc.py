@@ -337,7 +337,7 @@ def test_date_validation_errors(small_aorc_geometry, aorc_crs, aorc_manager):
         aorc_manager.getDataset(small_aorc_geometry, aorc_crs,
                                start='1970-01-01', end='1970-12-31', variables=['APCP_surface'])
 
-    # Test end date after AORC end (2024)
+    # Test end date after AORC end (today, minus publication lag)
     with pytest.raises(ValueError, match="End date .* is after dataset end"):
         aorc_manager.getDataset(small_aorc_geometry, aorc_crs,
-                               start='2024-01-01', end='2025-01-01', variables=['APCP_surface'])
+                               start='2024-01-01', end='2999-01-01', variables=['APCP_surface'])

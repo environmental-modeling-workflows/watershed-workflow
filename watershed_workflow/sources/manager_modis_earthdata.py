@@ -84,6 +84,9 @@ _WGS84_TO_SINU = pyproj.Transformer.from_crs(
 # ---------------------------------------------------------------------------
 #: Per-variable product metadata.
 #: ``opendap`` — True if cloud OPeNDAP is available for this product.
+#: ``native_end``/``native_end_lag_days`` — see ``_getNativeEnd()``: LAI is
+#: released on a near-real-time, roughly-constant-lag basis, while LULC is
+#: annual and only reliably available through a fixed, manually-bumped year.
 _PRODUCTS: Dict[str, Dict] = {
     'LAI': {
         'product': 'MCD15A3H',
@@ -95,6 +98,7 @@ _PRODUCTS: Dict[str, Dict] = {
         'long_name': 'Leaf Area Index',
         'units': 'm^2/m^2',
         'opendap': False,   # not yet available at LP DAAC cloud
+        'native_end_lag_days': 15,
     },
     'LULC': {
         'product': 'MCD12Q1',
@@ -106,6 +110,10 @@ _PRODUCTS: Dict[str, Dict] = {
         'long_name': 'Land Cover Type 1 (IGBP)',
         'units': 'class',
         'opendap': False,   # use HDF4 to match LAI pixel grid
+        # MCD12Q1.061 is annual and only reliably available through 2024 --
+        # the science team has not kept training data current since 2020.
+        # Update once a later year is confirmed published.
+        'native_end': cftime.datetime(2024, 12, 31, calendar='standard'),
     },
 }
 
@@ -294,7 +302,6 @@ class ManagerMODISEarthdata(manager_dataset.ManagerDataset):
             Default is ``False``.
         """
         native_start = cftime.datetime(2002, 7, 4, calendar='standard')
-        native_end = cftime.datetime(2024, 12, 31, calendar='standard')
 
         #: MODIS sinusoidal CRS (sphere, a=b=6 371 007.181 m).
         native_crs_out = _MODIS_SINU_CRS
@@ -322,14 +329,29 @@ class ManagerMODISEarthdata(manager_dataset.ManagerDataset):
             native_crs_out=native_crs_out,
             native_resolution=native_resolution,
             native_start=native_start,
-            native_end=native_end,
+            # native_end is variable-dependent -- see _getNativeEnd().
+            native_end=None,
             valid_variables=list(_PRODUCTS.keys()),
             default_variables=list(_PRODUCTS.keys()),
             is_temporal=True,
+            native_calendar='standard',
         )
         super().__init__(attrs)
         self.force_download = force_download
         self._session = None   # earthaccess HTTPS session, set on first use
+
+    @classmethod
+    def _productNativeEnd(cls, product_key):
+        """Return a single product's native_end: fixed date if given, else today minus its lag."""
+        info = _PRODUCTS[product_key]
+        if 'native_end' in info:
+            return info['native_end']
+        return manager_dataset.ManagerDataset._todayMinusLag(info['native_end_lag_days'],
+                                                              calendar='standard')
+
+    def _getNativeEnd(self, variables):
+        """Return the most conservative native_end across the requested products."""
+        return min(self._productNativeEnd(var) for var in variables)
 
     # ------------------------------------------------------------------
     # ManagerDataset abstract method implementations

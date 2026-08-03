@@ -47,11 +47,24 @@ class ManagerAttributes:
         Characteristic resolution of the data in ``native_crs_in`` units.
         Used for buffering and cache-directory snapping.
     native_start : object, optional
-        Earliest start date of the data (cftime.datetime), or ``None`` for
-        non-temporal datasets.
+        Earliest start date of the data (cftime.datetime).  Used as the
+        default implementation of ``ManagerDataset._getNativeStart()``.
+        May be ``None`` for non-temporal data, or for a temporal manager
+        that overrides ``_getNativeStart()`` with variable-dependent
+        logic (in which case ``native_calendar`` must be given).
     native_end : object, optional
-        Latest end date of the data (cftime.datetime), or ``None`` for
-        non-temporal datasets.
+        Latest end date of the data (cftime.datetime).  Used as the
+        default implementation of ``ManagerDataset._getNativeEnd()``.
+        May be ``None`` for non-temporal data, or for a temporal manager
+        that overrides ``_getNativeEnd()`` with variable-dependent logic
+        (in which case ``native_calendar`` must be given).
+    native_calendar : str or None, optional
+        cftime calendar (e.g. ``'standard'``, ``'noleap'``).  Required
+        when both ``native_start`` and ``native_end`` are ``None`` but
+        the manager is still temporal; calendars cannot be assumed equal
+        across variables (e.g. noleap vs. standard), so the manager must
+        state it explicitly.  When omitted, detected from whichever of
+        ``native_start``/``native_end`` is given.
     native_id_field : str or None, optional
         Name of the primary ID field in the native data.  ``None`` for
         raster managers.
@@ -89,6 +102,7 @@ class ManagerAttributes:
     native_resolution: float | None = None
     native_start: object = None     # cftime.datetime | None
     native_end: object = None       # cftime.datetime | None
+    native_calendar: str | None = None
     native_id_field: str | None = None
 
     # Variable selection

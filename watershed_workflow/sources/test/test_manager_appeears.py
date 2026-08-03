@@ -199,11 +199,19 @@ def test_date_validation_errors(modis_manager, coweeta):
             variables=['LAI']
         )
 
-    # Test end date after MODIS end (2024)
+    # Test end date after MODIS LULC end (fixed at 2024-12-31)
     with pytest.raises(ValueError, match="End date .* is after dataset end"):
         modis_manager.getDataset(
             coweeta,
             start='2020-01-01', end='2025-01-01',
+            variables=['LULC']
+        )
+
+    # Test end date after MODIS LAI end (today, minus publication lag)
+    with pytest.raises(ValueError, match="End date .* is after dataset end"):
+        modis_manager.getDataset(
+            coweeta,
+            start='2020-01-01', end='2999-01-01',
             variables=['LAI']
         )
 

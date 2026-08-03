@@ -29,6 +29,25 @@ _TEMPORAL_CONFIGS = {
     'yearly':  ('annual',  lambda d: f'y{d.year}'),
 }
 
+#: Conservative publication lag (days behind "today") for the two
+#: resolutions posted on a rolling basis.  Directory listings show
+#: daily/monthly granules trailing ~50-65 days in practice.
+_NATIVE_END_LAG_DAYS = {
+    'daily': 90,
+    'monthly': 90,
+}
+
+#: Resolutions posted as a single annual batch covering the *previous*
+#: calendar year (8-day composites are bundled one zip per year; yearly is
+#: an annual product by definition).  These can never report a bound inside
+#: the current, still-incomplete year, so "today minus N days" is the wrong
+#: shape of computation -- instead, require this many days into a new year
+#: to have elapsed before trusting that the previous year has been posted.
+_NATIVE_END_YEAR_POSTING_LAG_DAYS = {
+    '8day': 150,
+    'yearly': 150,
+}
+
 #: NoData sentinel value in the raw uint16 files.
 _NODATA = 9999
 
@@ -83,9 +102,29 @@ class ManagerSSEBop(manager_dataset.ManagerDataset):
             native_crs_out=watershed_workflow.crs.from_epsg(4326),
             native_resolution=0.009652,
             native_start=cftime.datetime(2000, 1, 1, calendar='standard'),
-            native_end=cftime.datetime(2023, 12, 31, calendar='standard'),
+            # native_end is self-perpetuating -- see _getNativeEnd().
+            native_end=None,
+            native_calendar='standard',
         )
         super().__init__(attrs)
+
+    def _getNativeEnd(self, variables):
+        """Return the latest date this manager's temporal resolution can trust as published.
+
+        ``daily``/``monthly`` are posted on a rolling basis, so the bound is
+        simply today minus a publication lag.  ``8day``/``yearly`` are
+        posted as a single annual batch covering the *previous* calendar
+        year, so the bound must be Dec 31 of the most recent year that has
+        both fully elapsed and had time to be posted -- never a date inside
+        the current, still-incomplete year.
+        """
+        if self._temporal_resolution in _NATIVE_END_LAG_DAYS:
+            lag_days = _NATIVE_END_LAG_DAYS[self._temporal_resolution]
+            return manager_dataset.ManagerDataset._todayMinusLag(lag_days, calendar='standard')
+        else:
+            posting_lag_days = _NATIVE_END_YEAR_POSTING_LAG_DAYS[self._temporal_resolution]
+            cutoff = manager_dataset.ManagerDataset._todayMinusLag(posting_lag_days, calendar='standard')
+            return cftime.datetime(cutoff.year - 1, 12, 31, calendar='standard')
 
     # ------------------------------------------------------------------
     # Cache directory management
