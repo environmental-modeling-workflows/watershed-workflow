@@ -89,9 +89,15 @@ class ManagerAORC(manager_dataset.ManagerDataset):
                          'TMP_2maboveground', 'UGRD_10maboveground', 'VGRD_10maboveground']
     URL = 's3://noaa-nws-aorc-v1-1-1km'
 
+    # AORC publishes on a near-real-time, rolling basis with roughly a
+    # 9-day production lag; use a slightly more conservative buffer to
+    # absorb pipeline hiccups (e.g. the April 2026 Zarr reprocessing).
+    NATIVE_END_LAG_DAYS = 15
+
     def __init__(self):
         native_start = cftime.datetime(1980, 1, 1, calendar='standard')
-        native_end = cftime.datetime(2024, 12, 31, calendar='standard')
+        native_end = manager_dataset.ManagerDataset._todayMinusLag(self.NATIVE_END_LAG_DAYS,
+                                                                    calendar='standard')
         native_crs = CRS.from_epsg(4326)
         native_resolution = 0.00833333  # 30 arc-second resolution
 

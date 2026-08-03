@@ -7,7 +7,7 @@ import logging
 import netrc
 import requests
 import time
-import cftime, datetime
+import cftime
 import shapely
 import numpy as np
 import rasterio.transform
@@ -90,14 +90,24 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
     _STATUS_URL = "https://appeears.earthdatacloud.nasa.gov/api/status/"
     _BUNDLE_URL_TEMPLATE = "https://appeears.earthdatacloud.nasa.gov/api/bundle/{0}"
 
+    # native_end: fixed last-known-good date for products with irregular
+    # or annual release schedules.  Omit this key for products released
+    # on a near-real-time, roughly-constant-lag basis -- their bound is
+    # instead computed as today minus native_end_lag_days.
     _PRODUCTS = {
         'LAI': {
             "layer": "Lai_500m",
-            "product": "MCD15A3H.061"
+            "product": "MCD15A3H.061",
+            "native_end_lag_days": 15,
         },
         'LULC': {
             "layer": "LC_Type1",
-            "product": "MCD12Q1.061"
+            "product": "MCD12Q1.061",
+            # MCD12Q1.061 is annual and only reliably available through
+            # 2024 -- the science team has not kept training data
+            # current since 2020.  Update once a later year is
+            # confirmed published.
+            "native_end": cftime.datetime(2024, 12, 31, calendar='standard'),
         },
     }
 
@@ -115,7 +125,6 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
         # 500 m / (pi/180 * 6 371 007.181 m/deg) ≈ 4.49e-3 deg
         native_resolution = 500.0 / (math.pi / 180.0 * 6_371_007.181)
         native_start = cftime.datetime(2002, 7, 1, calendar='standard')
-        native_end = cftime.datetime(2024, 1, 1, calendar='standard')
 
         attrs = ManagerAttributes(
             category='land_cover',
@@ -131,10 +140,12 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             native_crs_out=native_crs_out,
             native_resolution=native_resolution,
             native_start=native_start,
-            native_end=native_end,
+            # native_end is variable-dependent -- see _getNativeEnd().
+            native_end=None,
             valid_variables=['LAI', 'LULC'],
             default_variables=['LAI', 'LULC'],
             is_temporal=True,
+            native_calendar='standard',
         )
         super().__init__(attrs)
 
@@ -159,6 +170,19 @@ class ManagerMODISAppEEARS(manager_dataset.ManagerDataset):
             if not os.path.isfile(os.path.join(dir, f'{var}.nc')):
                 return False
         return True
+
+    @classmethod
+    def _productNativeEnd(cls, product_key):
+        """Return a single product's native_end: fixed date if given, else today minus its lag."""
+        info = cls._PRODUCTS[product_key]
+        if 'native_end' in info:
+            return info['native_end']
+        return manager_dataset.ManagerDataset._todayMinusLag(info['native_end_lag_days'],
+                                                              calendar='standard')
+
+    def _getNativeEnd(self, variables):
+        """Return the most conservative native_end across the requested products."""
+        return min(self._productNativeEnd(var) for var in variables)
 
     def _authenticate(self,
                       username: Optional[str] = None,

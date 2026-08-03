@@ -22,8 +22,8 @@ def test_constructor(soilgrids):
     assert soilgrids.product_short == 'SoilGrids2017'
     assert soilgrids.native_crs_in == watershed_workflow.crs.from_epsg(4326)
     assert soilgrids.native_crs_out == watershed_workflow.crs.from_epsg(4326)
-    assert soilgrids.native_start is None
-    assert soilgrids.native_end is None
+    assert soilgrids.getNativeStart() is None
+    assert soilgrids.getNativeEnd() is None
     assert soilgrids.default_variables == ['BDTICM']
 
 

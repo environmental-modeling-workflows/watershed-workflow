@@ -8,6 +8,7 @@ the fetching.
 import abc
 import concurrent.futures
 import dataclasses
+import datetime
 import enum
 from typing import Optional, List
 import numpy as np
@@ -129,11 +130,27 @@ class ManagerDataset(Manager, abc.ABC):
         ----------
         attrs : ManagerAttributes
             Plain-data object holding all metadata for this manager.
+            ``attrs.native_start``/``attrs.native_end`` are used as the
+            default implementation of ``_getNativeStart()``/
+            ``_getNativeEnd()``; both may be ``None`` for non-temporal
+            data, or for a temporal manager that overrides those hooks
+            with variable-dependent logic (in which case
+            ``attrs.native_calendar`` must be given, since calendars
+            cannot be assumed equal across variables, e.g. noleap vs.
+            standard).  When ``attrs.native_calendar`` is omitted, it is
+            detected from whichever of ``native_start``/``native_end``
+            is given.
         """
         super().__init__(attrs)
+        self._native_start = attrs.native_start
+        self._native_end = attrs.native_end
 
-        # Detect calendar from native dates
-        self.native_calendar = self._detectCalendar()
+        # Calendar must be explicit when neither native date is given.
+        calendar = attrs.native_calendar
+        if calendar is not None:
+            self.native_calendar = calendar
+        else:
+            self.native_calendar = self._detectCalendar()
 
         # Background executor for _waitAndDownload tasks
         self._executor = concurrent.futures.ThreadPoolExecutor()
@@ -286,6 +303,29 @@ class ManagerDataset(Manager, abc.ABC):
     #
     # Helper functions
     #
+    @staticmethod
+    def _todayMinusLag(lag_days: int, calendar: str = 'standard') -> cftime._cftime.datetime:
+        """Compute today minus a publication lag, for bounding native_end on near-real-time sources.
+
+        Parameters
+        ----------
+        lag_days : int
+            Number of days by which the source's published data trails today.
+        calendar : str, optional
+            cftime calendar to construct the date in.
+
+        Returns
+        -------
+        cftime._cftime.datetime
+            Today minus lag_days, in the requested calendar.  For
+            'noleap'/'365_day' calendars, Feb 29 is clamped to Feb 28.
+        """
+        date = datetime.date.today() - datetime.timedelta(days=lag_days)
+        day = date.day
+        if calendar in ('noleap', '365_day') and date.month == 2 and date.day == 29:
+            day = 28
+        return cftime.datetime(date.year, date.month, day, calendar=calendar)
+
     def _detectCalendar(self) -> str:
         """Detect the calendar type from native start/end dates.
 
@@ -294,12 +334,13 @@ class ManagerDataset(Manager, abc.ABC):
         str
             Calendar type ('noleap', 'standard', etc.) or 'standard' as default.
         """
-        for date in [self.native_start, self.native_end]:
+        for date in [self._native_start, self._native_end]:
             if date is not None and hasattr(date, 'calendar'):
                 return date.calendar
         return 'standard'
 
-    def _parseDate(self, date: str | int | cftime._cftime.datetime | None, is_start: bool) -> cftime._cftime.datetime | None:
+    def _parseDate(self, date: str | int | cftime._cftime.datetime | None, is_start: bool,
+                   default: cftime._cftime.datetime | None = None) -> cftime._cftime.datetime | None:
         """Parse date input into cftime datetime.
 
         Parameters
@@ -309,6 +350,8 @@ class ManagerDataset(Manager, abc.ABC):
         is_start : bool
             True if this is a start date (uses Jan 1 for int years).
             False if this is an end date (uses Dec 31 for int years).
+        default : cftime._cftime.datetime or None, optional
+            Value to return when date is None.
 
         Returns
         -------
@@ -316,7 +359,7 @@ class ManagerDataset(Manager, abc.ABC):
             Parsed datetime or None.
         """
         if date is None:
-            return self.native_start if is_start else self.native_end
+            return default
         elif isinstance(date, str):
             return cftime.datetime.strptime(date, "%Y-%m-%d", calendar=self.native_calendar)
         elif isinstance(date, int):
@@ -332,6 +375,73 @@ class ManagerDataset(Manager, abc.ABC):
             return date
         else:
             raise TypeError(f"Unsupported date type: {type(date)}")
+
+    def _getNativeStart(self, variables: List[str] | None) -> cftime._cftime.datetime | None:
+        """Return the native_start bound to validate against, given requested variables.
+
+        Parameters
+        ----------
+        variables : list of str or None
+            Variables being requested (None means default_variables).
+
+        Returns
+        -------
+        cftime._cftime.datetime or None
+            Defaults to the native_start passed at construction.  Managers
+            whose variables have different start dates should override
+            this to return a variable-specific bound.
+        """
+        return self._native_start
+
+    def _getNativeEnd(self, variables: List[str] | None) -> cftime._cftime.datetime | None:
+        """Return the native_end bound to validate against, given requested variables.
+
+        Parameters
+        ----------
+        variables : list of str or None
+            Variables being requested (None means default_variables).
+
+        Returns
+        -------
+        cftime._cftime.datetime or None
+            Defaults to the native_end passed at construction.  Managers
+            whose variables have different publication schedules (e.g.
+            MODIS LAI vs. LULC) should override this to return a
+            variable-specific bound.
+        """
+        return self._native_end
+
+    def getNativeStart(self, variables: List[str] | None = None) -> cftime._cftime.datetime | None:
+        """Return the earliest available start date for the given variables.
+
+        Parameters
+        ----------
+        variables : list of str or None, optional
+            Variables to check.  Default is ``default_variables``.
+
+        Returns
+        -------
+        cftime._cftime.datetime or None
+            Earliest available start date, or None for non-temporal data.
+        """
+        variables = variables if variables is not None else self.default_variables
+        return self._getNativeStart(variables)
+
+    def getNativeEnd(self, variables: List[str] | None = None) -> cftime._cftime.datetime | None:
+        """Return the latest available end date for the given variables.
+
+        Parameters
+        ----------
+        variables : list of str or None, optional
+            Variables to check.  Default is ``default_variables``.
+
+        Returns
+        -------
+        cftime._cftime.datetime or None
+            Latest available end date, or None for non-temporal data.
+        """
+        variables = variables if variables is not None else self.default_variables
+        return self._getNativeEnd(variables)
 
     def _validateDate(self, date: cftime._cftime.datetime | None, bound: cftime._cftime.datetime | None, is_start: bool) -> None:
         """Validate date against bounds.
@@ -425,21 +535,25 @@ class ManagerDataset(Manager, abc.ABC):
         polygon = polygon.buffer(3 * self.native_resolution)
         logging.info(f'... buffered shape area = {polygon.area}')
 
-        # Parse and validate dates, temporal_resampling
-        parsed_start = self._parseDate(start, True)
-        self._validateDate(parsed_start, self.native_start, True)
+        # Parse and validate variables first -- date bounds may depend on
+        # which variables are requested (e.g. MODIS LAI vs. LULC).
+        parsed_variables = self._validateVariables(variables)
 
-        parsed_end = self._parseDate(end, False)
-        self._validateDate(parsed_end, self.native_end, False)
+        # Parse and validate dates, temporal_resampling
+        native_start = self._getNativeStart(parsed_variables)
+        native_end = self._getNativeEnd(parsed_variables)
+
+        parsed_start = self._parseDate(start, True, default=native_start)
+        self._validateDate(parsed_start, native_start, True)
+
+        parsed_end = self._parseDate(end, False, default=native_end)
+        self._validateDate(parsed_end, native_end, False)
 
         if temporal_resampling is not None and parsed_start is None:
             raise ValueError("Cannot resample non-temporal dataset.")
 
         if parsed_start is not None and parsed_end is not None and parsed_start > parsed_end:
             raise ValueError(f"start ({parsed_start}) must not be after end ({parsed_end}).")
-
-        # Parse and validate variables
-        parsed_variables = self._validateVariables(variables)
 
         return self.Request(self, polygon, out_crs, parsed_start, parsed_end, temporal_resampling, parsed_variables)
 

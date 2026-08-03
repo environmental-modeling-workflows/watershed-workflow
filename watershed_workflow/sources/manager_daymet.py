@@ -68,7 +68,9 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
     def __init__(self):
         native_resolution = 1000.0  # 1km in meters
         native_start = cftime.datetime(1980, 1, 1, calendar='noleap')
-        native_end = cftime.datetime(2023, 12, 31, calendar='noleap')
+        # DayMet is released annually, ~30+ days after year-end; update this
+        # once the following year's data is confirmed published.
+        native_end = cftime.datetime(2024, 12, 31, calendar='noleap')
         native_crs_daymet = watershed_workflow.crs.from_string(
             '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
         )

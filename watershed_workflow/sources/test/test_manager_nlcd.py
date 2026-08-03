@@ -141,8 +141,8 @@ def test_native_properties():
     assert mgr.native_crs_in == CRS.from_epsg(4326)  # WGS84
     assert mgr.native_crs_out == CRS.from_epsg(4326) # WGS84
     assert mgr.native_resolution == 0.00027          # ~30m in degrees
-    assert mgr.native_start is None                  # Non-temporal
-    assert mgr.native_end is None                    # Non-temporal
+    assert mgr.getNativeStart() is None               # Non-temporal
+    assert mgr.getNativeEnd() is None                 # Non-temporal
     
     # Check variables
     expected_valid = ['cover', 'impervious', 'canopy', 'descriptor']

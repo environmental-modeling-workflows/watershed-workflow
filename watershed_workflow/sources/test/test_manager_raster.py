@@ -37,8 +37,8 @@ def test_manager_raster_initialization(raster_manager, dtb_raster_path):
     assert raster_manager.product == 'undefined'
     assert raster_manager.source == os.path.abspath(dtb_raster_path)
     
-    assert raster_manager.native_start is None  # Non-temporal
-    assert raster_manager.native_end is None    # Non-temporal
+    assert raster_manager.getNativeStart() is None  # Non-temporal
+    assert raster_manager.getNativeEnd() is None    # Non-temporal
 
     assert raster_manager.native_crs_in is not None
     assert raster_manager.native_crs_out is not None
