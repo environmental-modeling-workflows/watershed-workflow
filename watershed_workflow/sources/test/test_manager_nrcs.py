@@ -24,18 +24,18 @@ def test_nrcs2(coweeta):
         assert name.startswith('NRCS-')
     
     # Check metadata
-    assert df.attrs['name'] == nrcs.name
+    assert df.attrs['product'] == nrcs.product
     assert df.attrs['source'] == nrcs.source
 
 
 def test_nrcs_constructor():
     """Test NRCS constructor properties"""
     nrcs = watershed_workflow.sources.manager_nrcs.ManagerNRCS()
-    assert nrcs.name == 'National Resources Conservation Service Soil Survey (NRCS Soils)'
-    assert nrcs.source == 'USDA NRCS SSURGO Database'
+    assert nrcs.product == 'SSURGO'
+    assert nrcs.source == 'USDA NRCS Web Soil Survey'
     assert nrcs.native_id_field == 'mukey'
     assert nrcs.force_download == False
-    
+
     # Test with force_download=True
     nrcs_force = watershed_workflow.sources.manager_nrcs.ManagerNRCS(force_download=True)
     assert nrcs_force.force_download == True

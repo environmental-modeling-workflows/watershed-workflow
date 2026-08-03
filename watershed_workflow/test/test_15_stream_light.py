@@ -4,12 +4,12 @@ import pandas as pd
 import os
 import pytest
 
-import watershed_workflow.stream_light
+import watershed_workflow.properties.stream_light
 
 
 @pytest.fixture
 def sl_data():
-    sl = watershed_workflow.stream_light.StreamLight()
+    sl = watershed_workflow.properties.stream_light.StreamLight()
     path_data_test = './watershed_workflow/test/data_test_streamlight/'
 
     ## Files with the drivers and results

@@ -1,17 +1,10 @@
 """Manager for interacting with GLHYMPS v2.0 dataset."""
-import os, sys
+import os
 import logging
-import numpy as np
-import pandas, geopandas
-import shapely
-
-from watershed_workflow.crs import CRS
+import geopandas
 
 from . import manager_shapefile
-from . import filenames
-
-# No API for getting GLHYMPS locally -- must download the whole thing.
-urls = { 'GLHYMPS version 2.0': 'https://doi.org/10.5683/SP2/TTJNIU'}
+from . import cache_info as ci
 
 
 class ManagerGLHYMPS(manager_shapefile.ManagerShapefile):
@@ -21,8 +14,8 @@ class ManagerGLHYMPS(manager_shapefile.ManagerShapefile):
     .. note:: GLHYMPS does not have an API, and is a large (~4GB)
        download.  Download the file from the below citation DOI and
        unzip the file into:
-       
-       <data_directory>/soil_structure/GLHYMPS/
+
+       <data_directory>/soil_structure/GLHYMPS/dataverse_https/
 
        which should yield GLHYMPS.shp (amongst other files).
 
@@ -35,23 +28,28 @@ class ManagerGLHYMPS(manager_shapefile.ManagerShapefile):
 
     """
     def __init__(self, filename=None):
+        # Set metadata attrs before calling super so localFilePath works.
+        from .manager import ManagerAttributes
+        _attrs = ManagerAttributes(
+            category='soil_structure',
+            product='GLHYMPS 2.0',
+            product_short='GLHYMPS',
+            source='Scholars Portal Dataverse',
+            source_short='dataverse_https',
+            url='https://doi.org/10.5683/SP2/TTJNIU',
+            license='CC BY 4.0',
+            citation='Huscroft et al. 2018',
+            description='GLHYMPS 2.0 global hydrogeology map of permeability.',
+        )
         if filename is None:
-            self.name = 'GLHYMPS version 2.0'
-            self.names = filenames.Names(
-                self.name, os.path.join('soil_structure', 'GLHYMPS'), '', 'GLHYMPS.shp')
-            super(ManagerGLHYMPS, self).__init__(self.names.file_name(), id_name='OBJECTID_1')
+            filepath = ci.localFilePath(_attrs, 'GLHYMPS.shp')
         else:
-            self.name = filename
-            self.names = None
-            super(ManagerGLHYMPS, self).__init__(self.name, id_name='OBJECTID_1')
+            filepath = filename
+        super().__init__(filepath, id_name='OBJECTID_1', attrs=_attrs)
 
-            
     def _download(self, force : bool = False):
         """Download the files, returning downloaded filename."""
-        # check directory structure
-        if self.names is None:
-            return self.name
-        filename = self.names.file_name()
+        filename = self.filename
         logging.info('  from file: {}'.format(filename))
         if not os.path.exists(filename):
             logging.error(f'GLHYMPS download file {filename} not found.')
@@ -60,7 +58,6 @@ class ManagerGLHYMPS(manager_shapefile.ManagerShapefile):
             raise RuntimeError(f'GLHYMPS download file {filename} not found.')
         return filename
 
-    
     def _getShapesByGeometry(self, geometry_gdf: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
         """Fetch shapes for the given geometry, ensuring file exists first.
 
@@ -78,7 +75,6 @@ class ManagerGLHYMPS(manager_shapefile.ManagerShapefile):
         self._download()
         return super()._getShapesByGeometry(geometry_gdf)
 
-    
     def _getShapesByID(self, ids: list[str]) -> geopandas.GeoDataFrame:
         """Fetch shapes by ID list, ensuring file exists first.
 
@@ -95,4 +91,3 @@ class ManagerGLHYMPS(manager_shapefile.ManagerShapefile):
         # Ensure GLHYMPS file exists before attempting to read
         self._download()
         return super()._getShapesByID(ids)
-

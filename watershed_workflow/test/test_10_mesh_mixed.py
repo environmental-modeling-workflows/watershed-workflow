@@ -5,8 +5,10 @@ import shapely
 import geopandas
 from matplotlib import pyplot as plt
 
-from watershed_workflow.river_mesh import *
-from watershed_workflow.river_mesh import _projectTwoMiter
+from watershed_workflow.mesh.river_mesh import *
+from watershed_workflow.mesh.river_mesh import (computeLine, translateLinePerpendicular,
+    projectOne, findIntersection, projectTwoClampedMiter, projectTwoBisector,
+    projectJunction, fixConvexity, createRiverMesh, adjustHUCsToRiverMesh, _projectTwoMiter)
 from watershed_workflow.test.shapes import *
 
 _plot = False
@@ -101,11 +103,11 @@ def to_df(coords, elems):
 def test_single_reach_vert():
     r1 = shapely.geometry.LineString([(0,3), (0,2), (0,1), (0,0)])
     reaches = geopandas.GeoDataFrame(geometry=[r1])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+    rivers = watershed_workflow.hydro.river.createRivers(reaches, method='geometry')
 
     def computeWidth(x): return 0.5
 
-    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.mesh.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 3
     assert len(coords) == 7
     assert len(elems[0]) == 3
@@ -128,11 +130,11 @@ def test_single_reach_vert():
 def test_single_reach_horiz():
     r1 = shapely.geometry.LineString([(0,0), (2,0), (3,0), (6,0)])
     reaches = geopandas.GeoDataFrame(geometry=[r1])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+    rivers = watershed_workflow.hydro.river.createRivers(reaches, method='geometry')
 
     def computeWidth(x): return 0.5
 
-    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.mesh.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 3
     assert len(coords) == 7
     assert len(elems[0]) == 3
@@ -156,11 +158,11 @@ def test_single_reach_horiz():
 def test_single_reach_diag():
     r1 = shapely.geometry.LineString([(0,0), (2,2), (3,3), (6,6)])
     reaches = geopandas.GeoDataFrame(geometry=[r1])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+    rivers = watershed_workflow.hydro.river.createRivers(reaches, method='geometry')
 
     def computeWidth(x): return 0.5
 
-    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.mesh.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 3
     assert len(coords) == 7
     assert len(elems[0]) == 3
@@ -185,11 +187,11 @@ def test_single_reach_diag():
 def test_single_reach_jagged():
     r1 = shapely.geometry.LineString([(0,0), (2,1), (3,3), (5,5)])
     reaches = geopandas.GeoDataFrame(geometry=[r1])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+    rivers = watershed_workflow.hydro.river.createRivers(reaches, method='geometry')
 
     def computeWidth(x): return np.sqrt(2.0)/2
 
-    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.mesh.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 3
     assert len(coords) == 7
     assert len(elems[0]) == 3
@@ -215,11 +217,11 @@ def test_two_coplanar_reaches():
     r1 = shapely.geometry.LineString([(0,0), (2,0), (3,0), (5,0)])
     r2 = shapely.geometry.LineString([(-10, 0), (-5,0), (-4,0), (-1,0), (0,0)])
     reaches = geopandas.GeoDataFrame(geometry=[r1, r2])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+    rivers = watershed_workflow.hydro.river.createRivers(reaches, method='geometry')
 
     def computeWidth(x): return 1
 
-    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.mesh.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 7
     assert len(coords) == 15
     assert len(elems[0]) == 3
@@ -253,11 +255,11 @@ def test_two_kinked_reaches():
     r1 = shapely.geometry.LineString([(0,0), (2,1), (4,2), (6,3)])
     r2 = shapely.geometry.LineString([(-6,3), (-4, 2), (-2, 1), (0,0)])
     reaches = geopandas.GeoDataFrame(geometry=[r1, r2])
-    rivers = watershed_workflow.river_tree.createRivers(reaches, method='geometry')
+    rivers = watershed_workflow.hydro.river.createRivers(reaches, method='geometry')
 
     def computeWidth(x): return 1
 
-    coords, elems = watershed_workflow.river_mesh.createRiverMesh(rivers[0], computeWidth)
+    coords, elems = watershed_workflow.mesh.river_mesh.createRiverMesh(rivers[0], computeWidth)
     assert len(elems) == 6
     assert len(coords) == 13
     assert len(elems[0]) == 3

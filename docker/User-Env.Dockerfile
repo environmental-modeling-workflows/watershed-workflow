@@ -19,7 +19,8 @@ USER jovyan
 
 WORKDIR ${HOME}/tmp
 RUN mkdir ${HOME}/tmp/environments
-COPY environments/create_envs.py environments/create_envs.py 
+COPY environments/create_envs.py environments/create_envs.py
+COPY requirements.txt requirements.txt
 
 # compilers
 USER root
@@ -30,10 +31,13 @@ RUN apt-get update --yes && \
     apt-get autoremove -y
 USER jovyan
 
-# Create the base environment
+# Create the base environment (also pip-installs requirements.txt, constrained
+# against the conda env's own package versions -- see create_envs.py)
 RUN --mount=type=cache,target=/opt/conda/pkgs \
     /opt/conda/bin/python environments/create_envs.py --OS=Linux --manager=${CONDA_BIN}  \
     --env-type=STANDARD --use-local ${env_name}
+
+RUN ${CONDA_BIN} run -n ${env_name} python -c 'import geopandas; import meshpy; import rosetta; import hf_hydrodata'
 
 # install the kernel on base's jupyterlab
 USER root
@@ -42,20 +46,9 @@ RUN conda run -n ${env_name} python -m ipykernel install \
 USER jovyan
 
 #
-# Stage 2 -- add in the pip
+# Stage 2 -- add in Exodus
 #
-FROM ww_env_base_user AS ww_env_pip_user
-
-WORKDIR ${HOME}/tmp
-COPY requirements.txt ${HOME}/tmp/requirements.txt
-RUN ${CONDA_BIN} run -n ${env_name} python -m pip install -r requirements.txt
-
-RUN ${CONDA_BIN} run -n ${env_name} python -c 'import geopandas; import meshpy; meshpy.__file__'
-
-#
-# Stage 3 -- add in Exodus
-#
-FROM ww_env_pip_user AS ww_env_user
+FROM ww_env_base_user AS ww_env_user
 
 ENV SEACAS_DIR="/opt/conda/envs/${env_name}"
 ENV CONDA_ENV_PREFIX="/opt/conda/envs/${env_name}"

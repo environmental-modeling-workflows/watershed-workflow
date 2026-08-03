@@ -37,7 +37,7 @@ RUN --mount=type=cache,target=/opt/conda/pkgs \
     --env-type=CI --with-tools-env=watershed_workflow_tools ${env_name}
 
 # test the environment
-RUN ${CONDA_BIN} run --name ${env_name} python -c "import pymetis; import geopandas; import meshpy"
+RUN ${CONDA_BIN} run --name ${env_name} python -c "import pymetis; import geopandas; import meshpy; import rosetta; import hf_hydrodata"
 
 #
 # Stage 2 -- add in Exodus

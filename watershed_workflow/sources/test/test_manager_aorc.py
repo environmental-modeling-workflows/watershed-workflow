@@ -6,7 +6,7 @@ import cftime
 import datetime
 
 import watershed_workflow.crs
-import watershed_workflow.warp
+import watershed_workflow.utils.warp
 from watershed_workflow.crs import CRS
 
 from watershed_workflow.sources.manager_aorc import ManagerAORC
@@ -188,7 +188,7 @@ def test_invalid_year_range_error(small_aorc_geometry, aorc_crs, aorc_manager):
     start = cftime.datetime(2021, 1, 1, calendar='standard')
     end = cftime.datetime(2020, 1, 1, calendar='standard')  # Invalid: start > end
     
-    with pytest.raises(RuntimeError, match="start year .* is after .* end year"):
+    with pytest.raises(ValueError, match="start .* must not be after end"):
         aorc_manager.getDataset(small_aorc_geometry, aorc_crs, start=start, end=end, variables=['APCP_surface'])
 
 

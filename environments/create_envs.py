@@ -28,7 +28,9 @@ PACKAGES_BASE=['python<3.13',           # limited for cert issues in docker cont
                's3fs',
                'zarr',
                'metis',
-               'pymetis>=2025'          # arm64 builds are correct
+               'pymetis>=2025',         # arm64 builds are correct
+               'earthaccess',           # NASA Earthdata synchronous download
+               'pyhdf',                 # read MODIS HDF4 granules
                ]
 
 # extra packages needed in the WW env when building for a user
@@ -41,9 +43,10 @@ PACKAGES_EXTRAS_USER=['ipykernel',
 PACKAGES_EXTRAS_DEV=[
                'sphinx',
                'numpydoc',
-               'sphinx_rtd_theme',
-               'nbsphinx',
+               'pydata-sphinx-theme',
+               'myst-nb',
                'ipython',
+               'sphinxcontrib-jquery',
                ]
 
 # packages for the base environment
@@ -82,17 +85,8 @@ CHANNELS=['conda-forge',
 PACKAGE_MANAGER = 'conda'
 
 
-import datetime
 import subprocess
 import os
-
-def date_str():
-    """Gets the date in a preferred format for writing env names"""
-    return datetime.datetime.today().strftime('%Y-%m-%d')
-
-def get_env_name(name):
-    """Standard format for the name of an environment."""
-    return name+'-'+date_str()
 
 def get_env_prefix(env_type=None):
     if env_type is None or env_type == 'USER':
@@ -153,15 +147,8 @@ def dump_env_local(env_type, os_name, env_name, env_filename=None, new_env_name=
         else:
             env_filename = os.path.join('environments', f'environment-{env_type}-{os_name}.yml')
 
-
     if new_env_name is None:
-        if env_name is None:
-            new_env_name = get_env_prefix(env_type)
-        else:    
-            new_env_name = env_name
-
-    if env_name is None:
-        env_name = get_env_name(get_env_prefix(env_type))
+        new_env_name = env_name
 
 
     args = ['env', 'export',]
@@ -178,12 +165,8 @@ def dump_env_local(env_type, os_name, env_name, env_filename=None, new_env_name=
     with open(env_filename, 'w') as fid:
         fid.write('\n'.join(lines))
 
-def create_env_local(env_type, os_name, packages, env_name=None, dry_run=False, use_local=False):
+def create_env_local(env_type, os_name, packages, env_name, dry_run=False, use_local=False):
     """Creates the environment locally."""
-    if env_name is None:
-        env_prefix = get_env_prefix(env_type)
-        env_name = get_env_name(env_prefix)
-
     # build up the conda env create command
     cmd = [PACKAGE_MANAGER, 'create', '--yes', '--name', env_name]
     if use_local:
@@ -249,7 +232,7 @@ def pip_install_requirements(env_name, requirements_filename='requirements.txt',
     subprocess.run(install_cmd, check=True, env=env)
 
 
-def create_and_dump_env_local(env_type, os_name, packages, env_name=None, dump_only=False, dry_run=False, use_local=False,
+def create_and_dump_env_local(env_type, os_name, packages, env_name, dump_only=False, dry_run=False, use_local=False,
                                pip_requirements=True, requirements_filename='requirements.txt'):
     if not dump_only:
         env_name = create_env_local(env_type, os_name, packages, env_name, dry_run, use_local)

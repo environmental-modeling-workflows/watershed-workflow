@@ -1,22 +1,31 @@
 """Test van Genuchten from Rosetta"""
 import numpy as np
-import watershed_workflow.soil_properties
+import pandas as pd
+import watershed_workflow.properties.soil
 
 
 def test_vgm():
-    # headers: sand %, silt %, clay %, bulk dens
-    data = np.array([70, 15, 15, 1.4])
+    data = pd.DataFrame({
+        'sand pct [%]': [70],
+        'silt pct [%]': [15],
+        'clay pct [%]': [15],
+        'bulk density [g/cm^3]': [1.4],
+    })
 
-    vgm = watershed_workflow.soil_properties.computeVanGenuchtenModel_Rosetta(data)
+    vgm = watershed_workflow.properties.soil.computeVanGenuchtenModel_Rosetta(data)
     print(vgm)
 
 
 def test_vgm2():
-    # headers: sand %, silt %, clay %, bulk dens
-    data = np.array([[70, 15, 15, 1.4], [50, 25, 25, 1.4]]).transpose()
+    data = pd.DataFrame({
+        'sand pct [%]': [70, 50],
+        'silt pct [%]': [15, 25],
+        'clay pct [%]': [15, 25],
+        'bulk density [g/cm^3]': [1.4, 1.4],
+    })
 
-    vgm = watershed_workflow.soil_properties.computeVanGenuchtenModel_Rosetta(data)
-    ats = watershed_workflow.soil_properties.convertRosettaToATS(vgm)
+    vgm = watershed_workflow.properties.soil.computeVanGenuchtenModel_Rosetta(data)
+    ats = watershed_workflow.properties.soil.convertRosettaToATS(vgm)
     print(ats.keys())
     assert (all(ats['residual saturation [-]'] < 1))
     assert (all(ats['residual saturation [-]'] >= 0))
@@ -36,7 +45,7 @@ def test_cluster():
     arr_gd = np.array([[1, 1, 1], [1, 0, 0], [0, 0, 0]])
 
     arr_in = np.expand_dims(arr_in, -1)
-    codebook, arr_out, dists = watershed_workflow.soil_properties.cluster(arr_in, 2)
+    codebook, arr_out, dists = watershed_workflow.properties.soil.cluster(arr_in, 2)
     print(arr_out)
 
     assert ((arr_out[arr_gd == 0] == arr_out[-1, -1]).all())

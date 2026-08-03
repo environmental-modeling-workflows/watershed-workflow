@@ -95,7 +95,7 @@ def test_invalid_variable_raises():
     with pytest.raises(ValueError, match="Invalid variable"):
         mgr._preprocessParameters(
             geom, watershed_workflow.crs.latlon_crs,
-            None, None, ['not_a_real_variable'],
+            None, None, ['not_a_real_variable'], None, None,
         )
 
 
@@ -132,9 +132,9 @@ def test_get_dataset_porosity(coweeta):
 @pytest.mark.network
 def test_cache_reuse(coweeta, tmp_path, monkeypatch):
     """Second call with same bounds should reuse the cache, not re-download."""
-    import watershed_workflow.config
+    import watershed_workflow.utils.config
     monkeypatch.setitem(
-        watershed_workflow.config.rcParams['DEFAULT'],
+        watershed_workflow.utils.config.rcParams['DEFAULT'],
         'data_directory', str(tmp_path))
 
     mgr = ManagerHFHydrodata(force_download=False)

@@ -73,71 +73,74 @@ class ManagerNHD(manager_hyriver.ManagerHyRiver):
     """Leverages pynhd to download NHD data and its supporting shapes."""
     lowest_level = 12
 
+    # Maps product_short → (product, ids, renames, default_layer, catchment_layer)
+    _PRODUCT_ATTRS = {
+        'NHDPlusMR': ('NHDPlus MR v2.1', waterdata_ids, waterdata_renames,
+                      'nhdflowline_network', 'catchmentsp'),
+        'NHDPlusHR': ('NHDPlus HR',       hr_ids,        hr_renames,
+                      'flowline',          'catchment'),
+        'NHD':       ('NHD MR',           mr_ids,        mr_renames,
+                      'flowline_mr',       None),
+    }
+
     def __init__(self,
-                 dataset_name: str,
-                 layer: Optional[str] = None,
+                 product: str,
+                 variable: Optional[str] = None,
                  catchments: Optional[bool] = True,
-                 fewer_columns : Optional[bool] = False,
+                 fewer_columns: Optional[bool] = False,
                  ):
         """Initialize NHD manager.
-        
+
         Parameters
         ----------
-        dataset_name : str
-            NHD dataset name ('NHDPlus MR v2.1', 'NHDPlus HR', 'NHD MR').
-        layer : str, optional
-            Layer name, defaults to protocol-specific default.
+        product : str, optional
+            NHD product name: ``'NHDPlus HR'`` (default), ``'NHDPlus MR v2.1'``,
+            or ``'NHD MR'``.
+        variable : str, optional
+            Layer/variable name.  Defaults to the product's primary flowline layer.
         catchments : bool, optional
-            Whether to fetch catchments with flowlines, defaults to True.
+            Whether to fetch catchments alongside flowlines.  Default is ``True``.
         fewer_columns : bool, optional
-            Whether to remove some of the QA/QC columns from the
-            dataframe, defaults to True.
-
+            Whether to drop QA/QC columns from the returned GeoDataFrame.
+            Default is ``False``.
         """
-        self._catchment_layer = None
+        # Find product_short from product name
+        product_short = next(
+            (k for k, v in self._PRODUCT_ATTRS.items() if v[0] == product), None
+        )
+        if product_short is None:
+            raise ValueError(
+                f'Invalid ManagerNHD product "{product}". '
+                f'Valid options: {[v[0] for v in self._PRODUCT_ATTRS.values()]}'
+            )
+
+        _, self._ids, self._renames, default_variable, catchment_layer = \
+            self._PRODUCT_ATTRS[product_short]
+
+        if variable is None:
+            variable = default_variable
+        self._catchment_layer = catchment_layer if variable == default_variable else None
         self._fewer_columns = fewer_columns
-        
-        if dataset_name == 'NHDPlus MR v2.1':
-            self._protocol_name = 'WaterData'
-            self._ids = waterdata_ids
-            self._renames = waterdata_renames
-            if layer is None:
-                layer = 'nhdflowline_network'
-            if layer == 'nhdflowline_network':
-                self._catchment_layer = 'catchmentsp'
 
-        elif dataset_name == 'NHDPlus HR':
-            self._protocol_name = 'NHDPlusHR'
-            self._ids = hr_ids
-            self._renames = hr_renames
-            if layer is None:
-                layer = 'flowline'
-            if layer == 'flowline':
-                self._catchment_layer = 'catchment'
+        id_name = self._ids.get(variable, variable)
 
-        elif dataset_name == 'NHD MR':
-            self._protocol_name = 'NHD'
-            self._ids = mr_ids
-            self._renames = mr_renames
-            if layer is None:
-                layer = 'flowline_mr'
-
-        else:
-            raise ValueError(f'Invalid ManagerNHD dataset_name {dataset_name}')
-
-        # NHD data is typically in lat/lon coordinates
-        native_crs_in = watershed_workflow.crs.latlon_crs
-        # Rough resolution estimate for degree-based data
-        native_resolution = 0.001  # ~100m at mid-latitudes
-
-        # Get ID name for this layer
-        if layer in self._ids:
-            id_name = self._ids[layer]
-        else:
-            id_name = layer
-
-        super().__init__(self._protocol_name, native_crs_in, native_resolution, layer, id_name)
-        self.name = dataset_name
+        from .manager import ManagerAttributes
+        attrs = ManagerAttributes(
+            category='geometry',
+            product=product,
+            product_short=product_short,
+            source='hyriver',
+            url='https://www.usgs.gov/national-hydrography',
+            license='public domain',
+            citation='USGS NHD',
+            description='National Hydrography Dataset river reaches and catchments.',
+            native_crs_in=watershed_workflow.crs.latlon_crs,
+            native_resolution=0.001,
+            native_id_field=id_name,
+            valid_variables=[variable],
+            default_variables=[variable],
+        )
+        super().__init__(attrs)
         self._catchments = catchments
 
     def getCatchments(self,
@@ -156,30 +159,28 @@ class ManagerNHD(manager_hyriver.ManagerHyRiver):
         """
         if self._catchment_layer is not None:
             # Save current layer and switch to catchment layer
-            old_layer = self._layer
-            old_id_name = self._id_name
-            
+            old_layer = self.attrs.default_variables[0]
+            old_id_name = self.attrs.native_id_field
+
             # Set catchment layer properties
-            self._layer = self._catchment_layer
-            if self._catchment_layer in self._ids:
-                self._id_name = self._ids[self._catchment_layer]
-            else:
-                self._id_name = self._catchment_layer
-            
+            self.attrs.default_variables[0] = self._catchment_layer
+            catchment_id_name = self._ids.get(self._catchment_layer, self._catchment_layer)
+            self.attrs.native_id_field = catchment_id_name
+
             # Get catchments using HyRiver directly (no recursive catchment fetching)
             ids = df[old_id_name].tolist()
             cas_raw = manager_hyriver.ManagerHyRiver._getShapesByID(self, ids)
-            
+
             # Apply standard names to catchments
             cas_raw = self._addStandardNames(cas_raw, False)
 
             # Merge catchments with flowlines
             df = pd.merge(df, cas_raw, how='outer', left_on=old_id_name,
-                          right_on=self._id_name, suffixes=(None, '_ca'))
+                          right_on=catchment_id_name, suffixes=(None, '_ca'))
 
             # Restore original layer properties
-            self._layer = old_layer
-            self._id_name = old_id_name
+            self.attrs.default_variables[0] = old_layer
+            self.attrs.native_id_field = old_id_name
 
         return df
 
@@ -241,7 +242,7 @@ class ManagerNHD(manager_hyriver.ManagerHyRiver):
             df = self.getCatchments(df)
 
         # if NHDv2.1, get bankfull properties
-        if self.name == 'NHDPlus MR v2.1':
+        if self.attrs.product_short == 'NHDPlusMR':
             bankfull_df = pd.read_parquet(importlib.resources.files("watershed_workflow") / "data" / "nhd_v21_bankfull_properties.parquet")
 
             # merge on comid (lowercase in WaterData df, uppercase in bankfull file)
