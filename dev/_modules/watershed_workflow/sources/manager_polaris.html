@@ -1,0 +1,929 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watershed_workflow.sources.manager_polaris &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/watershed_workflow/sources/manager_polaris';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../../../_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../../watershed_workflow.html" class="nav-link">watershed_workflow</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../sources.html" class="nav-link">watershed_workflow.sources</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">watershed_workflow.sources.manager_polaris</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for watershed_workflow.sources.manager_polaris</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Manager for downloading POLARIS (30 m CONUS) soil hydraulic properties.</span>
+
+<span class="sd">POLARIS provides 30-m resolution, spatially continuous, probabilistic maps of</span>
+<span class="sd">soil hydraulic properties for the contiguous United States.  Data are</span>
+<span class="sd">physically modelled float32 GeoTIFFs served via plain HTTP from</span>
+<span class="sd">hydrology.cee.duke.edu.  No authentication is required.</span>
+
+<span class="sd">The URL pattern for a single tile is::</span>
+
+<span class="sd">    http://hydrology.cee.duke.edu/POLARIS/PROPERTIES/v1.0/</span>
+<span class="sd">        {property}/{stat}/{depth}/lat{south}{north}_lon{west}{east}.tif</span>
+
+<span class="sd">where tiles are 1 x 1 degree and the filename encodes both edges, e.g.</span>
+<span class="sd">``lat3536_lon-84-83`` covers 35N-36N, 84W-83W.</span>
+
+<span class="sd">Available properties</span>
+<span class="sd">--------------------</span>
+<span class="sd">Texture : clay, sand, silt, om</span>
+<span class="sd">Hydraulic : ksat (log10 cm/hr), alpha (log10 cm^-1), n, theta_r, theta_s</span>
+<span class="sd">Other : bd, ph, hb</span>
+
+<span class="sd">Units note: ``ksat`` and ``alpha`` are stored as log10 values in</span>
+<span class="sd">``log10(cm/hr)`` and ``log10(cm^-1)`` respectively.  All other variables are</span>
+<span class="sd">in their conventional units (fractions, g/cm^3, or dimensionless).</span>
+
+<span class="sd">Stats : mean, p5, p50, p95</span>
+
+<span class="sd">Depths : 0_5, 5_15, 15_30, 30_60, 60_100, 100_200 (cm)</span>
+
+<span class="sd">Data license: CC BY-NC 4.0.</span>
+
+<span class="sd">References: [Chaney2019]_</span>
+
+<span class="sd">.. [Chaney2019] Chaney, N.W., et al. (2019). POLARIS soil properties: 30-m</span>
+<span class="sd">   probabilistic maps of soil properties over the contiguous United States.</span>
+<span class="sd">   *Water Resources Research*, 55, 2916-2938.</span>
+<span class="sd">   https://doi.org/10.1029/2018WR022797</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio.io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio.merge</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio.transform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.crs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">watershed_workflow.crs</span><span class="w"> </span><span class="kn">import</span> <span class="n">CRS</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">manager_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManagerAttributes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.manager_dataset_cached</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_dataset_manager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.cache_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapBounds</span>
+
+
+<span class="n">_BASE_URL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;http://hydrology.cee.duke.edu/POLARIS/PROPERTIES/v1.0&#39;</span>
+    <span class="s1">&#39;/</span><span class="si">{property}</span><span class="s1">/</span><span class="si">{stat}</span><span class="s1">/</span><span class="si">{depth}</span><span class="s1">/lat</span><span class="si">{south}{north}</span><span class="s1">_lon</span><span class="si">{west}{east}</span><span class="s1">.tif&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Six GlobalSoilMap-aligned depth intervals and their centre depths [m].</span>
+<span class="n">_DEPTH_LABELS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0_5&#39;</span><span class="p">,</span> <span class="s1">&#39;5_15&#39;</span><span class="p">,</span> <span class="s1">&#39;15_30&#39;</span><span class="p">,</span> <span class="s1">&#39;30_60&#39;</span><span class="p">,</span> <span class="s1">&#39;60_100&#39;</span><span class="p">,</span> <span class="s1">&#39;100_200&#39;</span><span class="p">]</span>
+<span class="n">_DEPTH_LABEL_PRETTY</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0-5cm&#39;</span><span class="p">,</span> <span class="s1">&#39;5-15cm&#39;</span><span class="p">,</span> <span class="s1">&#39;15-30cm&#39;</span><span class="p">,</span> <span class="s1">&#39;30-60cm&#39;</span><span class="p">,</span> <span class="s1">&#39;60-100cm&#39;</span><span class="p">,</span> <span class="s1">&#39;100-200cm&#39;</span><span class="p">]</span>
+<span class="n">_DEPTH_CENTRES</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.80</span><span class="p">,</span> <span class="mf">1.50</span><span class="p">]</span>
+
+<span class="n">_VALID_STATS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="s1">&#39;p5&#39;</span><span class="p">,</span> <span class="s1">&#39;p50&#39;</span><span class="p">,</span> <span class="s1">&#39;p95&#39;</span><span class="p">}</span>
+
+<span class="n">_VALID_VARIABLES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;clay&#39;</span><span class="p">,</span> <span class="s1">&#39;sand&#39;</span><span class="p">,</span> <span class="s1">&#39;silt&#39;</span><span class="p">,</span> <span class="s1">&#39;om&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ksat&#39;</span><span class="p">,</span> <span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="s1">&#39;theta_r&#39;</span><span class="p">,</span> <span class="s1">&#39;theta_s&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;bd&#39;</span><span class="p">,</span> <span class="s1">&#39;ph&#39;</span><span class="p">,</span> <span class="s1">&#39;hb&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">_DEFAULT_VARIABLES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;theta_s&#39;</span><span class="p">,</span> <span class="s1">&#39;theta_r&#39;</span><span class="p">,</span> <span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="s1">&#39;ksat&#39;</span><span class="p">]</span>
+
+<span class="n">_UNITS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;clay&#39;</span><span class="p">:</span>    <span class="s1">&#39;%&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sand&#39;</span><span class="p">:</span>    <span class="s1">&#39;%&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;silt&#39;</span><span class="p">:</span>    <span class="s1">&#39;%&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;om&#39;</span><span class="p">:</span>      <span class="s1">&#39;g/kg&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ksat&#39;</span><span class="p">:</span>    <span class="s1">&#39;log10(cm/hr)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;alpha&#39;</span><span class="p">:</span>   <span class="s1">&#39;log10(cm^-1)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;n&#39;</span><span class="p">:</span>       <span class="s1">&#39;-&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;theta_r&#39;</span><span class="p">:</span> <span class="s1">&#39;cm^3/cm^3&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;theta_s&#39;</span><span class="p">:</span> <span class="s1">&#39;cm^3/cm^3&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;bd&#39;</span><span class="p">:</span>      <span class="s1">&#39;g/cm^3&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ph&#39;</span><span class="p">:</span>      <span class="s1">&#39;-&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;hb&#39;</span><span class="p">:</span>      <span class="s1">&#39;cm&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">_LONG_NAMES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;clay&#39;</span><span class="p">:</span>    <span class="s1">&#39;Clay content&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sand&#39;</span><span class="p">:</span>    <span class="s1">&#39;Sand content&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;silt&#39;</span><span class="p">:</span>    <span class="s1">&#39;Silt content&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;om&#39;</span><span class="p">:</span>      <span class="s1">&#39;Organic matter content&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ksat&#39;</span><span class="p">:</span>    <span class="s1">&#39;Saturated hydraulic conductivity (log10 scale)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;alpha&#39;</span><span class="p">:</span>   <span class="s1">&#39;van Genuchten alpha (log10 scale)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;n&#39;</span><span class="p">:</span>       <span class="s1">&#39;van Genuchten n&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;theta_r&#39;</span><span class="p">:</span> <span class="s1">&#39;Residual volumetric water content&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;theta_s&#39;</span><span class="p">:</span> <span class="s1">&#39;Saturated volumetric water content (porosity)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;bd&#39;</span><span class="p">:</span>      <span class="s1">&#39;Bulk density&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ph&#39;</span><span class="p">:</span>      <span class="s1">&#39;Soil pH&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;hb&#39;</span><span class="p">:</span>      <span class="s1">&#39;Bubbling pressure&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="ManagerPOLARIS">
+<a class="viewcode-back" href="../../../api/sources.html#watershed_workflow.sources.ManagerPOLARIS">[docs]</a>
+<span class="nd">@cached_dataset_manager</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ManagerPOLARIS</span><span class="p">(</span><span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;POLARIS 30-m CONUS soil hydraulic properties manager.</span>
+
+<span class="sd">    Downloads soil properties from the POLARIS v1.0 dataset [Chaney2019]_ served</span>
+<span class="sd">    by Duke University.  Data are returned as a 3-D ``xr.Dataset`` with dimensions</span>
+<span class="sd">    ``(depth, y, x)`` where ``depth`` holds the centre depth in metres for</span>
+<span class="sd">    each of the six soil layers (0-5, 5-15, 15-30, 30-60, 60-100, 100-200 cm).</span>
+
+<span class="sd">    A separate cache file is written for each ``{property}_{stat}`` combination,</span>
+<span class="sd">    e.g. ``POLARIS_theta_s_mean_...nc``.  All six depth layers are stacked into</span>
+<span class="sd">    that single file.</span>
+
+<span class="sd">    POLARIS covers the contiguous United States (CONUS) only.</span>
+
+<span class="sd">    Available variables</span>
+<span class="sd">    -------------------</span>
+<span class="sd">    clay, sand, silt, om, ksat, alpha, n, theta_r, theta_s, bd, ph, hb</span>
+
+<span class="sd">    Default variables: ``theta_s``, ``theta_r``, ``alpha``, ``n``, ``ksat``</span>
+<span class="sd">    (the van Genuchten parameter set plus saturated hydraulic conductivity).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    ``ksat`` is stored as log10(cm/hr) and ``alpha`` as log10(cm^-1) -- these</span>
+<span class="sd">    are the native POLARIS units, preserved as-is in the cache.</span>
+
+<span class="sd">    .. [Chaney2019] Chaney, N.W., et al. (2019). POLARIS soil properties: 30-m</span>
+<span class="sd">       probabilistic maps of soil properties over the contiguous United States.</span>
+<span class="sd">       *Water Resources Research*, 55, 2916-2938.</span>
+<span class="sd">       https://doi.org/10.1029/2018WR022797</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">VALID_VARIABLES</span> <span class="o">=</span> <span class="n">_VALID_VARIABLES</span>
+    <span class="n">DEFAULT_VARIABLES</span> <span class="o">=</span> <span class="n">_DEFAULT_VARIABLES</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">force_download</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the POLARIS manager.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        stat : str, optional</span>
+<span class="sd">            Statistical summary to retrieve.  One of ``&#39;mean&#39;``, ``&#39;p5&#39;``,</span>
+<span class="sd">            ``&#39;p50&#39;``, ``&#39;p95&#39;``.  Default ``&#39;mean&#39;``.</span>
+<span class="sd">        force_download : bool, optional</span>
+<span class="sd">            Re-download data even when a valid cached file already exists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">stat</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_VALID_STATS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid stat &#39;</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s2">&#39;. Valid stats: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_VALID_STATS</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">ManagerAttributes</span><span class="p">(</span>
+            <span class="n">category</span><span class="o">=</span><span class="s1">&#39;soil_structure&#39;</span><span class="p">,</span>
+            <span class="n">product</span><span class="o">=</span><span class="s1">&#39;POLARIS&#39;</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="s1">&#39;Duke Hydrology Lab&#39;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s1">&#39;POLARIS 30-m probabilistic soil hydraulic properties for CONUS.&#39;</span><span class="p">,</span>
+            <span class="n">product_short</span><span class="o">=</span><span class="s1">&#39;polaris&#39;</span><span class="p">,</span>
+            <span class="n">source_short</span><span class="o">=</span><span class="s1">&#39;duke_polaris_https&#39;</span><span class="p">,</span>
+            <span class="n">url</span><span class="o">=</span><span class="s1">&#39;http://hydrology.cee.duke.edu/POLARIS/PROPERTIES/v1.0&#39;</span><span class="p">,</span>
+            <span class="n">license</span><span class="o">=</span><span class="s1">&#39;CC BY-NC 4.0&#39;</span><span class="p">,</span>
+            <span class="n">citation</span><span class="o">=</span><span class="s1">&#39;Chaney et al. 2019&#39;</span><span class="p">,</span>
+            <span class="n">native_crs_in</span><span class="o">=</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
+            <span class="n">native_crs_out</span><span class="o">=</span><span class="n">CRS</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="mi">4326</span><span class="p">),</span>
+            <span class="n">native_resolution</span><span class="o">=</span><span class="mf">0.000278</span><span class="p">,</span>   <span class="c1"># ~30 m in degrees</span>
+            <span class="n">valid_variables</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">VALID_VARIABLES</span><span class="p">,</span>
+            <span class="n">default_variables</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_VARIABLES</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stat</span> <span class="o">=</span> <span class="n">stat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">force_download</span> <span class="o">=</span> <span class="n">force_download</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Abstract method implementations</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">isComplete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if all per-variable NetCDF files exist in the cache directory.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dir : str</span>
+<span class="sd">            Absolute path to a candidate cache directory.</span>
+<span class="sd">        request : ManagerDataset.Request</span>
+<span class="sd">            The request being fulfilled.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if ``{var}_{stat}.nc`` exists for every requested variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stat</span><span class="si">}</span><span class="s1">.nc&#39;</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_requestDataset</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the request unchanged — no async step.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">request</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_isServerReady</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True — POLARIS HTTP server is synchronous.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_downloadDataset</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download each requested variable to the cache directory.&quot;&quot;&quot;</span>
+        <span class="n">snapped_bounds</span> <span class="o">=</span> <span class="n">snapBounds</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">native_resolution</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">_download_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stat</span><span class="si">}</span><span class="s1">.nc&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">snapped_bounds</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_loadDataset</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Open cached NetCDF files and merge into a single dataset.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        request : ManagerDataset.Request</span>
+<span class="sd">            Request with ``_download_path`` set.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            Merged dataset with all requested variables, each shaped</span>
+<span class="sd">            ``(depth, y, x)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">_download_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stat</span><span class="si">}</span><span class="s1">.nc&#39;</span><span class="p">)</span>
+            <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="n">compat</span><span class="o">=</span><span class="s1">&#39;override&#39;</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Download internals</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">snapped_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download all depth layers for one variable and save as NetCDF.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var : str</span>
+<span class="sd">            POLARIS property name (e.g. ``&#39;theta_s&#39;``).</span>
+<span class="sd">        snapped_bounds : tuple of float</span>
+<span class="sd">            ``(xmin, ymin, xmax, ymax)`` in WGS84 (EPSG:4326).</span>
+<span class="sd">        filename : str</span>
+<span class="sd">            Destination NetCDF path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_download</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  Using existing: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="n">snapped_bounds</span>
+
+        <span class="c1"># Determine which 1-degree tiles cover the bounding box.</span>
+        <span class="n">tile_wests</span>  <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">xmin</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">xmax</span><span class="p">)))</span>
+        <span class="n">tile_souths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">ymin</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">ymax</span><span class="p">)))</span>
+        <span class="n">n_tiles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tile_wests</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">tile_souths</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;  POLARIS: downloading </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stat</span><span class="si">}</span><span class="s1"> &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;over </span><span class="si">{</span><span class="n">n_tiles</span><span class="si">}</span><span class="s1"> tile(s)&#39;</span>
+        <span class="p">)</span>
+
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">final_transform</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">final_height</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">final_width</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">depth_label</span> <span class="ow">in</span> <span class="n">_DEPTH_LABELS</span><span class="p">:</span>
+            <span class="n">tile_arrays</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">tile_transforms</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">tile_profile</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">tile_south</span> <span class="ow">in</span> <span class="n">tile_souths</span><span class="p">:</span>
+                <span class="n">tile_north</span> <span class="o">=</span> <span class="n">tile_south</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">tile_west</span> <span class="ow">in</span> <span class="n">tile_wests</span><span class="p">:</span>
+                    <span class="n">tile_east</span> <span class="o">=</span> <span class="n">tile_west</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="n">raw_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_downloadTile</span><span class="p">(</span>
+                        <span class="n">var</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat</span><span class="p">,</span> <span class="n">depth_label</span><span class="p">,</span>
+                        <span class="n">tile_south</span><span class="p">,</span> <span class="n">tile_north</span><span class="p">,</span> <span class="n">tile_west</span><span class="p">,</span> <span class="n">tile_east</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">raw_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">raw_data</span><span class="p">))</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+                        <span class="n">arr</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                        <span class="n">nodata</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">nodata</span>
+                        <span class="n">transform</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">transform</span>
+                        <span class="n">tile_profile</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">nodata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">arr</span><span class="p">[</span><span class="n">arr</span> <span class="o">==</span> <span class="n">nodata</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                    <span class="n">tile_arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+                    <span class="n">tile_transforms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tile_arrays</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;POLARIS: no tiles downloaded for </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stat</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">depth_label</span><span class="si">}</span><span class="s1"> &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;bounds </span><span class="si">{</span><span class="n">snapped_bounds</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tile_arrays</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">merged_arr</span> <span class="o">=</span> <span class="n">tile_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">merged_transform</span> <span class="o">=</span> <span class="n">tile_transforms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">merged_arr</span><span class="p">,</span> <span class="n">merged_transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mosaicTiles</span><span class="p">(</span>
+                    <span class="n">tile_arrays</span><span class="p">,</span> <span class="n">tile_transforms</span><span class="p">,</span> <span class="n">tile_profile</span>
+                <span class="p">)</span>
+
+            <span class="n">final_transform</span> <span class="o">=</span> <span class="n">merged_transform</span>
+            <span class="n">final_height</span><span class="p">,</span> <span class="n">final_width</span> <span class="o">=</span> <span class="n">merged_arr</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">merged_arr</span><span class="p">)</span>
+
+        <span class="c1"># Build coordinate arrays from the affine transform.</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">final_transform</span><span class="o">.</span><span class="n">c</span> <span class="o">+</span> <span class="n">final_transform</span><span class="o">.</span><span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">final_width</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="n">final_transform</span><span class="o">.</span><span class="n">f</span> <span class="o">+</span> <span class="n">final_transform</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">final_height</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="n">depth_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_DEPTH_CENTRES</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>   <span class="c1"># (depth, y, x)</span>
+
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">({</span>
+            <span class="n">var</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">,</span>
+                <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">],</span>
+                <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;depth&#39;</span><span class="p">:</span> <span class="n">depth_coords</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">ys</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">xs</span><span class="p">},</span>
+                <span class="n">attrs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s1">&#39;long_name&#39;</span><span class="p">:</span> <span class="n">_LONG_NAMES</span><span class="p">[</span><span class="n">var</span><span class="p">],</span>
+                    <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="n">_UNITS</span><span class="p">[</span><span class="n">var</span><span class="p">],</span>
+                    <span class="s1">&#39;stat&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat</span><span class="p">,</span>
+                    <span class="s1">&#39;depth_labels&#39;</span><span class="p">:</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_DEPTH_LABEL_PRETTY</span><span class="p">),</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="p">})</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">write_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">native_crs_out</span><span class="p">)</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;variable&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;stat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stat</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;    Written to: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_downloadTile</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">prop</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">stat</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">depth</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">south</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">north</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">west</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">east</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;bytes | None&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download a single POLARIS 1-degree tile and return raw bytes.</span>
+
+<span class="sd">        Returns ``None`` if the tile does not exist (HTTP 404).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">south_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">south</span><span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">north_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">north</span><span class="si">:</span><span class="s1">02d</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">west_str</span>  <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">west</span><span class="p">)</span>
+        <span class="n">east_str</span>  <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">east</span><span class="p">)</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="n">_BASE_URL</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">property</span><span class="o">=</span><span class="n">prop</span><span class="p">,</span>
+            <span class="n">stat</span><span class="o">=</span><span class="n">stat</span><span class="p">,</span>
+            <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
+            <span class="n">south</span><span class="o">=</span><span class="n">south_str</span><span class="p">,</span>
+            <span class="n">north</span><span class="o">=</span><span class="n">north_str</span><span class="p">,</span>
+            <span class="n">west</span><span class="o">=</span><span class="n">west_str</span><span class="p">,</span>
+            <span class="n">east</span><span class="o">=</span><span class="n">east_str</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;      GET </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;      POLARIS tile not found (404): </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="o">.</span><span class="n">content</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mosaicTiles</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">arrays</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+        <span class="n">transforms</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+        <span class="n">profile</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge multiple tile arrays into a single mosaic.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        arrays : list of np.ndarray</span>
+<span class="sd">            2-D float32 arrays (one per tile).</span>
+<span class="sd">        transforms : list of Affine</span>
+<span class="sd">            Affine transforms corresponding to each tile.</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Rasterio profile used as a template for in-memory datasets.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple of (np.ndarray, Affine)</span>
+<span class="sd">            The merged 2-D array and its affine transform.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">mem_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">arr</span><span class="p">,</span> <span class="n">tf</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">arrays</span><span class="p">,</span> <span class="n">transforms</span><span class="p">):</span>
+            <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">mem_profile</span> <span class="o">=</span> <span class="n">profile</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">mem_profile</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;GTiff&#39;</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">w</span><span class="p">,</span>
+                <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">,</span>
+                <span class="n">transform</span><span class="o">=</span><span class="n">tf</span><span class="p">,</span>
+                <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">MemoryFile</span><span class="p">()</span>
+            <span class="n">mem_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mf</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">mf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="o">**</span><span class="n">mem_profile</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="n">dst</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+            <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mf</span><span class="o">.</span><span class="n">open</span><span class="p">())</span>
+
+        <span class="n">merged</span><span class="p">,</span> <span class="n">merged_transform</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">merge</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+            <span class="n">datasets</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;first&#39;</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">mf</span> <span class="ow">in</span> <span class="n">mem_files</span><span class="p">:</span>
+            <span class="n">mf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">merged</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">merged_transform</span></div>
+
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

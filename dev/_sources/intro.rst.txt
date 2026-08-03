@@ -4,13 +4,13 @@ Watershed Workflow
 
 .. image:: _static/images/watershed_workflow.png
 
-.. include:: ../AUTHORS.rst
+.. include:: ../../AUTHORS.rst
 
 Watershed Workflow is a python-based, open source chain of tools for
 generating meshes and other data inputs for hyper-resolution
 hydrology, anywhere in the US.
 
-Fully distributed ydrologic models have huge data requirements, thanks
+Fully distributed hydrologic models have huge data requirements, thanks
 to their large extent (full river basins) and often very high
 resolution (~1-500 meters).  Furthermore, most process-rich
 models of integrated, distributed hydrology at this scale require

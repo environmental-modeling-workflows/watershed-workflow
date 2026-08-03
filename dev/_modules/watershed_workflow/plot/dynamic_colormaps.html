@@ -1,0 +1,1333 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watershed_workflow.plot.dynamic_colormaps &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/watershed_workflow/plot/dynamic_colormaps';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../../../_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../../watershed_workflow.html" class="nav-link">watershed_workflow</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">watershed_workflow.plot.dynamic_colormaps</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for watershed_workflow.plot.dynamic_colormaps</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Dynamic colormap scaling for matplotlib images with shared axes.</span>
+
+<span class="sd">Provides functionality to automatically adjust colormap limits (vmin/vmax) based on</span>
+<span class="sd">the currently visible region of data, useful for multi-panel plots with shared axes.</span>
+
+<span class="sd">Supports multiple data types through a wrapper abstraction:</span>
+<span class="sd">- xarray DataArray and Dataset</span>
+<span class="sd">- GeoPandas GeoDataFrame</span>
+<span class="sd">- matplotlib Collections (PolyCollection, LineCollection, PathCollection)</span>
+
+<span class="sd">Type Definitions</span>
+<span class="sd">----------------</span>
+<span class="sd">WrapperArgs : Union[Collection, Tuple[Any], List[Any], Dict[str, Any]]</span>
+<span class="sd">    Arguments to pass to DataWrapperFactory.wrap() to create a DataWrapper instance.</span>
+<span class="sd">    Can be:</span>
+<span class="sd">    - A Collection object (self-contained with geometry and values)</span>
+<span class="sd">    - A tuple/list of positional arguments (data, image, ...) for xarray/GeoDataFrame</span>
+<span class="sd">    - A dict of keyword arguments (data=..., image=..., ...)</span>
+
+<span class="sd">WrapperGroup : Tuple[List[WrapperArgs], bool]</span>
+<span class="sd">    A group of WrapperArgs that share the same colormap range, plus a boolean</span>
+<span class="sd">    flag indicating whether limits should be symmetric around 0.</span>
+
+<span class="sd">Extending with Custom Types</span>
+<span class="sd">----------------------------</span>
+<span class="sd">To add support for a custom data type, create a DataWrapper subclass and register it:</span>
+
+<span class="sd">    from dynamic_colormaps import DataWrapper, DataWrapperFactory</span>
+
+<span class="sd">    class DataWrapperMyType(DataWrapper):</span>
+<span class="sd">        def __init__(self, my_data, my_image):</span>
+<span class="sd">            self.data = my_data</span>
+<span class="sd">            self.image = my_image</span>
+
+<span class="sd">        def subset(self, xlim, ylim):</span>
+<span class="sd">            # Subset logic for your type</span>
+<span class="sd">            subsetted = self.data[...]</span>
+<span class="sd">            return DataWrapperMyType(subsetted, self.image)</span>
+
+<span class="sd">        def getLimits(self):</span>
+<span class="sd">            return float(self.data.min()), float(self.data.max())</span>
+
+<span class="sd">        def isEmpty(self):</span>
+<span class="sd">            return len(self.data) == 0</span>
+
+<span class="sd">        def setLimits(self, vmin, vmax):</span>
+<span class="sd">            self.image.set_clim(vmin, vmax)</span>
+
+<span class="sd">    # Register it</span>
+<span class="sd">    DataWrapperFactory.register(MyDataType, DataWrapperMyType)</span>
+
+<span class="sd">    # Now use it normally with createDynamicScaler:</span>
+<span class="sd">    # wrapper_groups = [</span>
+<span class="sd">    #     ([(my_data, my_image), (my_data2, my_image2)], False),</span>
+<span class="sd">    # ]</span>
+<span class="sd">    # scaler = createDynamicScaler(wrapper_groups, ax)</span>
+
+<span class="sd">Colorbar Updates</span>
+<span class="sd">----------------</span>
+<span class="sd">Colorbars created with plt.colorbar(img, ax=ax) will update automatically when the</span>
+<span class="sd">scaler calls img.set_clim(). The colorbar is connected to the image&#39;s colormap</span>
+<span class="sd">normalization, so changes to vmin/vmax propagate automatically.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">PolyCollection</span><span class="p">,</span> <span class="n">LineCollection</span><span class="p">,</span> <span class="n">PathCollection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.image</span><span class="w"> </span><span class="kn">import</span> <span class="n">AxesImage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">box</span><span class="p">,</span> <span class="n">Polygon</span><span class="p">,</span> <span class="n">LineString</span><span class="p">,</span> <span class="n">Point</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;DynamicColormapScaler&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;createDynamicScaler&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># Type definitions</span>
+<span class="c1">#</span>
+<span class="c1"># Arguments to a DataWrapper constructor, as a single argument, a</span>
+<span class="c1"># Tuple or List of args, or a Dict of kwargs.  The first argument (or</span>
+<span class="c1"># the data argument for kwargs) is used to determine the type.</span>
+<span class="n">WrapperArgs</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Collection</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+
+<span class="c1"># Arguments for a group of wrappers, plus the symmetric flag.</span>
+<span class="n">WrapperGroup</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">WrapperArgs</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DataWrapper</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract base class for data wrappers.</span>
+
+<span class="sd">    Wraps different data types to provide a uniform interface for subsetting</span>
+<span class="sd">    and computing min/max values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;DataWrapper&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a new wrapper containing only data within the specified bounds.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        xlim : Tuple[float, float]</span>
+<span class="sd">            (xmin, xmax) bounds</span>
+<span class="sd">        ylim : Tuple[float, float]</span>
+<span class="sd">            (ymin, ymax) bounds</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataWrapper</span>
+<span class="sd">            New DataWrapper instance with subsetted data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">getLimits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute min and max values of the data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[float, float]</span>
+<span class="sd">            (vmin, vmax)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">isEmpty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the wrapper contains any data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if empty, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setLimits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vmin</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vmax</span> <span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the color limits of the objects or image being displayed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DataWrapperXarray</span><span class="p">(</span><span class="n">DataWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DataWrapper for xarray DataArray and Dataset objects.</span>
+
+<span class="sd">    Provides subsetting via coordinate-based selection and min/max computation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">],</span> <span class="n">image</span><span class="p">:</span> <span class="n">AxesImage</span><span class="p">,</span> 
+                 <span class="n">var_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">x_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">y_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;y&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : Union[xr.DataArray, xr.Dataset]</span>
+<span class="sd">            DataArray or Dataset with coordinates</span>
+<span class="sd">        image : AxesImage</span>
+<span class="sd">            The return value of data.plot.imshow()</span>
+<span class="sd">        var_name : str, optional</span>
+<span class="sd">            For Dataset, the variable name to extract. If None and data is a Dataset,</span>
+<span class="sd">            defaults to the first data variable.</span>
+<span class="sd">        x_name : str, optional</span>
+<span class="sd">            Name of the x coordinate. Default is &#39;x&#39;.</span>
+<span class="sd">        y_name : str, optional</span>
+<span class="sd">            Name of the y coordinate. Default is &#39;y&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">var_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;When providing a Dataset, must also provide var_name option specifying what variable is plotted.&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected xarray.DataArray or Dataset, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_name</span> <span class="o">=</span> <span class="n">x_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_name</span> <span class="o">=</span> <span class="n">y_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DataWrapper</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Subset data to visible region using coordinate-based selection.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        xlim : Tuple[float, float]</span>
+<span class="sd">            (xmin, xmax) bounds</span>
+<span class="sd">        ylim : Tuple[float, float]</span>
+<span class="sd">            (ymin, ymax) bounds</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataWrapper</span>
+<span class="sd">            New DataWrapperXarray with subsetted data</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If coordinates are not present</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">subsetted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span>
+                <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">x_name</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="n">y_name</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">])}</span>
+            <span class="p">)</span>
+            <span class="n">wrapper</span> <span class="o">=</span> <span class="n">DataWrapperXarray</span><span class="p">(</span><span class="n">subsetted</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">,</span> <span class="n">x_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x_name</span><span class="p">,</span> <span class="n">y_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">y_name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">wrapper</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not subset xarray with coordinates: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">getLimits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[float, float]</span>
+<span class="sd">            (vmin, vmax)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">isEmpty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if size is 0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">setLimits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vmin</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vmax</span> <span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the color limits.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DataWrapperGeoDataFrame</span><span class="p">(</span><span class="n">DataWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper for GeoPandas GeoDataFrame objects.</span>
+
+<span class="sd">    Provides subsetting based on intersection with bounding box and min/max computation</span>
+<span class="sd">    from a value column.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="n">Collection</span><span class="p">,</span>
+                 <span class="n">value_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;value&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gdf : GeoDataFrame</span>
+<span class="sd">            GeoDataFrame with geometry column</span>
+<span class="sd">        collection : Collection</span>
+<span class="sd">            The drawn shapes, return value of gdf.plot(...)</span>
+<span class="sd">        value_column : str, optional</span>
+<span class="sd">            Name of column containing values for min/max computation. Default is &#39;value&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected GeoDataFrame, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gdf</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">value_column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Column &#39;</span><span class="si">{</span><span class="n">value_column</span><span class="si">}</span><span class="s2">&#39; not found in GeoDataFrame&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_column</span> <span class="o">=</span> <span class="n">value_column</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span> <span class="o">=</span> <span class="n">collection</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DataWrapper</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Subset by geometry intersection with bounding box.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        xlim : Tuple[float, float]</span>
+<span class="sd">            (xmin, xmax) bounds</span>
+<span class="sd">        ylim : Tuple[float, float]</span>
+<span class="sd">            (ymin, ymax) bounds</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataWrapper</span>
+<span class="sd">            New DataWrapperGeoDataFrame with subsetted data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">bbox</span><span class="p">)</span>
+        <span class="n">subsetted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">DataWrapperGeoDataFrame</span><span class="p">(</span><span class="n">subsetted</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_column</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">getLimits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[float, float]</span>
+<span class="sd">            (vmin, vmax) from value_column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isEmpty</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot compute limits from empty GeoDataFrame&quot;</span><span class="p">)</span>
+        <span class="n">vmin</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_column</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_column</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">setLimits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vmin</span> <span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vmax</span> <span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the color limits.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">isEmpty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if no rows</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gdf</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DataWrapperCollection</span><span class="p">(</span><span class="n">DataWrapperGeoDataFrame</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DataWrapper for matplotlib Collection objects (PolyCollection, LineCollection, PathCollection).</span>
+
+<span class="sd">    Converts collection to GeoDataFrame internally for efficient spatial subsetting.</span>
+<span class="sd">    Inherits all subsetting and limit computation from DataWrapperGeoDataFrame.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        collection : matplotlib.collections.Collection</span>
+<span class="sd">            A PolyCollection, LineCollection, or PathCollection</span>
+<span class="sd">        values : Iterable[float], optional</span>
+<span class="sd">            Values corresponding to each element in the collection.</span>
+<span class="sd">            If None, attempts to extract from collection.get_array().</span>
+<span class="sd">            Length must match number of paths in collection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">collection</span><span class="p">,</span> <span class="n">Collection</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected Collection, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">collection</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Try to get values from collection if not provided</span>
+        <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">get_array</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;No values provided and collection.get_array() returned None. &quot;</span>
+                    <span class="s2">&quot;Please provide values explicitly.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="n">values_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="c1"># Convert paths to geometries</span>
+        <span class="n">geometries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">collection</span><span class="p">,</span> <span class="n">PolyCollection</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">collection</span><span class="o">.</span><span class="n">get_paths</span><span class="p">():</span>
+                <span class="n">vertices</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">vertices</span>
+
+                <span class="c1"># Close the polygon if not already closed</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">vertices</span><span class="p">,</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                <span class="n">geometries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Polygon</span><span class="p">(</span><span class="n">vertices</span><span class="p">))</span>
+                
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">collection</span><span class="p">,</span> <span class="n">LineCollection</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">collection</span><span class="o">.</span><span class="n">get_paths</span><span class="p">():</span>
+                <span class="n">vertices</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">vertices</span>
+                <span class="n">geometries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">LineString</span><span class="p">(</span><span class="n">vertices</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">collection</span><span class="p">,</span> <span class="n">PathCollection</span><span class="p">):</span>
+            <span class="c1"># PathCollection stores points; create point geometries</span>
+            <span class="n">offsets</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">get_offsets</span><span class="p">()</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">geometries</span> <span class="o">=</span> <span class="p">[</span><span class="n">Point</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">offsets</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported collection type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">collection</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values_array</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">geometries</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Number of values (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">values_array</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;number of geometries (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">geometries</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create GeoDataFrame and initialize parent</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="n">values_array</span><span class="p">},</span>
+            <span class="n">geometry</span><span class="o">=</span><span class="n">geometries</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">collection</span><span class="p">,</span> <span class="s1">&#39;values&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DataWrapperFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Factory for creating appropriate wrapper instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_wrappers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span> <span class="n">DataWrapperXarray</span><span class="p">,</span>
+        <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span> <span class="n">DataWrapperXarray</span><span class="p">,</span>
+        <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span> <span class="n">DataWrapperGeoDataFrame</span><span class="p">,</span>
+        <span class="n">Collection</span><span class="p">:</span> <span class="n">DataWrapperCollection</span>
+    <span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrap</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataWrapper</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a wrapper for the given data type.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : xr.DataArray | xr.Dataset | Collection | GeoDataFrame</span>
+<span class="sd">            The data to wrap.</span>
+<span class="sd">        *args, **kwargs:</span>
+<span class="sd">            All other args are passed to the DataWrapper constructor.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataWrapper</span>
+<span class="sd">            Appropriate DataWrapper subclass instance</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If data type is not supported</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Handle registered types</span>
+        <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_wrappers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_wrappers</span><span class="p">[</span><span class="n">dtype</span><span class="p">](</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unsupported data type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="s2">&quot;Supported types: xarray.DataArray, xarray.Dataset, &quot;</span>
+            <span class="s2">&quot;geopandas.GeoDataFrame, matplotlib.collection.Collection&quot;</span>
+        <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">wrapper_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Register a new data type and its wrapper.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_type : type</span>
+<span class="sd">            The data type to support</span>
+<span class="sd">        wrapper_class : type</span>
+<span class="sd">            The DataWrapper subclass to use</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If wrapper_class is not a DataWrapper subclass</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">wrapper_class</span><span class="p">,</span> <span class="n">DataWrapper</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;wrapper_class must be a DataWrapper subclass, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">wrapper_class</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_wrappers</span><span class="p">[</span><span class="n">data_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrapper_class</span>
+
+
+<div class="viewcode-block" id="DynamicColormapScaler">
+<a class="viewcode-back" href="../../../api/plot.html#watershed_workflow.plot.DynamicColormapScaler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DynamicColormapScaler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manages dynamic vmin/vmax scaling for groups of matplotlib images.</span>
+
+<span class="sd">    This class enables automatic colormap adjustment when zooming/panning shared axes.</span>
+<span class="sd">    Images are organized into groups, where each group shares a common colormap range.</span>
+
+<span class="sd">    Supports multiple data types through DataWrapper abstraction:</span>
+<span class="sd">    - xarray DataArray and Dataset</span>
+<span class="sd">    - GeoPandas GeoDataFrame</span>
+<span class="sd">    - matplotlib Collections (PolyCollection, LineCollection, PathCollection)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        output : optional</span>
+<span class="sd">            Optional jupyter widgets.Output object for debug messages.</span>
+<span class="sd">            If None, prints to stdout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">img_groups</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">DataWrapper</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
+
+<div class="viewcode-block" id="DynamicColormapScaler.addGroup">
+<a class="viewcode-back" href="../../../api/plot.html#watershed_workflow.plot.DynamicColormapScaler.addGroup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">addGroup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">wrapper_args_group</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WrapperArgs</span><span class="p">],</span>
+        <span class="n">symmetric</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a group of wrapper arguments that share a common colormap range.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        wrapper_args_group : List[WrapperArgs]</span>
+<span class="sd">            List of arguments to create DataWrappers. Each element can be:</span>
+<span class="sd">            - A Collection object (self-contained)</span>
+<span class="sd">            - A tuple/list of (data, image, ...) for xarray/GeoDataFrame</span>
+<span class="sd">            - A dict of keyword arguments</span>
+<span class="sd">        symmetric : bool, optional</span>
+<span class="sd">            If True, vmin and vmax will be symmetric around 0. Default is False.</span>
+<span class="sd">            Useful for difference maps or anomalies.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If wrapper_args_group is empty</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If data types are not supported</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">wrapper_args_group</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;wrapper_args_group cannot be empty&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Wrap each data item</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Adding </span><span class="si">{</span><span class="s2">&quot;symmetric&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">symmetric</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;non-symmetric&quot;</span><span class="si">}</span><span class="s1"> group of size </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wrapper_args_group</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">wrappers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">wrapper_args_group</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;... adding a wrapper of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">wrapper</span> <span class="o">=</span> <span class="n">DataWrapperFactory</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;... adding a wrapper of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">wrapper</span> <span class="o">=</span> <span class="n">DataWrapperFactory</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;... adding a wrapper of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">wrapper</span> <span class="o">=</span> <span class="n">DataWrapperFactory</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;... could not wrap data of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not wrap data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">wrappers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wrapper</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Added a group with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wrappers</span><span class="p">)</span><span class="si">}</span><span class="s1"> wrappers&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">img_groups</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">wrappers</span><span class="p">,</span> <span class="n">symmetric</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Now have </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img_groups</span><span class="p">)</span><span class="si">}</span><span class="s1"> groups&#39;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_computeLimits</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_wrappers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DataWrapper</span><span class="p">],</span>
+        <span class="n">symmetric</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute vmin and vmax from a list of data wrappers.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_wrappers : List[DataWrapper]</span>
+<span class="sd">            List of DataWrapper objects to compute limits from</span>
+<span class="sd">        symmetric : bool, optional</span>
+<span class="sd">            If True, return symmetric limits around 0. Default is False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[float, float]</span>
+<span class="sd">            (vmin, vmax)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vmin_all</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">wrapper</span><span class="o">.</span><span class="n">getLimits</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">wrapper</span> <span class="ow">in</span> <span class="n">data_wrappers</span><span class="p">)</span>
+        <span class="n">vmax_all</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">wrapper</span><span class="o">.</span><span class="n">getLimits</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">wrapper</span> <span class="ow">in</span> <span class="n">data_wrappers</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">symmetric</span><span class="p">:</span>
+            <span class="n">abs_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">vmin_all</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">vmax_all</span><span class="p">))</span>
+            <span class="n">vmin</span> <span class="o">=</span> <span class="o">-</span><span class="n">abs_max</span>
+            <span class="n">vmax</span> <span class="o">=</span> <span class="n">abs_max</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="n">vmin_all</span><span class="p">,</span> <span class="n">vmax_all</span>
+
+        <span class="k">return</span> <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_printDebug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print debug message to output widget or stdout.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        message : str</span>
+<span class="sd">            Message to print</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_onLimitsChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Callback function for axis limit changes.</span>
+
+<span class="sd">        Connected to &#39;ylim_changed&#39; which fires once after both xlim and ylim</span>
+<span class="sd">        are updated (after zoom/pan completes).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        event : matplotlib event object</span>
+<span class="sd">            Event containing axes information</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;onLimitsChanged...&#39;</span><span class="p">)</span>
+        <span class="n">xlim</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
+        <span class="n">ylim</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Axis limits changed: xlim=</span><span class="si">{</span><span class="n">xlim</span><span class="si">}</span><span class="s1">, ylim=</span><span class="si">{</span><span class="n">ylim</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Update all image groups</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Updating: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">img_groups</span><span class="p">)</span><span class="si">}</span><span class="s1"> groups&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">wrappers</span><span class="p">,</span> <span class="n">symmetric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">img_groups</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Updating: </span><span class="si">{</span><span class="n">wrappers</span><span class="p">,</span><span class="w"> </span><span class="n">symmetric</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_updateGroup</span><span class="p">(</span><span class="n">wrappers</span><span class="p">,</span> <span class="n">xlim</span><span class="p">,</span> <span class="n">ylim</span><span class="p">,</span> <span class="n">symmetric</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_updateGroup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_wrappers</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DataWrapper</span><span class="p">],</span>
+        <span class="n">xlim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">ylim</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">symmetric</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update colormap limits for a group of images based on visible data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_wrappers : List[DataWrapper]</span>
+<span class="sd">            List of wrappers to update.</span>
+<span class="sd">        xlim : Tuple[float, float]</span>
+<span class="sd">            Visible x-axis limits</span>
+<span class="sd">        ylim : Tuple[float, float]</span>
+<span class="sd">            Visible y-axis limits</span>
+<span class="sd">        symmetric : bool</span>
+<span class="sd">            Whether limits should be symmetric around 0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Subset all data to visible region</span>
+            <span class="n">visible_wrappers</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">data_wrapper</span><span class="o">.</span><span class="n">subset</span><span class="p">(</span><span class="n">xlim</span><span class="p">,</span> <span class="n">ylim</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">data_wrapper</span> <span class="ow">in</span> <span class="n">data_wrappers</span>
+            <span class="p">]</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not subset data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">visible_wrappers</span><span class="p">)</span><span class="si">}</span><span class="s1"> visible wrappers.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Check if any visible data exists</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">wrapper</span><span class="o">.</span><span class="n">isEmpty</span><span class="p">()</span> <span class="k">for</span> <span class="n">wrapper</span> <span class="ow">in</span> <span class="n">visible_wrappers</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="s1">&#39;Visible data is empty, skipping update&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Compute new limits from visible data</span>
+        <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeLimits</span><span class="p">(</span><span class="n">visible_wrappers</span><span class="p">,</span> <span class="n">symmetric</span><span class="o">=</span><span class="n">symmetric</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Updating group: vmin=</span><span class="si">{</span><span class="n">vmin</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">, vmax=</span><span class="si">{</span><span class="n">vmax</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Is symmetric? </span><span class="si">{</span><span class="n">symmetric</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Apply limits to all images in the group</span>
+        <span class="k">for</span> <span class="n">wrapper</span> <span class="ow">in</span> <span class="n">data_wrappers</span><span class="p">:</span>
+            <span class="n">wrapper</span><span class="o">.</span><span class="n">setLimits</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DynamicColormapScaler.connect">
+<a class="viewcode-back" href="../../../api/plot.html#watershed_workflow.plot.DynamicColormapScaler.connect">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Connect the callback to an axes object.</span>
+
+<span class="sd">        Should be called on one of the shared axes. The callback will be</span>
+<span class="sd">        triggered whenever the axis limits change (via zoom/pan).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ax : matplotlib.axes.Axes</span>
+<span class="sd">            Axes object to monitor. Should be one of the shared axes</span>
+<span class="sd">            that all images are plotted on.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;ylim_changed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onLimitsChanged</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printDebug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Connected callback to axes: </span><span class="si">{</span><span class="n">ax</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="createDynamicScaler">
+<a class="viewcode-back" href="../../../api/plot.html#watershed_workflow.plot.createDynamicScaler">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">createDynamicScaler</span><span class="p">(</span>
+        <span class="n">data_wrapper_args_list</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WrapperGroup</span><span class="p">],</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span>
+        <span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DynamicColormapScaler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience function to create and connect a DynamicColormapScaler.</span>
+
+<span class="sd">    This is the primary user-facing function for setting up dynamic colormap scaling.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data_wrapper_args_list : List[WrapperGroup]</span>
+<span class="sd">        List of WrapperGroups. Each group is a (wrapper_args_list, symmetric) tuple where:</span>
+<span class="sd">        - wrapper_args_list is a List[WrapperArgs] containing arguments to create DataWrappers</span>
+<span class="sd">        - symmetric is a bool indicating symmetric scaling around 0</span>
+<span class="sd">    ax : matplotlib.axes.Axes</span>
+<span class="sd">        Axes to monitor for zoom/pan events. Should be one of the shared axes.</span>
+<span class="sd">    output : optional</span>
+<span class="sd">        Optional jupyter widgets.Output for debug messages.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DynamicColormapScaler</span>
+<span class="sd">        Configured scaler instance</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Each WrapperArgs can be:</span>
+<span class="sd">    - A Collection object (self-contained with geometry and values)</span>
+<span class="sd">    - A tuple/list like (data, image, ...) for xarray DataArray/Dataset or GeoDataFrame</span>
+<span class="sd">    - A dict of keyword arguments like {&#39;data&#39;: ..., &#39;image&#39;: ..., ...}</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Create a scaler with xarray and GeoDataFrame data:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        import matplotlib.pyplot as plt</span>
+<span class="sd">        import xarray as xr</span>
+<span class="sd">        import geopandas as gpd</span>
+<span class="sd">        import numpy as np</span>
+<span class="sd">        from dynamic_colormaps import createDynamicScaler</span>
+
+<span class="sd">        # Create figure and axes</span>
+<span class="sd">        fig, axes = plt.subplots(1, 2, sharex=True, sharey=True, figsize=(12, 5))</span>
+
+<span class="sd">        # Plot xarray DataArray on first axes</span>
+<span class="sd">        dem = xr.open_dataarray(&#39;dem.nc&#39;)</span>
+<span class="sd">        extent = [dem[&#39;x&#39;].min().item(), dem[&#39;x&#39;].max().item(),</span>
+<span class="sd">                  dem[&#39;y&#39;].min().item(), dem[&#39;y&#39;].max().item()]</span>
+<span class="sd">        img1 = axes[0].imshow(dem, extent=extent, cmap=&#39;gist_earth&#39;, origin=&#39;lower&#39;)</span>
+<span class="sd">        axes[0].set_title(&#39;DEM&#39;)</span>
+<span class="sd">        cbar1 = plt.colorbar(img1, ax=axes[0])</span>
+
+<span class="sd">        # Plot GeoDataFrame on second axes</span>
+<span class="sd">        gdf = gpd.read_file(&#39;regions.shp&#39;)</span>
+<span class="sd">        gdf[&#39;value&#39;] = np.random.rand(len(gdf)) * 100</span>
+<span class="sd">        collection = gdf.plot(ax=axes[1], column=&#39;value&#39;, cmap=&#39;viridis&#39;, legend=True)</span>
+<span class="sd">        axes[1].set_title(&#39;Regions&#39;)</span>
+
+<span class="sd">        # Create wrapper argument groups</span>
+<span class="sd">        # Both datasets share linear scaling in the same group</span>
+<span class="sd">        wrapper_groups = [</span>
+<span class="sd">            ([</span>
+<span class="sd">                (dem, img1),                    # xarray: (data, image)</span>
+<span class="sd">                (gdf, collection, &#39;value&#39;)      # GeoDataFrame: (gdf, collection, value_column)</span>
+<span class="sd">            ], False),</span>
+<span class="sd">        ]</span>
+
+<span class="sd">        # Setup dynamic scaling</span>
+<span class="sd">        scaler = createDynamicScaler(wrapper_groups, axes[0])</span>
+<span class="sd">        plt.show()</span>
+
+<span class="sd">    Example with PolyCollection, LineCollection, and scatter:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        import matplotlib.pyplot as plt</span>
+<span class="sd">        from matplotlib.collections import PolyCollection, LineCollection</span>
+<span class="sd">        import numpy as np</span>
+<span class="sd">        from dynamic_colormaps import createDynamicScaler</span>
+
+<span class="sd">        fig, axes = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(15, 5))</span>
+
+<span class="sd">        # PolyCollection example</span>
+<span class="sd">        polygons = [[[0, 0], [1, 0], [1, 1], [0, 1]],</span>
+<span class="sd">                    [[1, 1], [2, 1], [2, 2], [1, 2]]]</span>
+<span class="sd">        poly_values = [10, 20]</span>
+<span class="sd">        poly_coll = PolyCollection(polygons, edgecolors=&#39;black&#39;)</span>
+<span class="sd">        axes[0].add_collection(poly_coll)</span>
+<span class="sd">        poly_coll.set_array(np.array(poly_values))</span>
+<span class="sd">        axes[0].set_title(&#39;PolyCollection&#39;)</span>
+
+<span class="sd">        # LineCollection example</span>
+<span class="sd">        lines = [[[0, 0], [1, 1]], [[1, 0], [2, 1]]]</span>
+<span class="sd">        line_values = [15, 25]</span>
+<span class="sd">        line_coll = LineCollection(lines)</span>
+<span class="sd">        axes[1].add_collection(line_coll)</span>
+<span class="sd">        line_coll.set_array(np.array(line_values))</span>
+<span class="sd">        axes[1].set_title(&#39;LineCollection&#39;)</span>
+
+<span class="sd">        # Scatter plot example (returns PathCollection)</span>
+<span class="sd">        scatter_x = np.random.rand(50)</span>
+<span class="sd">        scatter_y = np.random.rand(50)</span>
+<span class="sd">        scatter_values = np.random.rand(50) * 100</span>
+<span class="sd">        scatter_coll = axes[2].scatter(scatter_x, scatter_y, c=scatter_values, cmap=&#39;viridis&#39;)</span>
+<span class="sd">        axes[2].set_title(&#39;Scatter (PathCollection)&#39;)</span>
+
+<span class="sd">        # Setup with all three collection types in one group with linear scaling</span>
+<span class="sd">        # Collections are self-contained and automatically extract values via get_array()</span>
+<span class="sd">        wrapper_groups = [</span>
+<span class="sd">            (</span>
+<span class="sd">                [</span>
+<span class="sd">                    poly_coll,      # Collection objects are self-contained</span>
+<span class="sd">                    line_coll,</span>
+<span class="sd">                    scatter_coll,</span>
+<span class="sd">                ],</span>
+<span class="sd">                False</span>
+<span class="sd">            ),</span>
+<span class="sd">        ]</span>
+
+<span class="sd">        scaler = createDynamicScaler(wrapper_groups, axes[0])</span>
+<span class="sd">        plt.show()</span>
+
+<span class="sd">    Example with symmetric scaling for differences:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        import matplotlib.pyplot as plt</span>
+<span class="sd">        import xarray as xr</span>
+<span class="sd">        from dynamic_colormaps import createDynamicScaler</span>
+
+<span class="sd">        fig, axes = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(15, 5))</span>
+
+<span class="sd">        # Load data</span>
+<span class="sd">        dem = xr.open_dataarray(&#39;dem.nc&#39;)</span>
+<span class="sd">        dem_smooth = dem.rolling(x=5, y=5, center=True).mean()</span>
+<span class="sd">        diff = dem_smooth - dem</span>
+
+<span class="sd">        extent = [dem[&#39;x&#39;].min().item(), dem[&#39;x&#39;].max().item(),</span>
+<span class="sd">                  dem[&#39;y&#39;].min().item(), dem[&#39;y&#39;].max().item()]</span>
+
+<span class="sd">        # Plot</span>
+<span class="sd">        img1 = axes[0].imshow(dem, extent=extent, cmap=&#39;gist_earth&#39;, origin=&#39;lower&#39;)</span>
+<span class="sd">        img2 = axes[1].imshow(dem_smooth, extent=extent, cmap=&#39;gist_earth&#39;, origin=&#39;lower&#39;)</span>
+<span class="sd">        img3 = axes[2].imshow(diff, extent=extent, cmap=&#39;RdBu_r&#39;, origin=&#39;lower&#39;)</span>
+
+<span class="sd">        axes[0].set_title(&#39;Original DEM&#39;)</span>
+<span class="sd">        axes[1].set_title(&#39;Smoothed DEM&#39;)</span>
+<span class="sd">        axes[2].set_title(&#39;Difference&#39;)</span>
+
+<span class="sd">        # Create wrapper groups: first two share linear scaling, third has symmetric</span>
+<span class="sd">        wrapper_groups = [</span>
+<span class="sd">            ([(dem, img1), (dem_smooth, img2)], False),  # Linear</span>
+<span class="sd">            ([(diff, img3)], True),                       # Symmetric</span>
+<span class="sd">        ]</span>
+
+<span class="sd">        scaler = createDynamicScaler(wrapper_groups, axes[0])</span>
+<span class="sd">        plt.show()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scaler</span> <span class="o">=</span> <span class="n">DynamicColormapScaler</span><span class="p">(</span><span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">wrapper_args_list</span><span class="p">,</span> <span class="n">symmetric</span> <span class="ow">in</span> <span class="n">data_wrapper_args_list</span><span class="p">:</span>
+        <span class="n">scaler</span><span class="o">.</span><span class="n">addGroup</span><span class="p">(</span><span class="n">wrapper_args_list</span><span class="p">,</span> <span class="n">symmetric</span><span class="o">=</span><span class="n">symmetric</span><span class="p">)</span>
+
+    <span class="n">scaler</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">scaler</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

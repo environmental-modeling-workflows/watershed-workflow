@@ -26,33 +26,34 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/custom_theme.css?v=a03f4c85" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../_static/jquery.js?v=5d32c60e"></script>
     <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
     <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = '_modules/index';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="../_static/main.js?v=b10558fa"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -60,20 +61,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -99,7 +106,7 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
   <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
@@ -169,23 +176,6 @@
   </a>
 </li>
 
-            <li class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button"
-                data-bs-toggle="dropdown" aria-expanded="false"
-                aria-controls="pst-nav-more-links">
-                    More
-                </button>
-                <ul id="pst-nav-more-links" class="dropdown-menu">
-                    
-<li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="../gallery.html">
-    Gallery
-  </a>
-</li>
-
-                </ul>
-            </li>
-            
   </ul>
 </nav></div>
       
@@ -207,11 +197,18 @@
       
         <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
       
     </div>
     
@@ -291,13 +288,6 @@
   </a>
 </li>
 
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../gallery.html">
-    Gallery
-  </a>
-</li>
-
   </ul>
 </nav></div>
           
@@ -310,11 +300,18 @@
         
           <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
         
       </div>
     
@@ -398,36 +395,54 @@ Version dev</div>
                   
   <h1>All modules for which code is available</h1>
 <ul><li><a href="watershed_workflow.html">watershed_workflow</a></li>
-<ul><li><a href="watershed_workflow/colors.html">watershed_workflow.colors</a></li>
-<li><a href="watershed_workflow/condition.html">watershed_workflow.condition</a></li>
-<li><a href="watershed_workflow/config.html">watershed_workflow.config</a></li>
-<li><a href="watershed_workflow/crs.html">watershed_workflow.crs</a></li>
-<li><a href="watershed_workflow/data.html">watershed_workflow.data</a></li>
-<li><a href="watershed_workflow/hydrography.html">watershed_workflow.hydrography</a></li>
-<li><a href="watershed_workflow/mesh.html">watershed_workflow.mesh</a></li>
-<li><a href="watershed_workflow/meteorology.html">watershed_workflow.meteorology</a></li>
-<li><a href="watershed_workflow/regions.html">watershed_workflow.regions</a></li>
-<li><a href="watershed_workflow/river_mesh.html">watershed_workflow.river_mesh</a></li>
-<li><a href="watershed_workflow/river_tree.html">watershed_workflow.river_tree</a></li>
-<li><a href="watershed_workflow/soil_properties.html">watershed_workflow.soil_properties</a></li>
+<ul><li><a href="watershed_workflow/crs.html">watershed_workflow.crs</a></li>
+<li><a href="watershed_workflow/hydro/angles.html">watershed_workflow.hydro.angles</a></li>
+<li><a href="watershed_workflow/hydro/hydrography.html">watershed_workflow.hydro.hydrography</a></li>
+<li><a href="watershed_workflow/hydro/resampling.html">watershed_workflow.hydro.resampling</a></li>
+<li><a href="watershed_workflow/hydro/river.html">watershed_workflow.hydro.river</a></li>
+<li><a href="watershed_workflow/hydro/watershed.html">watershed_workflow.hydro.watershed</a></li>
+<li><a href="watershed_workflow/io/hdf5.html">watershed_workflow.io.hdf5</a></li>
+<li><a href="watershed_workflow/io/ui.html">watershed_workflow.io.ui</a></li>
+<li><a href="watershed_workflow/io/vtk.html">watershed_workflow.io.vtk</a></li>
+<li><a href="watershed_workflow/mesh/condition.html">watershed_workflow.mesh.condition</a></li>
+<li><a href="watershed_workflow/mesh/mesh.html">watershed_workflow.mesh.mesh</a></li>
+<li><a href="watershed_workflow/mesh/regions.html">watershed_workflow.mesh.regions</a></li>
+<li><a href="watershed_workflow/mesh/river_mesh.html">watershed_workflow.mesh.river_mesh</a></li>
+<li><a href="watershed_workflow/mesh/triangulation.html">watershed_workflow.mesh.triangulation</a></li>
+<li><a href="watershed_workflow/plot/colors.html">watershed_workflow.plot.colors</a></li>
+<li><a href="watershed_workflow/plot/dynamic_colormaps.html">watershed_workflow.plot.dynamic_colormaps</a></li>
+<li><a href="watershed_workflow/plot/plot.html">watershed_workflow.plot.plot</a></li>
+<li><a href="watershed_workflow/plot/widgets.html">watershed_workflow.plot.widgets</a></li>
+<li><a href="watershed_workflow/properties/land_cover.html">watershed_workflow.properties.land_cover</a></li>
+<li><a href="watershed_workflow/properties/meteorology.html">watershed_workflow.properties.meteorology</a></li>
+<li><a href="watershed_workflow/properties/soil.html">watershed_workflow.properties.soil</a></li>
+<li><a href="watershed_workflow/properties/stream_light.html">watershed_workflow.properties.stream_light</a></li>
 <li><a href="watershed_workflow/sources.html">watershed_workflow.sources</a></li>
 <ul><li><a href="watershed_workflow/sources/manager_3dep.html">watershed_workflow.sources.manager_3dep</a></li>
 <li><a href="watershed_workflow/sources/manager_aorc.html">watershed_workflow.sources.manager_aorc</a></li>
 <li><a href="watershed_workflow/sources/manager_daymet.html">watershed_workflow.sources.manager_daymet</a></li>
 <li><a href="watershed_workflow/sources/manager_glhymps.html">watershed_workflow.sources.manager_glhymps</a></li>
+<li><a href="watershed_workflow/sources/manager_hf_hydrodata.html">watershed_workflow.sources.manager_hf_hydrodata</a></li>
 <li><a href="watershed_workflow/sources/manager_modis_appeears.html">watershed_workflow.sources.manager_modis_appeears</a></li>
+<li><a href="watershed_workflow/sources/manager_modis_earthdata.html">watershed_workflow.sources.manager_modis_earthdata</a></li>
 <li><a href="watershed_workflow/sources/manager_nhd.html">watershed_workflow.sources.manager_nhd</a></li>
 <li><a href="watershed_workflow/sources/manager_nlcd.html">watershed_workflow.sources.manager_nlcd</a></li>
 <li><a href="watershed_workflow/sources/manager_nrcs.html">watershed_workflow.sources.manager_nrcs</a></li>
+<li><a href="watershed_workflow/sources/manager_nwis.html">watershed_workflow.sources.manager_nwis</a></li>
 <li><a href="watershed_workflow/sources/manager_pelletier_dtb.html">watershed_workflow.sources.manager_pelletier_dtb</a></li>
+<li><a href="watershed_workflow/sources/manager_polaris.html">watershed_workflow.sources.manager_polaris</a></li>
 <li><a href="watershed_workflow/sources/manager_raster.html">watershed_workflow.sources.manager_raster</a></li>
+<li><a href="watershed_workflow/sources/manager_shangguan_dtb.html">watershed_workflow.sources.manager_shangguan_dtb</a></li>
 <li><a href="watershed_workflow/sources/manager_shapefile.html">watershed_workflow.sources.manager_shapefile</a></li>
+<li><a href="watershed_workflow/sources/manager_soilgrids.html">watershed_workflow.sources.manager_soilgrids</a></li>
 <li><a href="watershed_workflow/sources/manager_soilgrids_2017.html">watershed_workflow.sources.manager_soilgrids_2017</a></li>
+<li><a href="watershed_workflow/sources/manager_ssebop.html">watershed_workflow.sources.manager_ssebop</a></li>
 <li><a href="watershed_workflow/sources/manager_wbd.html">watershed_workflow.sources.manager_wbd</a></li>
-</ul><li><a href="watershed_workflow/split_hucs.html">watershed_workflow.split_hucs</a></li>
-<li><a href="watershed_workflow/triangulation.html">watershed_workflow.triangulation</a></li>
-<li><a href="watershed_workflow/utils.html">watershed_workflow.utils</a></li>
-<li><a href="watershed_workflow/warp.html">watershed_workflow.warp</a></li>
+</ul><li><a href="watershed_workflow/utils/config.html">watershed_workflow.utils.config</a></li>
+<li><a href="watershed_workflow/utils/data.html">watershed_workflow.utils.data</a></li>
+<li><a href="watershed_workflow/utils/geometry.html">watershed_workflow.utils.geometry</a></li>
+<li><a href="watershed_workflow/utils/tinytree.html">watershed_workflow.utils.tinytree</a></li>
+<li><a href="watershed_workflow/utils/warp.html">watershed_workflow.utils.warp</a></li>
 </ul></ul>
 
                 </article>
@@ -457,8 +472,8 @@ Version dev</div>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -478,7 +493,7 @@ Version dev</div>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>
@@ -492,7 +507,7 @@ Version dev</div>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
 </p></div>
       
     </div>

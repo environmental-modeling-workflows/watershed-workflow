@@ -1,0 +1,1230 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Properties &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/properties';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="I/O" href="io.html" />
+    <link rel="prev" title="Mesh" href="mesh.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="root.html">High-Level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydro.html">Hydrology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-watershed_workflow.properties.soil">Soil Properties</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.cluster"><code class="docutils literal notranslate"><span class="pre">cluster()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.computeVGAlphaFromPermeability"><code class="docutils literal notranslate"><span class="pre">computeVGAlphaFromPermeability()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.computeVanGenuchtenModelFromRasters"><code class="docutils literal notranslate"><span class="pre">computeVanGenuchtenModelFromRasters()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.computeVanGenuchtenModelFromSSURGO"><code class="docutils literal notranslate"><span class="pre">computeVanGenuchtenModelFromSSURGO()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.computeVanGenuchtenModel_Rosetta"><code class="docutils literal notranslate"><span class="pre">computeVanGenuchtenModel_Rosetta()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.convertRosettaToATS"><code class="docutils literal notranslate"><span class="pre">convertRosettaToATS()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.dropDuplicates"><code class="docutils literal notranslate"><span class="pre">dropDuplicates()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.getDefaultBedrockProperties"><code class="docutils literal notranslate"><span class="pre">getDefaultBedrockProperties()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.soil.mangleGLHYMPSProperties"><code class="docutils literal notranslate"><span class="pre">mangleGLHYMPSProperties()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-watershed_workflow.properties.land_cover">Land Cover Properties</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.land_cover.applyCrosswalk"><code class="docutils literal notranslate"><span class="pre">applyCrosswalk()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.land_cover.computeCrosswalk"><code class="docutils literal notranslate"><span class="pre">computeCrosswalk()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.land_cover.computeCrosswalkCorrelation"><code class="docutils literal notranslate"><span class="pre">computeCrosswalkCorrelation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.land_cover.computeTimeSeries"><code class="docutils literal notranslate"><span class="pre">computeTimeSeries()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.land_cover.getDefaultProperties"><code class="docutils literal notranslate"><span class="pre">getDefaultProperties()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.land_cover.plotLAI"><code class="docutils literal notranslate"><span class="pre">plotLAI()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.land_cover.removeNullLAI"><code class="docutils literal notranslate"><span class="pre">removeNullLAI()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-watershed_workflow.properties.meteorology">Meteorology</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.meteorology.allocatePrecipitation"><code class="docutils literal notranslate"><span class="pre">allocatePrecipitation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.meteorology.computeTypicalYear"><code class="docutils literal notranslate"><span class="pre">computeTypicalYear()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.meteorology.convertAORCToATS"><code class="docutils literal notranslate"><span class="pre">convertAORCToATS()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.meteorology.convertDayMetToATS"><code class="docutils literal notranslate"><span class="pre">convertDayMetToATS()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stream-light">Stream Light</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.computeStreamLight"><code class="docutils literal notranslate"><span class="pre">computeStreamLight()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.StreamLight"><code class="docutils literal notranslate"><span class="pre">StreamLight</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.StreamLight.computeEnergyStream"><code class="docutils literal notranslate"><span class="pre">StreamLight.computeEnergyStream()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.StreamLight.computeRadiativeTransferEstimates"><code class="docutils literal notranslate"><span class="pre">StreamLight.computeRadiativeTransferEstimates()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.StreamLight.computeRiparianStreamShading"><code class="docutils literal notranslate"><span class="pre">StreamLight.computeRiparianStreamShading()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.StreamLight.computeSolarAngles"><code class="docutils literal notranslate"><span class="pre">StreamLight.computeSolarAngles()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.StreamLight.run"><code class="docutils literal notranslate"><span class="pre">StreamLight.run()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.StreamLight.setChannelProperties"><code class="docutils literal notranslate"><span class="pre">StreamLight.setChannelProperties()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.properties.stream_light.StreamLight.setEnergyDrivers"><code class="docutils literal notranslate"><span class="pre">StreamLight.setEnergyDrivers()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Properties</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="properties">
+<h1>Properties<a class="headerlink" href="#properties" title="Link to this heading">#</a></h1>
+<section id="module-watershed_workflow.properties.soil">
+<span id="soil-properties"></span><h2>Soil Properties<a class="headerlink" href="#module-watershed_workflow.properties.soil" title="Link to this heading">#</a></h2>
+<p>Functions for manipulating soil properties.</p>
+<p>Computes soil properties such as permeability, porosity, and van Genutchen
+parameters given texture properties using the Rosetta model.</p>
+<p>Also provides functions for gap filling soil data via clustering,
+dataframe manipulations to merge soil type regions with shared values,
+etc.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.cluster">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rasters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nbins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#cluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.cluster" title="Link to this definition">#</a></dt>
+<dd><p>Given a bunch of raster bands, cluster into nbins.</p>
+<p>Returns the coloring map of the clusters.  This is used to fill in
+missing soil property data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rasters</strong> (<em>np.ndarray</em><em>(</em><em>(</em><em>nx</em><em>,</em><em>ny</em><em>,</em><em>nbands</em><em>)</em><em>)</em>) – nbands rasters providing spatial information on which to be clustered.</p></li>
+<li><p><strong>nbins</strong> (<em>int</em>) – Number of bins to cluster into.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>codebook</strong> (<em>np.ndarray((nbins,nbands))</em>) – The nbins centroids of the clusters.</p></li>
+<li><p><strong>codes</strong> (<em>np.ndarray((nx, ny), int)</em>) – Which cluster each point belongs to.</p></li>
+<li><p><strong>distortion</strong> (<em>(float, np.ndarray((nx*ny))</em>) – The distortion of the kmeans, and the distance between the
+observation and its nearest code.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.computeVGAlphaFromPermeability">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">computeVGAlphaFromPermeability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poro</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#computeVGAlphaFromPermeability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.computeVGAlphaFromPermeability" title="Link to this definition">#</a></dt>
+<dd><p>Compute van Genuchten alpha from permeability and porosity.</p>
+<p>Uses the relationship from Guarracino WRR 2007.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>perm</strong> (<em>array</em><em>(</em><em>double</em><em>)</em>) – Permeability, in [m^2]</p></li>
+<li><p><strong>poro</strong> (<em>array</em><em>(</em><em>double</em><em>)</em>) – Porosity, [-]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>alpha</strong> – van Genuchten alpha, in [Pa^-1]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array(double)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.computeVanGenuchtenModelFromRasters">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">computeVanGenuchtenModelFromRasters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#computeVanGenuchtenModelFromRasters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.computeVanGenuchtenModelFromRasters" title="Link to this definition">#</a></dt>
+<dd><p>Apply Rosetta pixel-by-pixel to gridded sand/silt/clay/bdod and add VG parameters.</p>
+<p>Expects <code class="docutils literal notranslate"><span class="pre">ds</span></code> to contain variables <code class="docutils literal notranslate"><span class="pre">sand</span></code> (%), <code class="docutils literal notranslate"><span class="pre">silt</span></code> (%), <code class="docutils literal notranslate"><span class="pre">clay</span></code> (%), and
+<code class="docutils literal notranslate"><span class="pre">bdod</span></code> (kg/dm³, equivalent to g/cm³) with dimensions <code class="docutils literal notranslate"><span class="pre">(depth,</span> <span class="pre">y,</span> <span class="pre">x)</span></code>.  Runs
+Rosetta v3 on every pixel at every depth layer and appends the resulting van
+Genuchten parameters as new variables in the same dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ds</strong> (<em>xr.Dataset</em>) – Dataset with <code class="docutils literal notranslate"><span class="pre">sand</span></code>, <code class="docutils literal notranslate"><span class="pre">silt</span></code>, <code class="docutils literal notranslate"><span class="pre">clay</span></code>, <code class="docutils literal notranslate"><span class="pre">bdod</span></code> variables, each shaped
+<code class="docutils literal notranslate"><span class="pre">(depth,</span> <span class="pre">y,</span> <span class="pre">x)</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Input dataset with five new variables added, each shaped <code class="docutils literal notranslate"><span class="pre">(depth,</span> <span class="pre">y,</span> <span class="pre">x)</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">residual</span> <span class="pre">saturation</span> <span class="pre">[-]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">porosity</span> <span class="pre">[-]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">van</span> <span class="pre">Genuchten</span> <span class="pre">alpha</span> <span class="pre">[Pa^-1]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">van</span> <span class="pre">Genuchten</span> <span class="pre">n</span> <span class="pre">[-]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">permeability</span> <span class="pre">[m^2]</span></code></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Pixels where any of the four input variables is NaN are passed to Rosetta as NaN
+and Rosetta propagates NaN to all output columns, which are preserved in the
+output arrays.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.computeVanGenuchtenModelFromSSURGO">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">computeVanGenuchtenModelFromSSURGO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#computeVanGenuchtenModelFromSSURGO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.computeVanGenuchtenModelFromSSURGO" title="Link to this definition">#</a></dt>
+<dd><p>Get van Genutchen model parameters using Rosetta v3.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – SSURGO properties dataframe, from manager_nrcs.FileManagerNRCS().get_properties()</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>df with new properties defining the van Genuchten model.  Note
+that this may be smaller than df as entries in df that have NaN
+values in soil composition (and therefore cannot calculate a
+VGM) will be dropped.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.computeVanGenuchtenModel_Rosetta">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">computeVanGenuchtenModel_Rosetta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#computeVanGenuchtenModel_Rosetta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.computeVanGenuchtenModel_Rosetta" title="Link to this definition">#</a></dt>
+<dd><p>Return van Genuchten model parameters using the Rosetta v3 model.</p>
+<p>(Zhang and Schaap, 2017 WRR)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>pd.DataFrame</em>) – One row per sample.  Must include columns ‘sand pct [%]’, ‘silt
+pct [%]’, and ‘clay pct [%]’; may optionally include ‘bulk
+density [g/cm^3]’, ‘field capacity [cm^3 cm^-3]’, and ‘wilting
+point [cm^3 cm^-3]’ to further constrain the model (Rosetta uses
+progressively more accurate sub-models as more of these are
+provided).  Missing optional columns, or NaN entries within
+them, are treated as unknown for that sample.  The row order of
+the input is preserved in the output.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>van Genuchten model parameters, one row per input row, in the
+same order as <code class="docutils literal notranslate"><span class="pre">data</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.convertRosettaToATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">convertRosettaToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#convertRosettaToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.convertRosettaToATS" title="Link to this definition">#</a></dt>
+<dd><p>Converts units from aggregated, Rosetta standard-parameters to ATS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame with Rosetta parameters to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with parameters converted to ATS units and naming conventions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.dropDuplicates">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">dropDuplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varying_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#dropDuplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.dropDuplicates" title="Link to this definition">#</a></dt>
+<dd><p>Removes duplicate rows by merging rows with identical values in all columns except those specified.</p>
+<p>Rows are considered duplicates if they have identical values in all columns
+except those listed in varying_columns. For duplicate rows, the varying columns
+are aggregated into tuples containing all values from the merged rows.</p>
+<p>For GeoDataFrames, the geometry column is automatically unioned using unary_union
+and cannot be included in varying_columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em><em> or </em><em>gpd.GeoDataFrame</em>) – The input DataFrame to process.</p></li>
+<li><p><strong>varying_columns</strong> (<em>list</em><em> of </em><em>str</em>) – Column names that are allowed to vary within duplicate groups. Values
+from these columns will be collected into tuples. Cannot include the
+geometry column for GeoDataFrames.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new DataFrame with duplicate rows merged. Returns the same type as
+the input (GeoDataFrame preserves CRS if applicable).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame or gpd.GeoDataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If varying_columns includes the geometry column for a GeoDataFrame.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.getDefaultBedrockProperties">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">getDefaultBedrockProperties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#getDefaultBedrockProperties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.getDefaultBedrockProperties" title="Link to this definition">#</a></dt>
+<dd><p>Simple helper function to get a one-row dataframe with bedrock properties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sane default bedrock soil properties.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.soil.mangleGLHYMPSProperties">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.soil.</span></span><span class="sig-name descname"><span class="pre">mangleGLHYMPSProperties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shapes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_porosity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_permeability</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_vg_alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residual_saturation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">van_genuchten_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">GeoDataFrame</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/soil.html#mangleGLHYMPSProperties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.soil.mangleGLHYMPSProperties" title="Link to this definition">#</a></dt>
+<dd><p>GLHYMPs properties need their units changed and variables renamed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shapes</strong> (<em>gpd.GeoDataFrame</em>)</p></li>
+<li><p><strong>min_porosity</strong> (<em>float</em><em>, </em><em>optional</em>) – Some GLHYMPS entries have 0 porosity; this sets a floor on that
+value.  Default is 0.01.</p></li>
+<li><p><strong>max_permeability</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, sets a ceiling on the permeability.</p></li>
+<li><p><strong>max_vg_alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, sets a ceiling on the vG alpha.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The resulting properties in standard form, names, and units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.properties.land_cover">
+<span id="land-cover-properties"></span><h2>Land Cover Properties<a class="headerlink" href="#module-watershed_workflow.properties.land_cover" title="Link to this heading">#</a></h2>
+<p>Functions for manipulating land cover and leaf area index (LAI) data.</p>
+<p>Computes per-land-cover-class LAI time series from MODIS LAI and land
+cover rasters, and crosswalks land cover classifications (e.g. MODIS to
+NLCD) so that LAI time series computed on one classification can be
+applied to land cover data from another.</p>
+<p>Also provides default property lookups and plotting utilities for LAI
+time series by land cover class.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.land_cover.applyCrosswalk">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.land_cover.</span></span><span class="sig-name descname"><span class="pre">applyCrosswalk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crosswalk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modis_lai</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unique_nlcd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/land_cover.html#applyCrosswalk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.land_cover.applyCrosswalk" title="Link to this definition">#</a></dt>
+<dd><p>Given a crosswalk from unique NLCD IDs to MODIS, computes time series data for each NLCD ID based on the MODIS LAI data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crosswalk</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Dictionary mapping NLCD IDs to lists of (MODIS_ID, weight) tuples.</p></li>
+<li><p><strong>modis_lai</strong> (<em>pd.DataFrame</em>) – DataFrame containing MODIS LAI time series data.</p></li>
+<li><p><strong>unique_nlcd</strong> (<em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – List of unique NLCD indices. If None, uses all keys from crosswalk.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame containing NLCD LAI time series computed from MODIS data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.land_cover.computeCrosswalk">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.land_cover.</span></span><span class="sig-name descname"><span class="pre">computeCrosswalk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modis_lc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlcd_lc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'maximal</span> <span class="pre">area'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/land_cover.html#computeCrosswalk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.land_cover.computeCrosswalk" title="Link to this definition">#</a></dt>
+<dd><p>Uses a correlation matrix to compute a crosswalk.</p>
+<p>Given MODIS and NLCD LU/LC arrays, computes the correlations of
+the two.</p>
+<p>Returns, for each unique ID in NLCD, a list of pairs of MODIS ID
+and fractional areas.  If method == ‘maximal area’, only the
+largest weighted correlation is used.  If method == ‘fractional
+area’, then all correlations are used.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.land_cover.computeCrosswalkCorrelation">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.land_cover.</span></span><span class="sig-name descname"><span class="pre">computeCrosswalkCorrelation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modis_lc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlcd_lc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unique_nlcd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unique_modis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/land_cover.html#computeCrosswalkCorrelation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.land_cover.computeCrosswalkCorrelation" title="Link to this definition">#</a></dt>
+<dd><p>Compute a map from NLCD indices to MODIS indices using correlation
+of the two rasters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modis_lc</strong> (<em>xarray.DataArray</em>) – Raster of a single year of MODIS land cover type.</p></li>
+<li><p><strong>nlcd_lc</strong> (<em>xarray.DataArray</em>) – Raster of a single year of NLCD land cover type.</p></li>
+<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>optional</em>) – Plot the correlation matrix, default is True.</p></li>
+<li><p><strong>warp</strong> (<em>bool</em><em>, </em><em>optional</em>) – Warps MODIS to NLCD CRS before correlating.  Should always be True
+except for tests where the rasters are already aligned.</p></li>
+<li><p><strong>unique_nlcd</strong> (<em>list</em><em> of </em><em>int</em><em>, </em><em>optional</em>) – List of unique NLCD indices.  If None, will be computed from raster.</p></li>
+<li><p><strong>unique_modis</strong> (<em>list</em><em> of </em><em>int</em><em>, </em><em>optional</em>) – List of unique MODIS indices.  If None, will be computed from raster.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary whose keys are the unique_nlcd ids and whose values are
+a list of tuples of (modis_id, weight).  For each value, the
+sum over the list of weights will always sum to 1.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.land_cover.computeTimeSeries">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.land_cover.</span></span><span class="sig-name descname"><span class="pre">computeTimeSeries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lai</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unique_lc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polygon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Polygon</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polygon_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/land_cover.html#computeTimeSeries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.land_cover.computeTimeSeries" title="Link to this definition">#</a></dt>
+<dd><p>Computes a time-series of LAI for each land cover type that appears
+in the raster.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lai</strong> (<em>xarray.DataArray</em>) – The LAI data.</p></li>
+<li><p><strong>lc</strong> (<em>xarray.DataArray</em>) – The LULC data.</p></li>
+<li><p><strong>unique_lc</strong> (<em>list</em>) – List of unique land cover types.  If None, will be computed from raster.</p></li>
+<li><p><strong>polygon</strong> (<em>shapely.Polygon</em><em>, </em><em>optional</em>) – If provided, restricts the lai and lc data to the polygon.</p></li>
+<li><p><strong>polygon_crs</strong> (<em>CRS</em><em>, </em><em>optional</em>) – Coordinate system of the polygon.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to scipy.signal.savgol_filter such as
+‘window_length (default=101)’ and ‘polyorder (default=3)’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lai timeseries</strong> – LAI time series dataframe with rows as time and columns as land
+type.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas datafame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.land_cover.getDefaultProperties">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.land_cover.</span></span><span class="sig-name descname"><span class="pre">getDefaultProperties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NLCD'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/land_cover.html#getDefaultProperties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.land_cover.getDefaultProperties" title="Link to this definition">#</a></dt>
+<dd><p>Sets default properties for each index, label in nlcd_dict</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.land_cover.plotLAI">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.land_cover.</span></span><span class="sig-name descname"><span class="pre">plotLAI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'NLCD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Axes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/land_cover.html#plotLAI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.land_cover.plotLAI" title="Link to this definition">#</a></dt>
+<dd><p>Plots time series of land cover data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame containing time series LAI data.</p></li>
+<li><p><strong>indices</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of land cover indices (‘NLCD’ or ‘MODIS’). Default is ‘NLCD’.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em><em>, </em><em>optional</em>) – Axes object to plot on. If None, creates new figure and axes.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.land_cover.removeNullLAI">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.land_cover.</span></span><span class="sig-name descname"><span class="pre">removeNullLAI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlcd_lai</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">null_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/land_cover.html#removeNullLAI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.land_cover.removeNullLAI" title="Link to this definition">#</a></dt>
+<dd><p>In place, sets entries in the null list to 0 LAI.</p>
+<p>The null_list defaults to a common list for NLCD.</p>
+</dd></dl>
+
+</section>
+<section id="module-watershed_workflow.properties.meteorology">
+<span id="meteorology"></span><h2>Meteorology<a class="headerlink" href="#module-watershed_workflow.properties.meteorology" title="Link to this heading">#</a></h2>
+<p>Functions for converting meteorological forcing data to ATS input format.</p>
+<p>Converts raw meteorological datasets – primarily AORC, with legacy
+support for DayMet – into the variables and units expected by ATS
+(e.g. specific humidity and pressure to vapor pressure, component wind
+speeds to total wind speed, precipitation split into rain and snow).</p>
+<p>Also provides utilities for allocating precipitation between rain and
+snow based on air temperature, and for computing a “typical year” by
+averaging a multi-year time series.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.meteorology.allocatePrecipitation">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.meteorology.</span></span><span class="sig-name descname"><span class="pre">allocatePrecipitation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precip</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">air_temp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">DataArray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataArray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/meteorology.html#allocatePrecipitation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.meteorology.allocatePrecipitation" title="Link to this definition">#</a></dt>
+<dd><p>Allocates precipitation between rain and snow based on temperature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>precip</strong> (<em>xr.DataArray</em>) – Total precipitation data.</p></li>
+<li><p><strong>air_temp</strong> (<em>xr.DataArray</em>) – Air temperature data.</p></li>
+<li><p><strong>transition_temperature</strong> (<em>float</em>) – Temperature threshold for rain/snow transition. If &lt; 100, assumed
+to be in Celsius; otherwise Kelvin.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>rain</strong> (<em>xr.DataArray</em>) – Rain precipitation (when temp &gt;= transition_temperature).</p></li>
+<li><p><strong>snow</strong> (<em>xr.DataArray</em>) – Snow precipitation (when temp &lt; transition_temperature).</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.meteorology.computeTypicalYear">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.meteorology.</span></span><span class="sig-name descname"><span class="pre">computeTypicalYear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat_nyears</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/meteorology.html#computeTypicalYear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.meteorology.computeTypicalYear" title="Link to this definition">#</a></dt>
+<dd><p>Given an ATS-format meteorology dataset, this computes a typical year.</p>
+<ul class="simple">
+<li><p>computes day-of-year averages of vapor pressure, air temp, radiation</p></li>
+<li><p>computes median year of total precip and uses that year for total precip</p></li>
+<li><p>allocates precip to snow and rain</p></li>
+<li><p>replicates nyears times</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> (<em>xr.Dataset</em>) – ATS-format, daily averaged meterology data.</p></li>
+<li><p><strong>repeat_nyears</strong> (<em>int</em>) – Number of years to replicate the data.  Note that first day of
+the returned dataset will be dat[‘time’][0] - repeat_nyears</p></li>
+<li><p><strong>transition_temperature</strong> (<em>float</em>) – Temperature to transition from snow to rain [C].  Default is 0 C.</p></li>
+<li><p><strong>smooth_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – If provided, keyword arguments passed to <code class="docutils literal notranslate"><span class="pre">ww.utils.smoothTimeSeries</span></code>
+to smooth all non-precipitation variables before computing the average
+year.  Default is no smoothing.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with ATS-standard names/units met forcing for a typical year.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.meteorology.convertAORCToATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.meteorology.</span></span><span class="sig-name descname"><span class="pre">convertAORCToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_leap_day</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/meteorology.html#convertAORCToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.meteorology.convertAORCToATS" title="Link to this definition">#</a></dt>
+<dd><p>Convert xarray.Dataset AORC datasets to standard ATS format output.</p>
+<ul class="simple">
+<li><p>computes specific humidity and surface pressure to vapor pressure</p></li>
+<li><p>computes total wind speed from component wind speeds</p></li>
+<li><p>converts precip units to m/s</p></li>
+<li><p>allocates precip to snow and rain based on transition temp</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> (<em>xr.Dataset</em>) – Input including AORC raw data.</p></li>
+<li><p><strong>transition_temperature</strong> (<em>float</em>) – Temperature to transition from snow to rain [C].  Default is 0 C.</p></li>
+<li><p><strong>n_hourly</strong> (<em>int</em>) – Convert data from 1-hourly to n_hourly to reduce data needs.
+Defaults to 24 hours (daily data).</p></li>
+<li><p><strong>remove_leap_day</strong> (<em>bool</em>) – If True, removes day 366 any leap year (not Feb 30!).  Deafult
+is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with ATS-standard names/units met forcing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.meteorology.convertDayMetToATS">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.meteorology.</span></span><span class="sig-name descname"><span class="pre">convertDayMetToATS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/meteorology.html#convertDayMetToATS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.meteorology.convertDayMetToATS" title="Link to this definition">#</a></dt>
+<dd><p>Convert xarray.Dataset Daymet datasets to daily average data in standard form.</p>
+<p>This:
+- takes tmin and tmax to compute a mean
+- splits rain and snow precip based on mean air temp relative to transition_temperature [C]
+- standardizes units and names for ATS</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dat</strong> (<em>xr.Dataset</em>) – Input Daymet dataset with variables: tmin, tmax, prcp, srad, dayl, vp.</p></li>
+<li><p><strong>transition_temperature</strong> (<em>float</em><em>, </em><em>optional</em>) – Temperature threshold for rain/snow split in Celsius. Default is 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with ATS-compatible variable names and units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="stream-light">
+<h2>Stream Light<a class="headerlink" href="#stream-light" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.computeStreamLight">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.stream_light.</span></span><span class="sig-name descname"><span class="pre">computeStreamLight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_azimuth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bottom_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bank_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bank_slope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overhang</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overhang_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">doy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hour</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sw_inc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lai</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_LAD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#computeStreamLight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.computeStreamLight" title="Link to this definition">#</a></dt>
+<dd><p>Compute photosynthetically active radiation (PAR) reaching a stream surface.</p>
+<p>This is a functional wrapper around <a class="reference internal" href="#watershed_workflow.properties.stream_light.StreamLight" title="watershed_workflow.properties.stream_light.StreamLight"><code class="xref py py-class docutils literal notranslate"><span class="pre">StreamLight</span></code></a> that
+configures, runs, and extracts results from the model in one call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lat</strong> (<em>float</em>) – Latitude [decimal degrees].</p></li>
+<li><p><strong>lon</strong> (<em>float</em>) – Longitude [decimal degrees].</p></li>
+<li><p><strong>channel_azimuth</strong> (<em>float</em>) – Channel azimuth [decimal degrees].</p></li>
+<li><p><strong>bottom_width</strong> (<em>float</em>) – Channel width at the water-sediment interface [m].</p></li>
+<li><p><strong>bank_height</strong> (<em>float</em>) – Bank height [m].</p></li>
+<li><p><strong>bank_slope</strong> (<em>float</em>) – Bank slope [-].</p></li>
+<li><p><strong>water_depth</strong> (<em>float</em>) – Water depth [m].</p></li>
+<li><p><strong>tree_height</strong> (<em>float</em>) – Tree height [m].</p></li>
+<li><p><strong>overhang</strong> (<em>float</em>) – Effectively max canopy radius [m].</p></li>
+<li><p><strong>overhang_height</strong> (<em>float</em>) – Height of the maximum canopy overhang (height at max canopy radius) [m].</p></li>
+<li><p><strong>doy</strong> (<em>int</em>) – Day of the year.</p></li>
+<li><p><strong>hour</strong> (<em>int</em>) – Hour of the day.</p></li>
+<li><p><strong>tz_offset</strong> (<em>int</em>) – Time zone offset.</p></li>
+<li><p><strong>sw_inc</strong> (<em>float</em>) – Total incoming shortwave radiation [W m-2].</p></li>
+<li><p><strong>lai</strong> (<em>float</em>) – Leaf area index [-].</p></li>
+<li><p><strong>x_LAD</strong> (<em>float</em><em>, </em><em>optional</em>) – Leaf angle distribution, default = 1 [-].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Energy and shading response variables, keyed by name (e.g.
+<code class="docutils literal notranslate"><span class="pre">'energy_total_surface_PAR_ppfd'</span></code>, <code class="docutils literal notranslate"><span class="pre">'fraction_shade_veg'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'fraction_shade_bank'</span></code>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-watershed_workflow.properties.stream_light">Functions for computing photosynthetically active radiation (PAR) at a stream surface.</p>
+<p>Wraps a Python port of the StreamLight model, which computes solar
+angles, radiative transfer through riparian vegetation, and stream
+shading to estimate the light energy reaching the stream surface given
+channel geometry, riparian canopy properties, and incoming shortwave
+radiation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.StreamLight">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">watershed_workflow.properties.stream_light.</span></span><span class="sig-name descname"><span class="pre">StreamLight</span></span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#StreamLight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.StreamLight" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class is a Python implementation
+of the code StreamLight (<a class="github reference external" href="https://github.com/psavoy/StreamLight">psavoy/StreamLight</a>).
+Minor modifications have been made to improve numerical performance.</p>
+<p>StreamLight is summarized in the following references:</p>
+<dl class="simple">
+<dt>Savoy, P., Bernhardt, E., Kirk, L., Cohen, M. J., &amp; Heffernan, J. B. (2021).</dt><dd><p>A seasonally dynamic model of light at the stream surface. Freshwater Science,
+40(April), 000–000. <a class="reference external" href="https://doi.org/10.1086/714270">https://doi.org/10.1086/714270</a></p>
+</dd>
+<dt>Savoy, P., &amp; Harvey, J. W. (2021). Predicting light regime controls on primary</dt><dd><p>productivity across CONUS river networks. Geophysical Research Letters, 48,
+e2020GL092149. <a class="reference external" href="https://doi.org/10.1029/2020GL092149">https://doi.org/10.1029/2020GL092149</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.StreamLight.computeEnergyStream">
+<span class="sig-name descname"><span class="pre">computeEnergyStream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#StreamLight.computeEnergyStream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.StreamLight.computeEnergyStream" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.StreamLight.computeRadiativeTransferEstimates">
+<span class="sig-name descname"><span class="pre">computeRadiativeTransferEstimates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#StreamLight.computeRadiativeTransferEstimates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.StreamLight.computeRadiativeTransferEstimates" title="Link to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>This function calculates below canopy PAR. Main references are</dt><dd><ol class="arabic simple">
+<li><p>Campbell &amp; Norman (1998) An introduction to Environmental biophysics (abbr C&amp;N (1998))</p></li>
+<li><p>Spitters et al. (1986) Separating the diffuse and direct component of global radiation and its implications for modeling canopy photosynthesis: Part I components of incoming radiation</p></li>
+<li><p>Goudriaan (1977) Crop micrometeorology: A simulation study. Pudoc, Wageningen, The Netherlands.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doy</strong> (<em>int</em>) – Day of the year.</p></li>
+<li><p><strong>solar_altitude</strong> (<em>float</em>) – Altitude [radians].</p></li>
+<li><p><strong>sza</strong> (<em>float</em>) – Solar zenith angle [radians].</p></li>
+<li><p><strong>sw_inc</strong> (<em>float</em>) – Total incoming shortwave radiation [W m-2].</p></li>
+<li><p><strong>lai</strong> (<em>float</em>) – Leaf are index [-].</p></li>
+<li><p><strong>x_LAD</strong> (<em>float</em>) – Leaf angle distribution [-].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>rad_diff_PAR</strong> (<em>float</em>) – Diffusive PAR incoming shortwave radiation [W m-2].</p></li>
+<li><p><strong>rad_beam_PAR</strong> (<em>float</em>) – Beam PAR incoming shortwave radiation [W m-2].</p></li>
+<li><p><strong>rad_diff</strong> (<em>float</em>) – Diffusive incoming shortwave radiation [W m-2].</p></li>
+<li><p><strong>rad_beam</strong> (<em>float</em>) – Beam incoming shortwave radiation [W m-2].</p></li>
+<li><p><strong>diff_trans_PAR</strong> (<em>float</em>) – Diffuse PAR energy transmitted through the canopy [W m-2].</p></li>
+<li><p><strong>beam_trans_PAR</strong> (<em>float</em>) – Beam PAR energy transmitted through the canopy [W m-2].</p></li>
+<li><p><strong>total_trans_PAR</strong> (<em>float</em>) – Total PAR energy transmitted through the canopy [W m-2].</p></li>
+<li><p><strong>diff_trans</strong> (<em>float</em>) – Diffuse energy transmitted through the canopy [W m-2].</p></li>
+<li><p><strong>beam_trans</strong> (<em>float</em>) – Beam energy transmitted through the canopy [W m-2].</p></li>
+<li><p><strong>total_trans</strong> (<em>float</em>) – Total energy transmitted through the canopy [W m-2].</p></li>
+<li><p><strong>total_trans_PAR_ppfd</strong> (<em>float</em>) – Total PPFD transmitted through the canopy [umol m-2 s-1]. The StreamLight model estimates photosynthetically active radiation (PAR), which relates to the conversion of solar energy by autotrophs via photosynthesis. Estimates are expressed in terms of the quanta of light in PAR (umol m-2 s-1), otherwise referred to as the photosynthetic photon flux density (PPFD).</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.StreamLight.computeRiparianStreamShading">
+<span class="sig-name descname"><span class="pre">computeRiparianStreamShading</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#StreamLight.computeRiparianStreamShading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.StreamLight.computeRiparianStreamShading" title="Link to this definition">#</a></dt>
+<dd><p>SHADE2 model from Li et al. (2012) Modeled riparian stream shading:
+Agreement with field measurements and sensitivity to riparian conditions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lat</strong> (<em>float</em>) – Latitude [decimal degrees].</p></li>
+<li><p><strong>lon</strong> (<em>float</em>) – Longitude [decimal degrees].</p></li>
+<li><p><strong>channel_azimuth</strong> (<em>float</em>) – Channel azimuth [decimal degrees].</p></li>
+<li><p><strong>bottom_width</strong> (<em>float</em>) – Channel width at the water-sediment interface [m].</p></li>
+<li><p><strong>bank_height</strong> (<em>float</em>) – Bank height [m].</p></li>
+<li><p><strong>bank_slope</strong> (<em>float</em>) – Bank slope [-].</p></li>
+<li><p><strong>water_depth</strong> (<em>float</em>) – Water depth [m].</p></li>
+<li><p><strong>tree_height</strong> (<em>float</em>) – Tree height [m].</p></li>
+<li><p><strong>overhang</strong> (<em>float</em>) – Effectively max canopy radius [m].</p></li>
+<li><p><strong>overhang_height</strong> (<em>float</em>) – Height of the maximum canopy overhang (height at max canopy radius) [m].</p></li>
+<li><p><strong>doy</strong> (<em>int</em>) – Day of the year.</p></li>
+<li><p><strong>hour</strong> (<em>int</em>) – Hour of the day.</p></li>
+<li><p><strong>tz_offset</strong> (<em>int</em>) – Time zone offset.</p></li>
+<li><p><strong>solar_dec_ini</strong> (<em>float</em>) – Solar declination (initial estimate).</p></li>
+<li><p><strong>solar_azimuth_ini</strong> (<em>float</em>) – Initial estimate of azimuth [decimal degrees].</p></li>
+<li><p><strong>solar_altitude_ini</strong> (<em>float</em>) – Initial estimate of solar altitude.</p></li>
+<li><p><strong>sw_inc</strong> (<em>float</em>) – Total incoming shortwave radiation [W m-2].</p></li>
+<li><p><strong>lai</strong> (<em>float</em>) – Leaf are index [-].</p></li>
+<li><p><strong>x_LAD</strong> (<em>float</em>) – Leaf angle distribution, default = 1 [-].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>fraction_shade_veg</strong> (<em>float</em>) – Percent of the wetted width shaded by vegetation [%].</p></li>
+<li><p><strong>fraction_shade_bank</strong> (<em>float</em>) – Percent of the wetted width shaded by the bank [%].</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.StreamLight.computeSolarAngles">
+<span class="sig-name descname"><span class="pre">computeSolarAngles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#StreamLight.computeSolarAngles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.StreamLight.computeSolarAngles" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.StreamLight.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#StreamLight.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.StreamLight.run" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.StreamLight.setChannelProperties">
+<span class="sig-name descname"><span class="pre">setChannelProperties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_azimuth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bottom_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bank_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bank_slope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overhang</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overhang_height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_LAD</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#StreamLight.setChannelProperties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.StreamLight.setChannelProperties" title="Link to this definition">#</a></dt>
+<dd><p>Set the channel properties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lat</strong> (<em>float</em>) – Latitude [decimal degrees].</p></li>
+<li><p><strong>lon</strong> (<em>float</em>) – Longitude [decimal degrees].</p></li>
+<li><p><strong>channel_azimuth</strong> (<em>float</em>) – Channel azimuth [decimal degrees].</p></li>
+<li><p><strong>bottom_width</strong> (<em>float</em>) – Channel width at the water-sediment interface [m].</p></li>
+<li><p><strong>bank_height</strong> (<em>float</em>) – Bank height [m].</p></li>
+<li><p><strong>bank_slope</strong> (<em>float</em>) – Bank slope [-].</p></li>
+<li><p><strong>water_depth</strong> (<em>float</em>) – Water depth [m].</p></li>
+<li><p><strong>tree_height</strong> (<em>float</em>) – Tree height [m].</p></li>
+<li><p><strong>overhang</strong> (<em>float</em>) – Effectively max canopy radius [m].</p></li>
+<li><p><strong>overhang_height</strong> (<em>float</em>) – Height of the maximum canopy overhang (height at max canopy radius) [m].</p></li>
+<li><p><strong>x_LAD</strong> (<em>float</em>) – Leaf angle distribution, default = 1 [-].</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="watershed_workflow.properties.stream_light.StreamLight.setEnergyDrivers">
+<span class="sig-name descname"><span class="pre">setEnergyDrivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hour</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tz_offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sw_inc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lai</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow/properties/stream_light.html#StreamLight.setEnergyDrivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.properties.stream_light.StreamLight.setEnergyDrivers" title="Link to this definition">#</a></dt>
+<dd><p>Set the energy drivers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doy</strong> (<em>int</em>) – Day of the year.</p></li>
+<li><p><strong>hour</strong> (<em>int</em>) – Hour of the day.</p></li>
+<li><p><strong>tz_offset</strong> (<em>int</em>) – Time zone offset.</p></li>
+<li><p><strong>sw_inc</strong> (<em>float</em>) – Total incoming shortwave radiation [W m-2].</p></li>
+<li><p><strong>lai</strong> (<em>float</em>) – Leaf are index [-].</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="mesh.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Mesh</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="io.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">I/O</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,1360 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watershed_workflow.sources.manager_modis_earthdata &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/watershed_workflow/sources/manager_modis_earthdata';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../../../_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../../watershed_workflow.html" class="nav-link">watershed_workflow</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../sources.html" class="nav-link">watershed_workflow.sources</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">watershed_workflow.sources.manager_modis_earthdata</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for watershed_workflow.sources.manager_modis_earthdata</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Manager for downloading MODIS products synchronously via NASA earthaccess.</span>
+
+<span class="sd">Uses two download strategies depending on product availability:</span>
+
+<span class="sd">- **OPeNDAP** (``pydap`` + earthaccess session): for products that expose a</span>
+<span class="sd">  cloud OPeNDAP endpoint in their granule metadata (currently MCD12Q1 LULC).</span>
+<span class="sd">  Only the requested spatial subset is transferred — very efficient.</span>
+
+<span class="sd">- **HDF4 full-tile download** (``pyhdf`` + ``earthaccess.download``): for</span>
+<span class="sd">  products that do not yet have a cloud OPeNDAP endpoint (currently MCD15A3H</span>
+<span class="sd">  LAI).  Granules are processed one at a time so the staging area never</span>
+<span class="sd">  exceeds one tile (~8 MB) at a time.</span>
+
+<span class="sd">Authentication</span>
+<span class="sd">--------------</span>
+<span class="sd">Uses ``earthaccess.login(strategy=&#39;netrc&#39;)``, which reads ``~/.netrc``.</span>
+<span class="sd">Register at https://urs.earthdata.nasa.gov and add::</span>
+
+<span class="sd">    machine urs.earthdata.nasa.gov login &lt;user&gt; password &lt;pass&gt;</span>
+
+<span class="sd">Products</span>
+<span class="sd">--------</span>
+<span class="sd">- LAI:  MCD15A3H v061, 4-day composite, subdataset ``Lai_500m``, scale 0.1</span>
+<span class="sd">        — HDF4 full-tile download (no OPeNDAP yet)</span>
+<span class="sd">- LULC: MCD12Q1  v061, annual,           subdataset ``LC_Type1``,  scale 1.0</span>
+<span class="sd">        — OPeNDAP spatial subset</span>
+
+<span class="sd">Coordinate system</span>
+<span class="sd">-----------------</span>
+<span class="sd">CMR bounding-box queries are issued in WGS84 (EPSG:4326), so</span>
+<span class="sd">``native_crs_in`` is WGS84.  All downloaded data is in the MODIS sinusoidal</span>
+<span class="sd">projection; ``native_crs_out`` is sinusoidal.  Spatial clipping and optional</span>
+<span class="sd">reprojection to ``out_crs`` are handled by the base-class</span>
+<span class="sd">``_postprocessDataset``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio.io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio.merge</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio.transform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyproj</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cftime</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.crs</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">manager_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManagerAttributes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.manager_dataset_cached</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_dataset_manager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.cache_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapBounds</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Module-level CRS objects and transformer</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="c1">#: WGS84 geographic CRS used for CMR bounding-box queries.</span>
+<span class="n">_WGS84_CRS</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+
+<span class="c1">#: MODIS sinusoidal CRS (sphere, a=b=6 371 007.181 m).</span>
+<span class="n">_MODIS_SINU_CRS</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span>
+    <span class="s1">&#39;+proj=sinu +lon_0=0 +x_0=0 +y_0=0 &#39;</span>
+    <span class="s1">&#39;+a=6371007.181 +b=6371007.181 +units=m +no_defs&#39;</span>
+<span class="p">)</span>
+
+<span class="c1">#: Pyproj Transformer from WGS84 geographic to MODIS sinusoidal.</span>
+<span class="n">_WGS84_TO_SINU</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Transformer</span><span class="o">.</span><span class="n">from_crs</span><span class="p">(</span>
+    <span class="s1">&#39;EPSG:4326&#39;</span><span class="p">,</span> <span class="n">_MODIS_SINU_CRS</span><span class="o">.</span><span class="n">to_wkt</span><span class="p">(),</span> <span class="n">always_xy</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Module-level constants</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1">#: Per-variable product metadata.</span>
+<span class="c1">#: ``opendap`` — True if cloud OPeNDAP is available for this product.</span>
+<span class="c1">#: ``native_end``/``native_end_lag_days`` — see ``_getNativeEnd()``: LAI is</span>
+<span class="c1">#: released on a near-real-time, roughly-constant-lag basis, while LULC is</span>
+<span class="c1">#: annual and only reliably available through a fixed, manually-bumped year.</span>
+<span class="n">_PRODUCTS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;LAI&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;product&#39;</span><span class="p">:</span> <span class="s1">&#39;MCD15A3H&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;061&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sds_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Lai_500m&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;scale_factor&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="s1">&#39;fill_value&#39;</span><span class="p">:</span> <span class="mi">255</span><span class="p">,</span>
+        <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="s1">&#39;long_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Leaf Area Index&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;m^2/m^2&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;opendap&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>   <span class="c1"># not yet available at LP DAAC cloud</span>
+        <span class="s1">&#39;native_end_lag_days&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;LULC&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;product&#39;</span><span class="p">:</span> <span class="s1">&#39;MCD12Q1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;061&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sds_name&#39;</span><span class="p">:</span> <span class="s1">&#39;LC_Type1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;scale_factor&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="s1">&#39;fill_value&#39;</span><span class="p">:</span> <span class="mi">255</span><span class="p">,</span>
+        <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span>
+        <span class="s1">&#39;long_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Land Cover Type 1 (IGBP)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;class&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;opendap&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>   <span class="c1"># use HDF4 to match LAI pixel grid</span>
+        <span class="c1"># MCD12Q1.061 is annual and only reliably available through 2024 --</span>
+        <span class="c1"># the science team has not kept training data current since 2020.</span>
+        <span class="c1"># Update once a later year is confirmed published.</span>
+        <span class="s1">&#39;native_end&#39;</span><span class="p">:</span> <span class="n">cftime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="n">calendar</span><span class="o">=</span><span class="s1">&#39;standard&#39;</span><span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="c1">#: Regex that extracts year + day-of-year from an HDF4 granule filename.</span>
+<span class="c1">#: Example: ``MCD15A3H.A2020001.h11v05.061.2020010040000.hdf``</span>
+<span class="n">_HDF_DATE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\.A(\d</span><span class="si">{4}</span><span class="s1">)(\d</span><span class="si">{3}</span><span class="s1">)\.&#39;</span><span class="p">)</span>
+
+<span class="c1"># Colour table (same product as the AppEEARS manager).</span>
+<span class="n">_COLORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Unclassified&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">)),</span>
+    <span class="mi">0</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Open Water&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">219</span><span class="p">,</span> <span class="mi">255</span><span class="p">)),</span>
+    <span class="mi">1</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Evergreen Needleleaf Forests&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">38</span><span class="p">,</span> <span class="mi">115</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+    <span class="mi">2</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Evergreen Broadleaf Forests&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">82</span><span class="p">,</span> <span class="mi">204</span><span class="p">,</span> <span class="mi">77</span><span class="p">)),</span>
+    <span class="mi">3</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Deciduous Needleleaf Forests&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">196</span><span class="p">,</span> <span class="mi">20</span><span class="p">)),</span>
+    <span class="mi">4</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Deciduous Broadleaf Forests&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">122</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">166</span><span class="p">)),</span>
+    <span class="mi">5</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Mixed Forests&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">137</span><span class="p">,</span> <span class="mi">205</span><span class="p">,</span> <span class="mi">102</span><span class="p">)),</span>
+    <span class="mi">6</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Closed Shrublands&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">215</span><span class="p">,</span> <span class="mi">158</span><span class="p">,</span> <span class="mi">158</span><span class="p">)),</span>
+    <span class="mi">7</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Open Shrublands&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mi">196</span><span class="p">)),</span>
+    <span class="mi">8</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Woody Savannas&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">233</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">190</span><span class="p">)),</span>
+    <span class="mi">9</span><span class="p">:</span>  <span class="p">(</span><span class="s1">&#39;Savannas&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">216</span><span class="p">,</span> <span class="mi">20</span><span class="p">)),</span>
+    <span class="mi">10</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Grasslands&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">196</span><span class="p">,</span> <span class="mi">120</span><span class="p">)),</span>
+    <span class="mi">11</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Permanent Wetlands&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">132</span><span class="p">,</span> <span class="mi">168</span><span class="p">)),</span>
+    <span class="mi">12</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Croplands&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">115</span><span class="p">)),</span>
+    <span class="mi">13</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Urban and Built up lands&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+    <span class="mi">14</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Cropland Natural Vegetation Mosaics&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">168</span><span class="p">,</span> <span class="mi">168</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+    <span class="mi">15</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Permanent Snow and Ice&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">)),</span>
+    <span class="mi">16</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Barren Land&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">130</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mi">130</span><span class="p">)),</span>
+    <span class="mi">17</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Water Bodies&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">140</span><span class="p">,</span> <span class="mi">209</span><span class="p">,</span> <span class="mi">245</span><span class="p">)),</span>
+<span class="p">}</span>
+
+<span class="n">colors</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_COLORS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+<span class="n">indices</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">pars</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pars</span> <span class="ow">in</span> <span class="n">colors</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Module-level helpers</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parseHdfDate</span><span class="p">(</span><span class="n">hdf_filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the acquisition date from a MODIS HDF4 granule filename.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hdf_filename : str</span>
+<span class="sd">        Bare filename or full path, e.g.</span>
+<span class="sd">        ``MCD15A3H.A2020001.h11v05.061.2020010040000.hdf``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    datetime.date</span>
+<span class="sd">        Acquisition date derived from the embedded year + day-of-year.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">hdf_filename</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">_HDF_DATE_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">basename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Cannot parse acquisition date from HDF filename: </span><span class="si">{</span><span class="n">basename</span><span class="si">!r}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">doy</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">doy</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_granuleDate</span><span class="p">(</span><span class="n">granule</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract acquisition date from an earthaccess DataGranule.&quot;&quot;&quot;</span>
+    <span class="n">begin</span> <span class="o">=</span> <span class="n">granule</span><span class="p">[</span><span class="s1">&#39;umm&#39;</span><span class="p">][</span><span class="s1">&#39;TemporalExtent&#39;</span><span class="p">][</span><span class="s1">&#39;RangeDateTime&#39;</span><span class="p">][</span><span class="s1">&#39;BeginningDateTime&#39;</span><span class="p">]</span>
+    <span class="c1"># format: &#39;2010-01-01T00:00:00.000Z&#39;</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">begin</span><span class="p">[:</span><span class="mi">10</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_opendapUrl</span><span class="p">(</span><span class="n">granule</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the cloud OPeNDAP URL for a granule, or None if unavailable.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">granule</span><span class="p">[</span><span class="s1">&#39;umm&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;RelatedUrls&#39;</span><span class="p">,</span> <span class="p">[]):</span>
+        <span class="k">if</span> <span class="n">u</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Subtype&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;OPENDAP DATA&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">u</span><span class="p">[</span><span class="s1">&#39;URL&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_readHdfSds</span><span class="p">(</span><span class="n">hdf_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sds_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open an HDF4 file and read a named SDS.</span>
+
+<span class="sd">    Returns ``(array, transform)`` where ``array`` is the raw 2-D</span>
+<span class="sd">    ``float64`` pixel values and ``transform`` is the affine mapping from</span>
+<span class="sd">    pixel space to MODIS sinusoidal metres (upper-left corner origin).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pyhdf.SD</span><span class="w"> </span><span class="kn">import</span> <span class="n">SD</span><span class="p">,</span> <span class="n">SDC</span>  <span class="c1"># type: ignore[import]</span>
+
+    <span class="n">hdf</span> <span class="o">=</span> <span class="n">SD</span><span class="p">(</span><span class="n">hdf_path</span><span class="p">,</span> <span class="n">SDC</span><span class="o">.</span><span class="n">READ</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sds</span> <span class="o">=</span> <span class="n">hdf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">sds_name</span><span class="p">)</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">sds</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">meta_attr</span> <span class="o">=</span> <span class="n">hdf</span><span class="o">.</span><span class="n">attributes</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;StructMetadata.0&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">ul_x</span><span class="p">,</span> <span class="n">ul_y</span><span class="p">,</span> <span class="n">lr_x</span><span class="p">,</span> <span class="n">lr_y</span> <span class="o">=</span> <span class="n">_parseStructMetadata</span><span class="p">(</span><span class="n">meta_attr</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">hdf</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+
+    <span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">pixel_w</span> <span class="o">=</span> <span class="p">(</span><span class="n">lr_x</span> <span class="o">-</span> <span class="n">ul_x</span><span class="p">)</span> <span class="o">/</span> <span class="n">ncols</span>
+    <span class="n">pixel_h</span> <span class="o">=</span> <span class="p">(</span><span class="n">ul_y</span> <span class="o">-</span> <span class="n">lr_y</span><span class="p">)</span> <span class="o">/</span> <span class="n">nrows</span>
+
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">Affine</span><span class="p">(</span>
+        <span class="n">pixel_w</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ul_x</span><span class="p">,</span>
+        <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">pixel_h</span><span class="p">,</span> <span class="n">ul_y</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">array</span><span class="p">,</span> <span class="n">transform</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parseStructMetadata</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse ULCorner and LRCorner from StructMetadata.0 text.</span>
+
+<span class="sd">    Returns ``(ul_x, ul_y, lr_x, lr_y)`` in MODIS sinusoidal metres.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ul_x</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;UpperLeftPointMtrs\s*=\s*\(\s*(-?[\d.eE+\-]+)&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">ul_y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;UpperLeftPointMtrs\s*=\s*\([^,]+,\s*(-?[\d.eE+\-]+)&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">lr_x</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;LowerRightMtrs\s*=\s*\(\s*(-?[\d.eE+\-]+)&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">lr_y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;LowerRightMtrs\s*=\s*\([^,]+,\s*(-?[\d.eE+\-]+)&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ul_x</span><span class="p">,</span> <span class="n">ul_y</span><span class="p">,</span> <span class="n">lr_x</span><span class="p">,</span> <span class="n">lr_y</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sinosBoundsFromWgs84</span><span class="p">(</span><span class="n">snapped_bounds_deg</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert WGS84 bounding box to MODIS sinusoidal metres.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    snapped_bounds_deg : tuple of float</span>
+<span class="sd">        ``(xmin, ymin, xmax, ymax)`` in WGS84 degrees.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple of float</span>
+<span class="sd">        ``(xmin, ymin, xmax, ymax)`` in sinusoidal metres.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xmin_d</span><span class="p">,</span> <span class="n">ymin_d</span><span class="p">,</span> <span class="n">xmax_d</span><span class="p">,</span> <span class="n">ymax_d</span> <span class="o">=</span> <span class="n">snapped_bounds_deg</span>
+    <span class="n">corners_x</span><span class="p">,</span> <span class="n">corners_y</span> <span class="o">=</span> <span class="n">_WGS84_TO_SINU</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">xmin_d</span><span class="p">,</span> <span class="n">xmax_d</span><span class="p">,</span> <span class="n">xmin_d</span><span class="p">,</span> <span class="n">xmax_d</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">ymin_d</span><span class="p">,</span> <span class="n">ymin_d</span><span class="p">,</span> <span class="n">ymax_d</span><span class="p">,</span> <span class="n">ymax_d</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">corners_x</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">corners_y</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">corners_x</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">corners_y</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Manager class</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ManagerMODISEarthdata">
+<a class="viewcode-back" href="../../../api/sources.html#watershed_workflow.sources.ManagerMODISEarthdata">[docs]</a>
+<span class="nd">@cached_dataset_manager</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ManagerMODISEarthdata</span><span class="p">(</span><span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MODIS LAI and LULC products via NASA earthaccess (synchronous).</span>
+
+<span class="sd">    Uses cloud OPeNDAP (via ``pydap``) for products that support it, and</span>
+<span class="sd">    direct HDF4 tile download (via ``pyhdf``) for those that do not.</span>
+<span class="sd">    Currently:</span>
+
+<span class="sd">    - **LULC** (MCD12Q1): OPeNDAP — only the requested spatial subset is</span>
+<span class="sd">      transferred (~KB per granule).</span>
+<span class="sd">    - **LAI** (MCD15A3H): HDF4 download — full tiles (~8 MB each), but</span>
+<span class="sd">      processed one at a time to limit temporary disk use.</span>
+
+<span class="sd">    Authentication reads ``~/.netrc`` via</span>
+<span class="sd">    ``earthaccess.login(strategy=&#39;netrc&#39;)``.  Register at</span>
+<span class="sd">    https://urs.earthdata.nasa.gov.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Data are returned in the **MODIS sinusoidal** projection</span>
+<span class="sd">    (``+proj=sinu +a=6371007.181``).  Pass ``out_crs`` to ``getDataset``</span>
+<span class="sd">    to reproject; the base class handles spatial clipping and reprojection.</span>
+
+<span class="sd">    Each variable gets its own time dimension (``time_LAI``, ``time_LULC``)</span>
+<span class="sd">    so that LAI (4-day composites) and LULC (annual) can coexist in the same</span>
+<span class="sd">    ``xr.Dataset`` without broadcasting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">colors</span> <span class="o">=</span> <span class="n">colors</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force_download</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the earthaccess MODIS manager.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        force_download : bool, optional</span>
+<span class="sd">            Re-download data even when a valid cached file already exists.</span>
+<span class="sd">            Default is ``False``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">native_start</span> <span class="o">=</span> <span class="n">cftime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2002</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">calendar</span><span class="o">=</span><span class="s1">&#39;standard&#39;</span><span class="p">)</span>
+
+        <span class="c1">#: MODIS sinusoidal CRS (sphere, a=b=6 371 007.181 m).</span>
+        <span class="n">native_crs_out</span> <span class="o">=</span> <span class="n">_MODIS_SINU_CRS</span>
+        
+        <span class="c1">#: WGS84 geographic CRS used for CMR bounding-box queries.</span>
+        <span class="n">native_crs_in</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">from_epsg</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+
+        <span class="c1"># Native pixel spacing of 500-m MODIS products expressed in</span>
+        <span class="c1"># native_in_crs, **degrees**. Used by the base class for</span>
+        <span class="c1"># buffering/snapping.</span>
+        <span class="c1"># 500 m / (pi/180 * 6 371 007.181 m/deg) ≈ 4.49e-3 deg</span>
+        <span class="n">native_resolution</span> <span class="o">=</span> <span class="mf">500.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span> <span class="o">*</span> <span class="mf">6_371_007.181</span><span class="p">)</span>
+        
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">ManagerAttributes</span><span class="p">(</span>
+            <span class="n">category</span><span class="o">=</span><span class="s1">&#39;land_cover&#39;</span><span class="p">,</span>
+            <span class="n">product</span><span class="o">=</span><span class="s1">&#39;MODIS&#39;</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="s1">&#39;NASA Earthdata&#39;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s1">&#39;MODIS LAI and LULC products via NASA earthaccess (synchronous).&#39;</span><span class="p">,</span>
+            <span class="n">product_short</span><span class="o">=</span><span class="s1">&#39;modis&#39;</span><span class="p">,</span>
+            <span class="n">source_short</span><span class="o">=</span><span class="s1">&#39;nasa_earthdata_opendap&#39;</span><span class="p">,</span>
+            <span class="n">url</span><span class="o">=</span><span class="s1">&#39;https://urs.earthdata.nasa.gov&#39;</span><span class="p">,</span>
+            <span class="n">license</span><span class="o">=</span><span class="s1">&#39;public domain&#39;</span><span class="p">,</span>
+            <span class="n">citation</span><span class="o">=</span><span class="s1">&#39;Didan et al.&#39;</span><span class="p">,</span>
+            <span class="n">native_crs_in</span><span class="o">=</span><span class="n">native_crs_in</span><span class="p">,</span>
+            <span class="n">native_crs_out</span><span class="o">=</span><span class="n">native_crs_out</span><span class="p">,</span>
+            <span class="n">native_resolution</span><span class="o">=</span><span class="n">native_resolution</span><span class="p">,</span>
+            <span class="n">native_start</span><span class="o">=</span><span class="n">native_start</span><span class="p">,</span>
+            <span class="c1"># native_end is variable-dependent -- see _getNativeEnd().</span>
+            <span class="n">native_end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">valid_variables</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">_PRODUCTS</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="n">default_variables</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">_PRODUCTS</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="n">is_temporal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">native_calendar</span><span class="o">=</span><span class="s1">&#39;standard&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">force_download</span> <span class="o">=</span> <span class="n">force_download</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># earthaccess HTTPS session, set on first use</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_productNativeEnd</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">product_key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a single product&#39;s native_end: fixed date if given, else today minus its lag.&quot;&quot;&quot;</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">_PRODUCTS</span><span class="p">[</span><span class="n">product_key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;native_end&#39;</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;native_end&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">_todayMinusLag</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;native_end_lag_days&#39;</span><span class="p">],</span>
+                                                              <span class="n">calendar</span><span class="o">=</span><span class="s1">&#39;standard&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_getNativeEnd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the most conservative native_end across the requested products.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_productNativeEnd</span><span class="p">(</span><span class="n">var</span><span class="p">)</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># ManagerDataset abstract method implementations</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">isComplete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if all per-variable NetCDF files exist in the cache directory.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dir : str</span>
+<span class="sd">            Absolute path to a candidate cache directory.</span>
+<span class="sd">        request : ManagerDataset.Request</span>
+<span class="sd">            The request being fulfilled.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if ``{var}.nc`` exists for every requested variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">.nc&#39;</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_requestDataset</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Authenticate and return the request.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        request : ManagerDataset.Request</span>
+<span class="sd">            Pre-processed request carrying geometry, date range, and variable list.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ManagerDataset.Request</span>
+<span class="sd">            The same request, unchanged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ensureAuth</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">request</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_isServerReady</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True — earthaccess downloads are synchronous.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_downloadDataset</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download each requested variable to the cache directory.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        request : ManagerDataset.Request</span>
+<span class="sd">            Request with ``_download_path`` set. Files are written to</span>
+<span class="sd">            ``request._download_path/{var}.nc`` for each variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_year</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">year</span>
+        <span class="n">end_year</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">year</span>
+        <span class="n">snapped_bounds</span> <span class="o">=</span> <span class="n">snapBounds</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">native_resolution</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">_download_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">.nc&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_download</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  MODIS earthaccess: using existing file for &quot;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">&quot;: </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_downloadVar</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">snapped_bounds</span><span class="p">,</span> <span class="n">start_year</span><span class="p">,</span> <span class="n">end_year</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+
+    <span class="n">_NODATA</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;LULC&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">}</span>
+            
+    <span class="k">def</span><span class="w"> </span><span class="nf">_loadDataset</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">request</span><span class="p">:</span> <span class="n">manager_dataset</span><span class="o">.</span><span class="n">ManagerDataset</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Open cached NetCDF files and merge into a single Dataset.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        request : ManagerDataset.Request</span>
+<span class="sd">            Request with ``_download_path`` set.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        xr.Dataset</span>
+<span class="sd">            Merged dataset with all requested variables.  Each variable has a</span>
+<span class="sd">            per-variable time dimension (``time_LAI``, ``time_LULC``) so that</span>
+<span class="sd">            LAI and LULC can coexist without coordinate broadcasting.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_arrays</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">_download_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">.nc&#39;</span><span class="p">)</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="n">var</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s1">&#39;time&#39;</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+                <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;time_</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">})</span>
+            <span class="n">data_arrays</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">da</span>
+
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">data_arrays</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Auth</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ensureAuth</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Authenticate once and cache the session.&quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">earthaccess</span>  <span class="c1"># type: ignore[import]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">earthaccess</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;netrc&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s1">&#39;NASA Earthdata authentication failed. Ensure ~/.netrc contains:</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="s1">&#39;    machine urs.earthdata.nasa.gov login &lt;username&gt; password &lt;password&gt;</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="s1">&#39;Register for a free account at https://urs.earthdata.nasa.gov</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Original error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">earthaccess</span><span class="o">.</span><span class="n">get_requests_https_session</span><span class="p">()</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Dispatch: OPeNDAP vs HDF4</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_downloadVar</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">snapped_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">start_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">end_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">cache_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Search for granules and download one variable to the cache.</span>
+
+<span class="sd">        Dispatches to OPeNDAP or HDF4 based on product availability.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var : str</span>
+<span class="sd">            Variable name, one of ``&#39;LAI&#39;``, ``&#39;LULC&#39;``.</span>
+<span class="sd">        snapped_bounds : tuple of float</span>
+<span class="sd">            ``(xmin, ymin, xmax, ymax)`` in WGS84 degrees.</span>
+<span class="sd">        start_year : int</span>
+<span class="sd">            First year to retrieve (inclusive).</span>
+<span class="sd">        end_year : int</span>
+<span class="sd">            Last year to retrieve (inclusive).</span>
+<span class="sd">        cache_path : str</span>
+<span class="sd">            Destination NetCDF4 file path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">earthaccess</span>  <span class="c1"># type: ignore[import]</span>
+
+        <span class="n">product_info</span> <span class="o">=</span> <span class="n">_PRODUCTS</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+        <span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="n">snapped_bounds</span>
+        <span class="n">start_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">start_year</span><span class="si">}</span><span class="s1">-01-01&#39;</span>
+        <span class="n">end_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">end_year</span><span class="si">}</span><span class="s1">-12-31&#39;</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;  MODIS earthaccess: searching </span><span class="si">{</span><span class="n">product_info</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> v</span><span class="si">{</span><span class="n">product_info</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;bounds=</span><span class="si">{</span><span class="n">snapped_bounds</span><span class="si">}</span><span class="s1"> temporal=</span><span class="si">{</span><span class="n">start_str</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">end_str</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+        <span class="n">granules</span> <span class="o">=</span> <span class="n">earthaccess</span><span class="o">.</span><span class="n">search_data</span><span class="p">(</span>
+            <span class="n">short_name</span><span class="o">=</span><span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;product&#39;</span><span class="p">],</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">],</span>
+            <span class="n">bounding_box</span><span class="o">=</span><span class="p">(</span><span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span><span class="p">),</span>
+            <span class="n">temporal</span><span class="o">=</span><span class="p">(</span><span class="n">start_str</span><span class="p">,</span> <span class="n">end_str</span><span class="p">),</span>
+            <span class="n">count</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">granules</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;earthaccess: no granules found for </span><span class="si">{</span><span class="n">product_info</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;bounds=</span><span class="si">{</span><span class="n">snapped_bounds</span><span class="si">}</span><span class="s1"> temporal=</span><span class="si">{</span><span class="n">start_str</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">end_str</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;    found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">granules</span><span class="p">)</span><span class="si">}</span><span class="s1"> granule(s)&#39;</span><span class="p">)</span>
+
+        <span class="n">sinu_bounds</span> <span class="o">=</span> <span class="n">_sinosBoundsFromWgs84</span><span class="p">(</span><span class="n">snapped_bounds</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;opendap&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_downloadViaOpendap</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">granules</span><span class="p">,</span> <span class="n">sinu_bounds</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_downloadViaHdf4</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">granules</span><span class="p">,</span> <span class="n">sinu_bounds</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># OPeNDAP path (e.g. LULC / MCD12Q1)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_downloadViaOpendap</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">granules</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+        <span class="n">sinu_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">cache_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch granules via cloud OPeNDAP, reading only the spatial subset.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var : str</span>
+<span class="sd">            Variable name.</span>
+<span class="sd">        granules : list of DataGranule</span>
+<span class="sd">            earthaccess search results.</span>
+<span class="sd">        sinu_bounds : tuple of float</span>
+<span class="sd">            ``(xmin, ymin, xmax, ymax)`` in sinusoidal metres.</span>
+<span class="sd">        cache_path : str</span>
+<span class="sd">            Destination NetCDF4 file path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">product_info</span> <span class="o">=</span> <span class="n">_PRODUCTS</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+        <span class="n">sds_name</span> <span class="o">=</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;sds_name&#39;</span><span class="p">]</span>
+        <span class="n">fill</span> <span class="o">=</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;fill_value&#39;</span><span class="p">]</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;scale_factor&#39;</span><span class="p">]</span>
+        <span class="n">sinu_xmin</span><span class="p">,</span> <span class="n">sinu_ymin</span><span class="p">,</span> <span class="n">sinu_xmax</span><span class="p">,</span> <span class="n">sinu_ymax</span> <span class="o">=</span> <span class="n">sinu_bounds</span>
+
+        <span class="n">time_slices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dates_out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">final_transform</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">granule</span> <span class="ow">in</span> <span class="n">granules</span><span class="p">:</span>
+            <span class="n">dap_url</span> <span class="o">=</span> <span class="n">_opendapUrl</span><span class="p">(</span><span class="n">granule</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dap_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;No OPeNDAP URL found for granule </span><span class="si">{</span><span class="n">granule</span><span class="si">}</span><span class="s1">. &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;Product may have lost cloud OPeNDAP support — set opendap=False in _PRODUCTS.&#39;</span>
+                <span class="p">)</span>
+            <span class="n">acq_date</span> <span class="o">=</span> <span class="n">_granuleDate</span><span class="p">(</span><span class="n">granule</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;    OPeNDAP: </span><span class="si">{</span><span class="n">acq_date</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">dap_url</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="c1"># Use dap2:// prefix to suppress the &quot;unable to determine protocol&quot;</span>
+            <span class="c1"># warning. DAP4 returns an empty dataset for LP DAAC cloud endpoints.</span>
+            <span class="n">dap2_url</span> <span class="o">=</span> <span class="n">dap_url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;https://&#39;</span><span class="p">,</span> <span class="s1">&#39;dap2://&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">dap2_url</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;pydap&#39;</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="p">)</span>
+            <span class="n">product</span> <span class="o">=</span> <span class="n">_PRODUCTS</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="s1">&#39;product&#39;</span><span class="p">]</span>
+
+            <span class="n">xdim</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;/</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s1">/XDim&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>   <span class="c1"># ascending sinusoidal metres</span>
+            <span class="n">ydim</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;/</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s1">/YDim&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>   <span class="c1"># descending sinusoidal metres</span>
+            <span class="n">xdim_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;XDim_</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="n">ydim_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;YDim_</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s1">&#39;</span>
+
+            <span class="n">xi1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">xdim</span><span class="p">,</span> <span class="n">sinu_xmin</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">xi2</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xdim</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">xdim</span><span class="p">,</span> <span class="n">sinu_xmax</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">yi1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="o">-</span><span class="n">ydim</span><span class="p">,</span> <span class="o">-</span><span class="n">sinu_ymax</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">yi2</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ydim</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="o">-</span><span class="n">ydim</span><span class="p">,</span> <span class="o">-</span><span class="n">sinu_ymin</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">da</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;/</span><span class="si">{</span><span class="n">product</span><span class="si">}</span><span class="s1">/Data_Fields/</span><span class="si">{</span><span class="n">sds_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+            <span class="n">sliced</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">ydim_name</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">yi1</span><span class="p">,</span> <span class="n">yi2</span><span class="p">),</span> <span class="n">xdim_name</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">xi1</span><span class="p">,</span> <span class="n">xi2</span><span class="p">)})</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">sliced</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+            <span class="n">arr</span><span class="p">[</span><span class="n">arr</span> <span class="o">==</span> <span class="n">fill</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+            <span class="n">arr</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">*</span> <span class="n">scale</span>
+
+            <span class="n">xs_slice</span> <span class="o">=</span> <span class="n">xdim</span><span class="p">[</span><span class="n">xi1</span><span class="p">:</span><span class="n">xi2</span><span class="p">]</span>
+            <span class="n">ys_slice</span> <span class="o">=</span> <span class="n">ydim</span><span class="p">[</span><span class="n">yi1</span><span class="p">:</span><span class="n">yi2</span><span class="p">]</span>
+            <span class="n">pixel_w</span> <span class="o">=</span> <span class="n">xdim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xdim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">pixel_h</span> <span class="o">=</span> <span class="n">ydim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ydim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="c1"># negative</span>
+
+            <span class="n">transform</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">Affine</span><span class="p">(</span>
+                <span class="n">pixel_w</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">xs_slice</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pixel_w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="mf">0.0</span><span class="p">,</span> <span class="n">pixel_h</span><span class="p">,</span> <span class="n">ys_slice</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pixel_h</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">time_slices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+            <span class="n">dates_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_date</span><span class="p">)</span>
+            <span class="n">final_transform</span> <span class="o">=</span> <span class="n">transform</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">time_slices</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;MODIS earthaccess OPeNDAP: no slices assembled for </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_writeCacheFile</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">time_slices</span><span class="p">,</span> <span class="n">dates_out</span><span class="p">,</span> <span class="n">final_transform</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># HDF4 path (e.g. LAI / MCD15A3H)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_downloadViaHdf4</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">granules</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+        <span class="n">sinu_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">cache_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Download HDF4 tiles one at a time, extract, and accumulate time slices.</span>
+
+<span class="sd">        Each tile is downloaded to a temporary file, read, then deleted before</span>
+<span class="sd">        the next download, so the staging footprint is at most one tile (~8 MB).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var : str</span>
+<span class="sd">            Variable name.</span>
+<span class="sd">        granules : list of DataGranule</span>
+<span class="sd">            earthaccess search results.</span>
+<span class="sd">        sinu_bounds : tuple of float</span>
+<span class="sd">            ``(xmin, ymin, xmax, ymax)`` in sinusoidal metres.</span>
+<span class="sd">        cache_path : str</span>
+<span class="sd">            Destination NetCDF4 file path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">earthaccess</span>  <span class="c1"># type: ignore[import]</span>
+
+        <span class="c1"># Group by date — multiple tiles on the same date are mosaiced.</span>
+        <span class="n">date_groups</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">granules</span><span class="p">:</span>
+            <span class="n">date_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">_granuleDate</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+
+        <span class="n">sorted_dates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">date_groups</span><span class="p">)</span>
+        <span class="c1"># Flatten into an ordered list of (date, granule) pairs so we can chunk.</span>
+        <span class="n">ordered</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">sorted_dates</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">date_groups</span><span class="p">[</span><span class="n">d</span><span class="p">]:</span>
+                <span class="n">ordered</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">))</span>
+
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">time_slices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dates_out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">final_transform</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">chunk_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ordered</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">ordered</span><span class="p">[</span><span class="n">chunk_start</span><span class="p">:</span><span class="n">chunk_start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>
+            <span class="n">chunk_granules</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">]</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;    HDF4: downloading chunk </span><span class="si">{</span><span class="n">chunk_start</span><span class="o">//</span><span class="n">chunk_size</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;/</span><span class="si">{</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ordered</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="n">chunk_size</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39; (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="si">}</span><span class="s1"> granule(s))&#39;</span>
+            <span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;modis_earthdata_&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">staging_dir</span><span class="p">:</span>
+                <span class="n">local_files</span> <span class="o">=</span> <span class="n">earthaccess</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">chunk_granules</span><span class="p">,</span> <span class="n">local_path</span><span class="o">=</span><span class="n">staging_dir</span><span class="p">)</span>
+                <span class="c1"># Map filename → granule date using the HDF filename.</span>
+                <span class="n">fname_to_date</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">lf</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">local_files</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">lf</span><span class="p">:</span>
+                        <span class="n">fname_to_date</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">lf</span><span class="p">)]</span> <span class="o">=</span> <span class="n">d</span>
+
+                <span class="c1"># Group downloaded files by date and mosaic same-date tiles.</span>
+                <span class="n">date_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">fpath</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">fname_to_date</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">date_files</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">acq_date</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">date_files</span><span class="p">):</span>
+                    <span class="n">tile_arrays</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">tile_transforms</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">Affine</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">hdf_path</span> <span class="ow">in</span> <span class="n">date_files</span><span class="p">[</span><span class="n">acq_date</span><span class="p">]:</span>
+                        <span class="n">arr</span><span class="p">,</span> <span class="n">tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extractHdf4Slice</span><span class="p">(</span><span class="n">hdf_path</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">sinu_bounds</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">arr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">tile_arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+                            <span class="n">tile_transforms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tf</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">tile_arrays</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tile_arrays</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">merged_arr</span><span class="p">,</span> <span class="n">merged_transform</span> <span class="o">=</span> <span class="n">tile_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tile_transforms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">merged_arr</span><span class="p">,</span> <span class="n">merged_transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mosaicTiles</span><span class="p">(</span>
+                            <span class="n">tile_arrays</span><span class="p">,</span> <span class="n">tile_transforms</span>
+                        <span class="p">)</span>
+
+                    <span class="n">time_slices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">merged_arr</span><span class="p">)</span>
+                    <span class="n">dates_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_date</span><span class="p">)</span>
+                    <span class="n">final_transform</span> <span class="o">=</span> <span class="n">merged_transform</span>
+                <span class="c1"># TemporaryDirectory context exit deletes all files in the chunk.</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">time_slices</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;MODIS earthaccess HDF4: no slices assembled for </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_writeCacheFile</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">time_slices</span><span class="p">,</span> <span class="n">dates_out</span><span class="p">,</span> <span class="n">final_transform</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extractHdf4Slice</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hdf_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">sinu_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read one HDF4 tile, clip to sinu_bounds, scale, and mask fill values.</span>
+
+<span class="sd">        Returns ``(None, None)`` if the tile does not overlap ``sinu_bounds``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">product_info</span> <span class="o">=</span> <span class="n">_PRODUCTS</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+        <span class="n">fill</span> <span class="o">=</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;fill_value&#39;</span><span class="p">]</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;scale_factor&#39;</span><span class="p">]</span>
+
+        <span class="n">raw</span><span class="p">,</span> <span class="n">transform</span> <span class="o">=</span> <span class="n">_readHdfSds</span><span class="p">(</span><span class="n">hdf_path</span><span class="p">,</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;sds_name&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Reconstruct pixel-centre coordinates from the affine transform.</span>
+        <span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">c</span> <span class="o">+</span> <span class="n">transform</span><span class="o">.</span><span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ncols</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">f</span> <span class="o">+</span> <span class="n">transform</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nrows</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># descending</span>
+
+        <span class="n">sinu_xmin</span><span class="p">,</span> <span class="n">sinu_ymin</span><span class="p">,</span> <span class="n">sinu_xmax</span><span class="p">,</span> <span class="n">sinu_ymax</span> <span class="o">=</span> <span class="n">sinu_bounds</span>
+
+        <span class="c1"># Check overlap</span>
+        <span class="k">if</span> <span class="n">xs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">sinu_xmin</span> <span class="ow">or</span> <span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">sinu_xmax</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">ys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">sinu_ymax</span> <span class="ow">or</span> <span class="n">ys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">sinu_ymin</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="c1"># Find column indices (xs is ascending)</span>
+        <span class="n">xi1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">sinu_xmin</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">xi2</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ncols</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">sinu_xmax</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Find row indices (ys is descending, so negate)</span>
+        <span class="n">yi1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="o">-</span><span class="n">ys</span><span class="p">,</span> <span class="o">-</span><span class="n">sinu_ymax</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">yi2</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="o">-</span><span class="n">ys</span><span class="p">,</span> <span class="o">-</span><span class="n">sinu_ymin</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">raw_slice</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="n">yi1</span><span class="p">:</span><span class="n">yi2</span><span class="p">,</span> <span class="n">xi1</span><span class="p">:</span><span class="n">xi2</span><span class="p">]</span>
+        <span class="n">xs_slice</span> <span class="o">=</span> <span class="n">xs</span><span class="p">[</span><span class="n">xi1</span><span class="p">:</span><span class="n">xi2</span><span class="p">]</span>
+        <span class="n">ys_slice</span> <span class="o">=</span> <span class="n">ys</span><span class="p">[</span><span class="n">yi1</span><span class="p">:</span><span class="n">yi2</span><span class="p">]</span>
+
+        <span class="c1"># Rebuild transform for the slice (upper-left pixel corner)</span>
+        <span class="n">pixel_w</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">a</span>
+        <span class="n">pixel_h</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">e</span>  <span class="c1"># negative</span>
+        <span class="n">slice_transform</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">Affine</span><span class="p">(</span>
+            <span class="n">pixel_w</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">xs_slice</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pixel_w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="mf">0.0</span><span class="p">,</span> <span class="n">pixel_h</span><span class="p">,</span> <span class="n">ys_slice</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pixel_h</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">scaled</span> <span class="o">=</span> <span class="n">raw_slice</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">scaled</span><span class="p">[</span><span class="n">raw_slice</span> <span class="o">==</span> <span class="n">fill</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span>
+        <span class="n">scaled</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">*=</span> <span class="n">scale</span>
+
+        <span class="k">return</span> <span class="n">scaled</span><span class="p">,</span> <span class="n">slice_transform</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mosaicTiles</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">arrays</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">transforms</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">Affine</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mosaic multiple sinusoidal tiles into one array using rasterio.merge.&quot;&quot;&quot;</span>
+        <span class="n">sinu_rasterio_crs</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">to_rasterio</span><span class="p">(</span><span class="n">_MODIS_SINU_CRS</span><span class="p">)</span>
+        <span class="n">mem_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">arr</span><span class="p">,</span> <span class="n">tf</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">arrays</span><span class="p">,</span> <span class="n">transforms</span><span class="p">):</span>
+            <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">mf</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">MemoryFile</span><span class="p">()</span>
+            <span class="n">mem_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mf</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">mf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">driver</span><span class="o">=</span><span class="s1">&#39;GTiff&#39;</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                         <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">tf</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                         <span class="n">crs</span><span class="o">=</span><span class="n">sinu_rasterio_crs</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="n">dst</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+            <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mf</span><span class="o">.</span><span class="n">open</span><span class="p">())</span>
+
+        <span class="n">merged</span><span class="p">,</span> <span class="n">merged_transform</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">merge</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+            <span class="n">datasets</span><span class="p">,</span> <span class="n">nodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;first&#39;</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">mf</span> <span class="ow">in</span> <span class="n">mem_files</span><span class="p">:</span>
+            <span class="n">mf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">merged</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">merged_transform</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Shared cache writer</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_writeCacheFile</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">time_slices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">dates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">],</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">Affine</span><span class="p">,</span>
+        <span class="n">cache_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assemble time slices into an ``xr.Dataset`` and write as NetCDF4.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        var : str</span>
+<span class="sd">            Variable name.</span>
+<span class="sd">        time_slices : list of np.ndarray</span>
+<span class="sd">            One 2-D array per acquisition date.</span>
+<span class="sd">        dates : list of datetime.date</span>
+<span class="sd">            Acquisition dates corresponding to each slice.</span>
+<span class="sd">        transform : rasterio.transform.Affine</span>
+<span class="sd">            Affine transform for the spatial grid (sinusoidal metres,</span>
+<span class="sd">            upper-left pixel-corner origin).</span>
+<span class="sd">        cache_path : str</span>
+<span class="sd">            Destination NetCDF4 file path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">product_info</span> <span class="o">=</span> <span class="n">_PRODUCTS</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+        <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">time_slices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">c</span> <span class="o">+</span> <span class="n">transform</span><span class="o">.</span><span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">f</span> <span class="o">+</span> <span class="n">transform</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="n">time_coords</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">cftime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">day</span><span class="p">,</span> <span class="n">calendar</span><span class="o">=</span><span class="s1">&#39;standard&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dates</span>
+        <span class="p">]</span>
+
+        <span class="n">data_stack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">time_slices</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># Replace NaN with the nodata sentinel before casting to the target</span>
+        <span class="c1"># dtype — astype() silently converts NaN to 0, which is a valid</span>
+        <span class="c1"># LULC class.</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
+            <span class="n">nodata</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">data_stack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data_stack</span><span class="p">),</span> <span class="n">nodata</span><span class="p">,</span> <span class="n">data_stack</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nodata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">data_stack</span> <span class="o">=</span> <span class="n">data_stack</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">])</span>
+
+        <span class="n">var_attrs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;long_name&#39;</span><span class="p">:</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;long_name&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="n">product_info</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;scale_factor_applied&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NODATA</span><span class="p">:</span>
+            <span class="n">var_attrs</span><span class="p">[</span><span class="s1">&#39;nodata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NODATA</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+
+        <span class="n">da</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">data_stack</span><span class="p">,</span>
+            <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">],</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">time_coords</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">ys</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">xs</span><span class="p">},</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="n">var_attrs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">({</span><span class="n">var</span><span class="p">:</span> <span class="n">da</span><span class="p">})</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rio</span><span class="o">.</span><span class="n">write_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">native_crs_out</span><span class="p">)</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;variable&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">var</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">cache_path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;    Writing </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1"> to: </span><span class="si">{</span><span class="n">cache_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">cache_path</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

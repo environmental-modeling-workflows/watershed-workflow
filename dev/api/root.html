@@ -1,0 +1,1024 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>High-Level API &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/root';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data Sources" href="sources.html" />
+    <link rel="prev" title="API Documentation" href="../api.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">High-Level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sources.html">Data Sources</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hydro.html">Hydrology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l1"><a class="reference internal" href="properties.html">Properties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot.html">Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.findHUC"><code class="docutils literal notranslate"><span class="pre">findHUC()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.reduceRivers"><code class="docutils literal notranslate"><span class="pre">reduceRivers()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.simplify"><code class="docutils literal notranslate"><span class="pre">simplify()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.triangulate"><code class="docutils literal notranslate"><span class="pre">triangulate()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.tessalateRiverAligned"><code class="docutils literal notranslate"><span class="pre">tessalateRiverAligned()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.elevate"><code class="docutils literal notranslate"><span class="pre">elevate()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.getDatasetOnMesh"><code class="docutils literal notranslate"><span class="pre">getDatasetOnMesh()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.getShapePropertiesOnMesh"><code class="docutils literal notranslate"><span class="pre">getShapePropertiesOnMesh()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.makeMap"><code class="docutils literal notranslate"><span class="pre">makeMap()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-watershed_workflow.crs">Coordinate Reference Systems</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.from_cartopy"><code class="docutils literal notranslate"><span class="pre">from_cartopy()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.from_epsg"><code class="docutils literal notranslate"><span class="pre">from_epsg()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.from_proj"><code class="docutils literal notranslate"><span class="pre">from_proj()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.from_rasterio"><code class="docutils literal notranslate"><span class="pre">from_rasterio()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.from_string"><code class="docutils literal notranslate"><span class="pre">from_string()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.from_wkt"><code class="docutils literal notranslate"><span class="pre">from_wkt()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.from_xarray"><code class="docutils literal notranslate"><span class="pre">from_xarray()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.isEqual"><code class="docutils literal notranslate"><span class="pre">isEqual()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.isNative"><code class="docutils literal notranslate"><span class="pre">isNative()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.to_cartopy"><code class="docutils literal notranslate"><span class="pre">to_cartopy()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.to_epsg"><code class="docutils literal notranslate"><span class="pre">to_epsg()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.to_proj"><code class="docutils literal notranslate"><span class="pre">to_proj()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.to_rasterio"><code class="docutils literal notranslate"><span class="pre">to_rasterio()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#watershed_workflow.crs.to_wkt"><code class="docutils literal notranslate"><span class="pre">to_wkt()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../api.html" class="nav-link">API Documentation</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">High-Level API</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="high-level-api">
+<h1>High-Level API<a class="headerlink" href="#high-level-api" title="Link to this heading">#</a></h1>
+<p>The top-level <code class="xref py py-mod docutils literal notranslate"><span class="pre">watershed_workflow</span></code> namespace provides the
+high-level, “do what the user means” functions that most workflows are
+built from, plus the <code class="xref py py-class docutils literal notranslate"><span class="pre">CRS</span></code>,
+<a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.river.River"><code class="xref py py-class docutils literal notranslate"><span class="pre">River</span></code></a>,
+<a class="reference internal" href="hydro.html#watershed_workflow.hydro.Watershed" title="watershed_workflow.hydro.watershed.Watershed"><code class="xref py py-class docutils literal notranslate"><span class="pre">Watershed</span></code></a>,
+<a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh2D</span></code></a>, and
+<a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh3D" title="watershed_workflow.mesh.mesh.Mesh3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh3D</span></code></a> types used throughout.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.findHUC">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">findHUC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Polygon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrink_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/watershed_workflow.html#findHUC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.findHUC" title="Link to this definition">#</a></dt>
+<dd><p>Finds the smallest HUC containing shape.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<em>source-type</em>) – Source object providing a getShapes() method that gets HUCs by ID.</p></li>
+<li><p><strong>shape</strong> (<em>shapely.geometry.Polygon</em>) – Find this shape in a HUC.</p></li>
+<li><p><strong>in_crs</strong> (<em>watershed_workflow.crs.CRS</em>) – CRS of shape.</p></li>
+<li><p><strong>hint</strong> (<em>str</em>) – HUC in which to start searching.  This should be at least as long as
+the indexing file size – HUC 2 or longer for WBD, 4 or longer for NHD
+Plus, or 8 or longer for NHD.</p></li>
+<li><p><strong>shrink_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – A fraction of the radius of shape to shrink prior for checking
+containment within HUCs.  This fixes cases where shape is on a HUC
+boundary with potentially some numerical error.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out</strong> – The smallest containing HUC.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.reduceRivers">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">reduceRivers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rivers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.river.River"><span class="pre">River</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_small_rivers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_n_rivers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_by_area</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">area_property</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'drainage_area_sqkm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_diversions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_braided_divergences</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.river.River"><span class="pre">River</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/watershed_workflow.html#reduceRivers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.reduceRivers" title="Link to this definition">#</a></dt>
+<dd><p>Reduce the extent of the river network through a variety of methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rivers</strong> (<em>list</em><em>(</em><em>river_tree.River</em><em>)</em>) – A list of rivers to reduce.</p></li>
+<li><p><strong>ignore_small_rivers</strong> (<em>int</em><em>, </em><em>optional</em>) – If provided and positive, removes rivers whose number of
+reaches is less than this value.  If negative, keeps the N
+biggest (in number of reaches) rivers, where N is the negative
+of the provided value (e.g. -2 keeps the biggest 2 rivers).</p></li>
+<li><p><strong>prune_by_area</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, remove reaches whose total contributing area is
+less than this tol.  NOTE: only valid for reaches that include
+a contributing area property (e.g. NHDPlus).</p></li>
+<li><p><strong>area_property</strong> (<em>str</em><em>, </em><em>optional='DivergenceRoutedDrainAreaSqKm'</em>) – Name of the area property to use for determining reach CA.
+Note that this defines the units of prune_by_area value.</p></li>
+<li><p><strong>remove_diversions</strong> (<em>bool</em><em>, </em><em>optional=False</em>) – If true, remove diversions (see documentation of
+modify_rivers_remove_divergences()).</p></li>
+<li><p><strong>remove_braided_divergences</strong> (<em>bool</em><em>, </em><em>optional=False</em>) – If true, remove braided divergences (see documentation of
+modify_rivers_remove_divergences()).</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional=0.1</em>) – Defines what close is in the case of method == ‘geometry’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out</strong> – A list of rivers, as River objects.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list(river_tree.River)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.simplify">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">simplify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hydro.html#watershed_workflow.hydro.Watershed" title="watershed_workflow.hydro.watershed.Watershed"><span class="pre">Watershed</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.river.River"><span class="pre">River</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reach_segment_target_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">huc_segment_target_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_close_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_far_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample_by_reach_property</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_angle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">junction_min_angle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snap_triple_junctions_tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_diagnostics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/watershed_workflow.html#simplify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.simplify" title="Link to this definition">#</a></dt>
+<dd><p>Simplifies, in place, the HUC and river shapes to create constrained, discrete segments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hucs</strong> (<a class="reference internal" href="hydro.html#watershed_workflow.hydro.Watershed" title="watershed_workflow.hydro.Watershed"><em>Watershed</em></a>) – A split-form HUC object containing all reaches.</p></li>
+<li><p><strong>rivers</strong> (<em>list</em><em>(</em><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.River"><em>River</em></a><em>)</em>) – A list of river objects.</p></li>
+<li><p><strong>huc_segment_target_length</strong> (<em>float</em>) – Target length of a typical triangle edge away from the river.</p></li>
+<li><p><strong>reach_segment_target_length</strong> (<em>float</em>) – Target length of a typical triangle edge at the river.</p></li>
+<li><p><strong>waterbodies</strong> (<em>list</em><em>(</em><em>shply</em><em>)</em><em>, </em><em>optional</em>) – A list of waterbodies.</p></li>
+<li><p><strong>simplify_hucs</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, simply the hucs by moving points at most this
+many units (see also shapely.simplify).  Units are that of the
+CRS of shapes.</p></li>
+<li><p><strong>simplify_rivers</strong> (<em>float</em><em>, </em><em>optional</em>) – If provided, simply the rivers by moving points at most this
+many units (see also shapely.simplify).  Units are that of the
+CRS of shapes.  If not provided, use the simplify_hucs value.
+Provide 0 to make no changes to the rivers.</p></li>
+<li><p><strong>simplify_waterbodies</strong> (<em>float</em><em>, </em><em>optional</em>) – Simplify the waterbodies.  If not provided, uses the
+simplify_hucs value.  Provide 0 to make no changes to the
+waterbodies.</p></li>
+<li><p><strong>prune_tol</strong> (<em>float</em><em>, </em><em>optional = simplify_rivers</em>) – Prune leaf reaches that are smaller than this tolerance.  If
+not provided, uses simplify_rivers value.  Provide 0 to not do
+this step.</p></li>
+<li><p><strong>merge_tol</strong> (<em>float</em><em>, </em><em>optional = simplify_rivers</em>) – Merges reaches that are smaller than this tolerance with their
+downstream parent reach.  Note that if there is a branchpoint
+at the downstream node of the small reach, it will get moved
+to the upstream node.  If not provided, uses simplify_rivers
+value.  Provide 0 to not do this step.</p></li>
+<li><p><strong>snap_tol</strong> (<em>float</em><em>, </em><em>optional = 0.75 * simplify_rivers</em>) – Tolerance used for snapping rivers to nearby huc boundaries.
+Provide 0 to not snap.</p></li>
+<li><p><strong>snap_triple_junctions_tol</strong> (<em>float</em><em>, </em><em>optional = 3 * snap_tol</em>) – Tolerance used for snapping river triple junctions to huc
+triple junctions.</p></li>
+<li><p><strong>snap_reach_endpoints_tol</strong> (<em>float</em><em>, </em><em>optional = 2 * snap_tol</em>) – Tolerance used for snapping reach junctions to huc boundaries.</p></li>
+<li><p><strong>snap_waterbodies_tol</strong> (<em>float</em><em>, </em><em>optional = snap_tol</em>) – If not 0, snaps waterbody and HUC nodes that are nearly
+coincident to be discretely coincident.  Note this is not
+recommended; prefer to include major waterbodies in the HUC
+network.</p></li>
+<li><p><strong>cut_intersections</strong> (<em>bool</em><em>, </em><em>optional = False</em>) – If true, force intersections of the river network and the HUC
+boundary to occur at a coincident node by adding nodes as
+needed.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.triangulate">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">triangulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hydro.html#watershed_workflow.hydro.Watershed" title="watershed_workflow.hydro.Watershed"><span class="pre">Watershed</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.River"><span class="pre">River</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">internal_boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">shapely.geometry.BaseGeometry</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.River"><span class="pre">River</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hole_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">shapely.geometry.Point</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_vertices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_max_area</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_polygons</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">shapely.geometry.Polygon</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_max_edge_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refine_min_angle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_delaunay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><span class="pre">watershed_workflow.mesh.mesh.Mesh2D</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><span class="pre">watershed_workflow.mesh.mesh.Mesh2D</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">np.ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">np.ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/watershed_workflow.html#triangulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.triangulate" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.tessalateRiverAligned">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">tessalateRiverAligned</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hucs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hydro.html#watershed_workflow.hydro.Watershed" title="watershed_workflow.hydro.Watershed"><span class="pre">Watershed</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rivers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.River"><span class="pre">River</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.River"><span class="pre">River</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">internal_boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.River"><span class="pre">River</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">shapely.geometry.base.BaseGeometry</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hole_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_vertices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">triangulate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><span class="pre">watershed_workflow.mesh.mesh.Mesh2D</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><span class="pre">watershed_workflow.mesh.mesh.Mesh2D</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">np.ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">np.ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/watershed_workflow.html#tessalateRiverAligned"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.tessalateRiverAligned" title="Link to this definition">#</a></dt>
+<dd><p>Tessalate HUCs using river-aligned quads along the corridor and triangles away from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hucs</strong> (<a class="reference internal" href="hydro.html#watershed_workflow.hydro.Watershed" title="watershed_workflow.hydro.Watershed"><em>Watershed</em></a>) – The huc geometry to tessalate.  Note this will be adjusted if
+required by the river corridor.</p></li>
+<li><p><strong>rivers</strong> (<em>list</em><em>[</em><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.River"><em>River</em></a><em>]</em>) – The rivers to mesh with quads</p></li>
+<li><p><strong>river_width</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.River"><em>River</em></a><em>]</em><em>, </em><em>float</em><em>]</em>) – Function to compute the river width for each reach (given as a River object).
+This callable can either return a constant value, or dynamically fetch a value
+based on stream order, properties, or a user-defined rule.</p></li>
+<li><p><strong>river_n_quads</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of quads across the river.  Currently only 1 is
+supported (the default).</p></li>
+<li><p><strong>internal_boundaries</strong> (<em>list</em><em>[</em><em>shapely.Polygon</em><em>]</em><em>, </em><em>optional</em>) – List of internal boundaries to embed in the domain, e.g. waterbodies.</p></li>
+<li><p><strong>hole_points</strong> (<em>list</em><em>(</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>)</em><em>, </em><em>optional</em>) – List of points inside the polygons to be left as holes/voids (excluded from mesh)</p></li>
+<li><p><strong>additional_vertices</strong> (<em>list</em><em>(</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>)</em><em>, </em><em>optional</em>) – List of points to be inlcuded in the triangulation.</p></li>
+<li><p><strong>diagnostics</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, prints extra diagnostic info.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib Axes object</em><em>, </em><em>optional</em>) – For debugging – plots troublesome reaches as quad elements are
+generated to find tricky areas.</p></li>
+<li><p><strong>kwargs</strong> – All other arguments are passed to the triangulation function for refinement.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>vertices</strong> (<em>np.array((n_vertices, 2), ‘d’)</em>) – Array of triangle vertices.</p></li>
+<li><p><strong>elems</strong> (<em>list[list[int]]</em>) – For each element, an ordered list of indices into the vertices
+array that make up that cell.</p></li>
+<li><p><strong>areas</strong> (<em>_only if diagnostics=True_, np.array((n_cell_vertices), ‘d’)</em>) – Array of areas.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.elevate">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">elevate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><span class="pre">Mesh2D</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/watershed_workflow.html#elevate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.elevate" title="Link to this definition">#</a></dt>
+<dd><p>Elevate a mesh onto the provided dem, in place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_crs</strong> (<em>crs-type</em>) – Mesh coordinate system.</p></li>
+<li><p><strong>dem</strong> (<em>xr.DataArray</em>) – 2D array forming an elevation raster.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Interpolation method, passed to interpolateValues(). One of:
+* “linear” for piecewise bilinear interpolation (default)
+* “nearest” for nearest-neighbor pixels
+* “cubic” for cubic interpolation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out</strong> – Array of triangle vertices, including a z-dimension.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array((n_points, 3), ‘d’)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.getDatasetOnMesh">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">getDatasetOnMesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><span class="pre">Mesh2D</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/watershed_workflow.html#getDatasetOnMesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.getDatasetOnMesh" title="Link to this definition">#</a></dt>
+<dd><p>Interpolate xarray data onto cell centroids of a mesh.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.getShapePropertiesOnMesh">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">getShapePropertiesOnMesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><span class="pre">Mesh2D</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/watershed_workflow.html#getShapePropertiesOnMesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.getShapePropertiesOnMesh" title="Link to this definition">#</a></dt>
+<dd><p>Intepolate shape data onto cell centroids of a mesh.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.makeMap">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.</span></span><span class="sig-name descname"><span class="pre">makeMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/watershed_workflow.html#makeMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.makeMap" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<section id="module-watershed_workflow.crs">
+<span id="coordinate-reference-systems"></span><span id="crs"></span><h2>Coordinate Reference Systems<a class="headerlink" href="#module-watershed_workflow.crs" title="Link to this heading">#</a></h2>
+<p>Coordinate Reference System conversions.</p>
+<p>Coordinate Reference Systems (CRSs) differ across datasets, and
+standardizing and managing these across the workflow is a necessary
+technical detail.  That said, rarely does the user care what
+coordinate system is being used, as long as it is appropriate for the
+watershed in question.  Watershed Workflow aims to make using datasets
+in different CRSs as streamlined as possible.  Typically, a workflow
+will pick a CRS based upon either a default for the region or by
+simply using the CRS of the shapefile that specifies the watershed
+boundary.  This CRS is then passed into each function that acquires
+more data, and that data’s coordinates are changed to the CRS
+requested.</p>
+<p>Users should interact with CRS objects exclusively through the
+<code class="docutils literal notranslate"><span class="pre">from_*</span></code> and <code class="docutils literal notranslate"><span class="pre">to_*</span></code> functions in this module, rather than
+constructing or calling methods on CRS objects directly.  This
+abstraction allows the underlying CRS representation to change in
+future versions without breaking user code.</p>
+<p>To create a CRS, use one of:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#watershed_workflow.crs.from_epsg" title="watershed_workflow.crs.from_epsg"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_epsg()</span></code></a> — most common, e.g. <code class="docutils literal notranslate"><span class="pre">crs.from_epsg(5070)</span></code></p></li>
+<li><p><a class="reference internal" href="#watershed_workflow.crs.from_string" title="watershed_workflow.crs.from_string"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_string()</span></code></a> — from a proj string</p></li>
+<li><p><a class="reference internal" href="#watershed_workflow.crs.from_wkt" title="watershed_workflow.crs.from_wkt"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_wkt()</span></code></a> — from a WKT string</p></li>
+<li><p><a class="reference internal" href="#watershed_workflow.crs.from_rasterio" title="watershed_workflow.crs.from_rasterio"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_rasterio()</span></code></a>, <a class="reference internal" href="#watershed_workflow.crs.from_cartopy" title="watershed_workflow.crs.from_cartopy"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_cartopy()</span></code></a>, <a class="reference internal" href="#watershed_workflow.crs.from_proj" title="watershed_workflow.crs.from_proj"><code class="xref py py-func docutils literal notranslate"><span class="pre">from_proj()</span></code></a> — convert from other libraries</p></li>
+<li><p>Module-level constants: <code class="xref py py-data docutils literal notranslate"><span class="pre">default_crs</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">latlon_crs</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">default_alaska_crs</span></code></p></li>
+</ul>
+<p>To convert a CRS for use with another library, use the corresponding
+<code class="docutils literal notranslate"><span class="pre">to_*</span></code> function.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.from_cartopy">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_cartopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cartopy.crs.CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#from_cartopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_cartopy" title="Link to this definition">#</a></dt>
+<dd><p>Convert cartopy CRS to workflow CRS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>cartopy.crs.CRS</em>) – Cartopy CRS object to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Workflow CRS object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CRS</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.from_epsg">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_epsg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epsg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#from_epsg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_epsg" title="Link to this definition">#</a></dt>
+<dd><p>Convert EPSG code to workflow CRS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>epsg</strong> (<em>int</em>) – EPSG code identifying the coordinate reference system.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Workflow CRS object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CRS</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.from_proj">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_proj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#from_proj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_proj" title="Link to this definition">#</a></dt>
+<dd><p>Convert a Proj CRS to the workflow CRS standard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>CRS</em>) – Proj CRS object to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Workflow CRS standard (currently identical to input).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CRS</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.from_rasterio">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_rasterio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">rasterio.crs.CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#from_rasterio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_rasterio" title="Link to this definition">#</a></dt>
+<dd><p>Convert rasterio CRS to workflow CRS standard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>rasterio.crs.CRS</em>) – Rasterio CRS object to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Workflow CRS standard.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CRS</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Attempts to use authority codes first for better bounds handling,
+falls back to general user input conversion.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.from_string">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#from_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_string" title="Link to this definition">#</a></dt>
+<dd><p>Create CRS from proj string specification.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>string</strong> (<em>str</em>) – Proj string specification of coordinate reference system.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Workflow CRS object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CRS</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.from_wkt">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_wkt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#from_wkt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_wkt" title="Link to this definition">#</a></dt>
+<dd><p>Create CRS from Well-Known Text (WKT) string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>string</strong> (<em>str</em>) – WKT string specification of coordinate reference system.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Workflow CRS object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CRS</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.from_xarray">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">from_xarray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">xarray.DataArray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CRS</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#from_xarray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.from_xarray" title="Link to this definition">#</a></dt>
+<dd><p>Extract CRS from xarray DataArray.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>array</strong> (<em>xarray.DataArray</em>) – xarray DataArray that may contain CRS information.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Extracted CRS if found, None otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CRS or None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Attempts to find CRS from rioxarray extension first, then from
+spatial_ref attributes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.isEqual">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">isEqual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#isEqual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.isEqual" title="Link to this definition">#</a></dt>
+<dd><p>Check if two CRS objects are equal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>crs1</strong> (<em>CRS</em>) – First CRS to compare.</p></li>
+<li><p><strong>crs2</strong> (<em>CRS</em>) – Second CRS to compare.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if CRS objects are considered equal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.isNative">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">isNative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#isNative"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.isNative" title="Link to this definition">#</a></dt>
+<dd><p>Check if CRS is in the native format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>CRS</em>) – Coordinate reference system to check.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if CRS is in native format.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.to_cartopy">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_cartopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cartopy.crs.CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#to_cartopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_cartopy" title="Link to this definition">#</a></dt>
+<dd><p>Convert workflow CRS to cartopy CRS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>CRS</em>) – Workflow CRS to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cartopy CRS object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cartopy.crs.CRS</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Requires cartopy version 0.20.0 or higher.
+Adopted from: <a class="reference external" href="https://pyproj4.github.io/pyproj/stable/crs_compatibility.html">https://pyproj4.github.io/pyproj/stable/crs_compatibility.html</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.to_epsg">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_epsg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#to_epsg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_epsg" title="Link to this definition">#</a></dt>
+<dd><p>Convert CRS to EPSG code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>CRS</em>) – Workflow CRS to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>EPSG code, or raises ValueError if the CRS has no EPSG representation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.to_proj">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_proj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#to_proj"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_proj" title="Link to this definition">#</a></dt>
+<dd><p>Convert workflow CRS standard to a Proj CRS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>CRS</em>) – Workflow CRS to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Proj CRS object (currently identical to input).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>CRS</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.to_rasterio">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_rasterio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">rasterio.crs.CRS</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#to_rasterio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_rasterio" title="Link to this definition">#</a></dt>
+<dd><p>Convert workflow CRS to rasterio CRS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>CRS</em>) – Workflow CRS to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Rasterio CRS object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>rasterio.crs.CRS</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="watershed_workflow.crs.to_wkt">
+<span class="sig-prename descclassname"><span class="pre">watershed_workflow.crs.</span></span><span class="sig-name descname"><span class="pre">to_wkt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CRS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/watershed_workflow/crs.html#to_wkt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#watershed_workflow.crs.to_wkt" title="Link to this definition">#</a></dt>
+<dd><p>Convert CRS to Well-Known Text (WKT) string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>crs</strong> (<em>CRS</em>) – Workflow CRS to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>WKT string representation of the CRS.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../api.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">API Documentation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="sources.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Data Sources</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

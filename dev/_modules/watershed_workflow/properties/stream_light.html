@@ -1,0 +1,1378 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>watershed_workflow.properties.stream_light &#8212; Watershed Workflow</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/custom_theme.css?v=a03f4c85" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=3ce10a4d"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/watershed_workflow/properties/stream_light';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="../../../_static/main.js?v=b10558fa"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Watershed Workflow</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../intro.html">
+    Introduction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../examples.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts.html">
+    Concepts
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api.html">
+    API Documentation
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><!-- This will display the version of the docs -->
+Version dev</div>
+        <div class="sidebar-primary-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../../watershed_workflow.html" class="nav-link">watershed_workflow</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">watershed_workflow.properties.stream_light</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for watershed_workflow.properties.stream_light</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Functions for computing photosynthetically active radiation (PAR) at a stream surface.</span>
+
+<span class="sd">Wraps a Python port of the StreamLight model, which computes solar</span>
+<span class="sd">angles, radiative transfer through riparian vegetation, and stream</span>
+<span class="sd">shading to estimate the light energy reaching the stream surface given</span>
+<span class="sd">channel geometry, riparian canopy properties, and incoming shortwave</span>
+<span class="sd">radiation.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;computeStreamLight&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;StreamLight&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="StreamLight">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.StreamLight">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StreamLight</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This class is a Python implementation </span>
+<span class="sd">    of the code StreamLight (https://github.com/psavoy/StreamLight).</span>
+<span class="sd">    Minor modifications have been made to improve numerical performance.</span>
+
+<span class="sd">    StreamLight is summarized in the following references:</span>
+
+<span class="sd">    Savoy, P., Bernhardt, E., Kirk, L., Cohen, M. J., &amp; Heffernan, J. B. (2021). </span>
+<span class="sd">        A seasonally dynamic model of light at the stream surface. Freshwater Science, </span>
+<span class="sd">        40(April), 000–000. https://doi.org/10.1086/714270</span>
+
+<span class="sd">    Savoy, P., &amp; Harvey, J. W. (2021). Predicting light regime controls on primary </span>
+<span class="sd">        productivity across CONUS river networks. Geophysical Research Letters, 48, </span>
+<span class="sd">        e2020GL092149. https://doi.org/10.1029/2020GL092149</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;StreamLight requires channel properties and energy drivers </span>
+<span class="sd">        to calculate photosynthetically active radiation (PAR)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Channel properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">([</span>
+            <span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="s1">&#39;channel_azimuth&#39;</span><span class="p">,</span> <span class="s1">&#39;bottom_width&#39;</span><span class="p">,</span> <span class="s1">&#39;bank_height&#39;</span><span class="p">,</span> <span class="s1">&#39;bank_slope&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;water_depth&#39;</span><span class="p">,</span> <span class="s1">&#39;tree_height&#39;</span><span class="p">,</span> <span class="s1">&#39;overhang&#39;</span><span class="p">,</span> <span class="s1">&#39;overhang_height&#39;</span><span class="p">,</span> <span class="s1">&#39;x_LAD&#39;</span>
+        <span class="p">])</span>
+
+        <span class="c1"># Energy drivers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">([</span><span class="s1">&#39;doy&#39;</span><span class="p">,</span> <span class="s1">&#39;hour&#39;</span><span class="p">,</span> <span class="s1">&#39;tz_offset&#39;</span><span class="p">,</span> <span class="s1">&#39;sw_inc&#39;</span><span class="p">,</span> <span class="s1">&#39;lai&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Solar Angles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;solar_dec&#39;</span><span class="p">,</span> <span class="s1">&#39;solar_altitude&#39;</span><span class="p">,</span> <span class="s1">&#39;sza&#39;</span><span class="p">,</span> <span class="s1">&#39;solar_azimuth&#39;</span><span class="p">,</span> <span class="s1">&#39;solar_azimuth_shade2&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Energy response</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">([</span>
+            <span class="s1">&#39;rad_diff_PAR&#39;</span><span class="p">,</span> <span class="s1">&#39;rad_beam_PAR&#39;</span><span class="p">,</span> <span class="s1">&#39;rad_diff&#39;</span><span class="p">,</span> <span class="s1">&#39;rad_beam&#39;</span><span class="p">,</span> <span class="s1">&#39;diff_trans_PAR&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;beam_trans_PAR&#39;</span><span class="p">,</span> <span class="s1">&#39;total_trans_PAR&#39;</span><span class="p">,</span> <span class="s1">&#39;diff_trans&#39;</span><span class="p">,</span> <span class="s1">&#39;beam_trans&#39;</span><span class="p">,</span> <span class="s1">&#39;total_trans&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;total_trans_PAR_ppfd&#39;</span><span class="p">,</span> <span class="s1">&#39;par_surface_original&#39;</span><span class="p">,</span> <span class="s1">&#39;energy_diff_surface_PAR&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;energy_beam_surface_PAR&#39;</span><span class="p">,</span> <span class="s1">&#39;energy_total_surface_PAR&#39;</span><span class="p">,</span> <span class="s1">&#39;energy_diff_surface&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;energy_beam_surface&#39;</span><span class="p">,</span> <span class="s1">&#39;energy_total_surface&#39;</span><span class="p">,</span> <span class="s1">&#39;energy_total_surface_PAR_ppfd&#39;</span>
+        <span class="p">])</span>
+
+        <span class="c1"># Shading response</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">([</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">,</span> <span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="StreamLight.setChannelProperties">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.StreamLight.setChannelProperties">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setChannelProperties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                             <span class="n">lat</span><span class="p">,</span>
+                             <span class="n">lon</span><span class="p">,</span>
+                             <span class="n">channel_azimuth</span><span class="p">,</span>
+                             <span class="n">bottom_width</span><span class="p">,</span>
+                               <span class="n">bank_height</span><span class="p">,</span>
+                               <span class="n">bank_slope</span><span class="p">,</span>
+                               <span class="n">water_depth</span><span class="p">,</span>
+                               <span class="n">tree_height</span><span class="p">,</span>
+                               <span class="n">overhang</span><span class="p">,</span>
+                               <span class="n">overhang_height</span><span class="p">,</span>
+                               <span class="n">x_LAD</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the channel properties. </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lat : float</span>
+<span class="sd">            Latitude [decimal degrees].</span>
+<span class="sd">        lon : float</span>
+<span class="sd">            Longitude [decimal degrees].        </span>
+<span class="sd">        channel_azimuth : float</span>
+<span class="sd">            Channel azimuth [decimal degrees].</span>
+<span class="sd">        bottom_width: float</span>
+<span class="sd">            Channel width at the water-sediment interface [m].</span>
+<span class="sd">        bank_height: float</span>
+<span class="sd">            Bank height [m].</span>
+<span class="sd">        bank_slope: float</span>
+<span class="sd">            Bank slope [-].</span>
+<span class="sd">        water_depth: float</span>
+<span class="sd">            Water depth [m].        </span>
+<span class="sd">        tree_height: float</span>
+<span class="sd">            Tree height [m].</span>
+<span class="sd">        overhang: float</span>
+<span class="sd">            Effectively max canopy radius [m].</span>
+<span class="sd">        overhang_height: float</span>
+<span class="sd">            Height of the maximum canopy overhang (height at max canopy radius) [m].</span>
+<span class="sd">        x_LAD: float</span>
+<span class="sd">            Leaf angle distribution, default = 1 [-].&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;channel_azimuth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel_azimuth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bottom_width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bottom_width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_height&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bank_height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_slope&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bank_slope</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_depth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">water_depth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;tree_height&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tree_height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;overhang&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overhang</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;overhang_height&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overhang_height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;x_LAD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_LAD</span></div>
+
+
+<div class="viewcode-block" id="StreamLight.setEnergyDrivers">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.StreamLight.setEnergyDrivers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setEnergyDrivers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doy</span><span class="p">,</span> <span class="n">hour</span><span class="p">,</span> <span class="n">tz_offset</span><span class="p">,</span> <span class="n">sw_inc</span><span class="p">,</span> <span class="n">lai</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the energy drivers. </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        doy : int</span>
+<span class="sd">            Day of the year.</span>
+<span class="sd">        hour: int</span>
+<span class="sd">            Hour of the day.</span>
+<span class="sd">        tz_offset: int</span>
+<span class="sd">            Time zone offset.    </span>
+<span class="sd">        sw_inc : float</span>
+<span class="sd">            Total incoming shortwave radiation [W m-2].  </span>
+<span class="sd">        lai: float</span>
+<span class="sd">            Leaf are index [-].&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;doy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">doy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hour</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;tz_offset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tz_offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;sw_inc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sw_inc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;lai&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lai</span></div>
+
+
+<div class="viewcode-block" id="StreamLight.computeSolarAngles">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.StreamLight.computeSolarAngles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">computeSolarAngles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">solar_dec</span><span class="p">,</span> <span class="n">solar_altitude</span><span class="p">,</span> <span class="n">sza</span><span class="p">,</span> <span class="n">solar_azimuth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeSolarAngles</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;doy&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;tz_offset&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_dec&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">solar_dec</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_altitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">solar_altitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;sza&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sza</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_azimuth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">solar_azimuth</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_correctSolarAzimuth</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_computeSolarAngles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doy</span><span class="p">,</span> <span class="n">hour</span><span class="p">,</span> <span class="n">tz_offset</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This function calculates solar declination, altitude,</span>
+<span class="sd">        zenith angle, and an initial estimate of azimuth. This initial estimate</span>
+<span class="sd">        of solar azimuth is passed to the solar_c function where it is adjusted</span>
+<span class="sd">        based on latitude and the solar declination angle. </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        doy : int</span>
+<span class="sd">            Day of the year.</span>
+<span class="sd">        hour: int</span>
+<span class="sd">            Hour of the day.</span>
+<span class="sd">        tz_offset: float</span>
+<span class="sd">            Time zone offset.</span>
+<span class="sd">        lat : float</span>
+<span class="sd">            Latitude [decimal degrees].</span>
+<span class="sd">        lon : float</span>
+<span class="sd">            Longitude [decimal degrees].        </span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        solar_dec : float</span>
+<span class="sd">            Solar declination (initial estimate) [radians]. The angle made between the ray of the Sun, extended to the centre of the Earth, and the equatorial plane of the Earth.</span>
+<span class="sd">        solar_altitude : float</span>
+<span class="sd">            Altitude (initial estimate) [radians]. The angular distance between the rays of Sun and the horizon of the Earth. </span>
+<span class="sd">        sza : float</span>
+<span class="sd">            Solar zenith angle (initial estimate) [radians]. The angle between the sun&#39;s rays and the vertical direction. It is the complement to the solar altitude.</span>
+<span class="sd">        solar_azimuth : float</span>
+<span class="sd">            Initial estimate of azimuth (initial estimate) [radians]. The angle is the azimuth (horizontal angle with respect to north) of the Sun&#39;s position.       </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdate</span> <span class="o">=</span> <span class="p">(</span><span class="n">doy</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">hour</span><span class="o">/</span><span class="mi">24</span><span class="p">)</span>  <span class="c1"># numerical day (Julian date)</span>
+
+        <span class="c1"># Defining solar geometry</span>
+
+        <span class="c1">## Solar declination</span>
+        <span class="n">solar_dec</span> <span class="o">=</span> <span class="mf">23.45</span> <span class="o">*</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">180</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">jdate</span><span class="o">+</span><span class="mi">284</span><span class="p">))</span> <span class="o">/</span> <span class="mf">365.25</span><span class="p">)</span>
+
+        <span class="c1">## Calculating true solar time</span>
+        <span class="c1">### Mean solar time</span>
+        <span class="n">mst</span> <span class="o">=</span> <span class="n">jdate</span> <span class="o">+</span> <span class="p">((</span><span class="n">lon</span> <span class="o">-</span> <span class="n">tz_offset</span><span class="o">*</span><span class="mi">15</span><span class="p">)</span> <span class="o">/</span> <span class="mi">361</span><span class="p">)</span>
+
+        <span class="c1">### Equation of time</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">182</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">jdate</span><span class="o">-</span><span class="mi">81</span><span class="p">)</span>
+        <span class="n">eot</span> <span class="o">=</span> <span class="p">((</span><span class="mf">9.87</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="mf">7.53</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">b</span><span class="p">)))</span> <span class="o">/</span> <span class="mi">1440</span>
+
+        <span class="c1">### True solar time</span>
+        <span class="n">tst</span> <span class="o">=</span> <span class="n">mst</span> <span class="o">+</span> <span class="n">eot</span>
+
+        <span class="c1">### This is an adjustment from the Li (2006) code which deals with negative solar altitudes</span>
+
+        <span class="n">sin_solar_altitude</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">solar_dec</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">solar_dec</span><span class="p">)</span> <span class="o">*</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">lat</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tst</span><span class="p">))</span>
+
+        <span class="n">solar_altitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">sin_solar_altitude</span><span class="p">)</span>
+
+        <span class="c1"># Solar zenith angle</span>
+        <span class="n">sza</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">-</span> <span class="n">solar_altitude</span>
+
+        <span class="c1"># Initial estimate of the solar azimuth</span>
+        <span class="n">solar_azimuth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">solar_dec</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tst</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">solar_altitude</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">solar_dec</span><span class="p">,</span> <span class="n">solar_altitude</span><span class="p">,</span> <span class="n">sza</span><span class="p">,</span> <span class="n">solar_azimuth</span>
+
+<div class="viewcode-block" id="StreamLight.computeRadiativeTransferEstimates">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.StreamLight.computeRadiativeTransferEstimates">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">computeRadiativeTransferEstimates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This function calculates below canopy PAR. Main references are</span>
+<span class="sd">            1) Campbell &amp; Norman (1998) An introduction to Environmental biophysics (abbr C&amp;N (1998))</span>
+<span class="sd">            2) Spitters et al. (1986) Separating the diffuse and direct component of global radiation and its implications for modeling canopy photosynthesis: Part I components of incoming radiation</span>
+<span class="sd">            3) Goudriaan (1977) Crop micrometeorology: A simulation study. Pudoc, Wageningen, The Netherlands.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        doy : int</span>
+<span class="sd">            Day of the year.    </span>
+<span class="sd">        solar_altitude : float</span>
+<span class="sd">            Altitude [radians].</span>
+<span class="sd">        sza : float</span>
+<span class="sd">            Solar zenith angle [radians].       </span>
+<span class="sd">        sw_inc : float</span>
+<span class="sd">            Total incoming shortwave radiation [W m-2].  </span>
+<span class="sd">        lai: float</span>
+<span class="sd">            Leaf are index [-].   </span>
+<span class="sd">        x_LAD: float</span>
+<span class="sd">            Leaf angle distribution [-].      </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        rad_diff_PAR : float</span>
+<span class="sd">            Diffusive PAR incoming shortwave radiation [W m-2].</span>
+<span class="sd">        rad_beam_PAR : float</span>
+<span class="sd">            Beam PAR incoming shortwave radiation [W m-2].</span>
+<span class="sd">        rad_diff : float</span>
+<span class="sd">            Diffusive incoming shortwave radiation [W m-2].</span>
+<span class="sd">        rad_beam : float</span>
+<span class="sd">            Beam incoming shortwave radiation [W m-2].</span>
+<span class="sd">        diff_trans_PAR : float</span>
+<span class="sd">            Diffuse PAR energy transmitted through the canopy [W m-2].</span>
+<span class="sd">        beam_trans_PAR : float</span>
+<span class="sd">            Beam PAR energy transmitted through the canopy [W m-2].</span>
+<span class="sd">        total_trans_PAR : float</span>
+<span class="sd">            Total PAR energy transmitted through the canopy [W m-2].        </span>
+<span class="sd">        diff_trans : float</span>
+<span class="sd">            Diffuse energy transmitted through the canopy [W m-2].</span>
+<span class="sd">        beam_trans : float</span>
+<span class="sd">            Beam energy transmitted through the canopy [W m-2].</span>
+<span class="sd">        total_trans : float</span>
+<span class="sd">            Total energy transmitted through the canopy [W m-2].</span>
+<span class="sd">        total_trans_PAR_ppfd : float</span>
+<span class="sd">            Total PPFD transmitted through the canopy [umol m-2 s-1]. The StreamLight model estimates photosynthetically active radiation (PAR), which relates to the conversion of solar energy by autotrophs via photosynthesis. Estimates are expressed in terms of the quanta of light in PAR (umol m-2 s-1), otherwise referred to as the photosynthetic photon flux density (PPFD).    </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Partitioning incoming shorwave radiation into beam and diffuse components</span>
+        <span class="c1"># Following Spitters et al. (1986)</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1">## Generate a logical index of night and day. Night = SZA &gt; 90</span>
+        <span class="n">is_night</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;sza&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="c1">## Calculate the extra-terrestrial irradiance at a plane parallel to the earth surface(Spitters et al. (1986) Eq. 1), i.e., global incoming shortwave radiation [W m-2]</span>
+        <span class="n">Q_sc</span> <span class="o">=</span> <span class="mi">1370</span>  <span class="c1"># Solar constant [W m-2]</span>
+        <span class="n">Qo</span> <span class="o">=</span> <span class="n">Q_sc</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_altitude&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="mi">1</span> <span class="o">+</span> <span class="mf">0.033</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mi">360</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;doy&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">365</span><span class="p">)))</span>
+
+        <span class="c1">## The relationship between fraction diffuse and atmospheric transmission from Spitters et al. (1986) appendix.</span>
+        <span class="c1"># &quot;The radiation incident upon the earth surface is partly direct, with angle of incidence equal to the angle of the sun, and partly diffuse, with incidence under different angles. The diffuse flux arises from scattering (reflection and transmission) of the sun&#39;s rays in the atmosphere. The share of the diffuse flux will therefore be related to the transmission of the total radiation through the atmosphere.&quot; (Spitters et al., 1986).</span>
+
+        <span class="n">atm_trns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;sw_inc&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">Qo</span>  <span class="c1"># Atmospheric transmission</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="mf">0.847</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.61</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_altitude&#39;</span><span class="p">]))</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.04</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_altitude&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_altitude&#39;</span><span class="p">]))</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.47</span><span class="o">-</span><span class="n">R</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1.66</span>
+
+        <span class="n">frac_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_computeDiffuse</span><span class="p">(</span><span class="n">at</span><span class="p">,</span> <span class="n">rr</span><span class="p">,</span> <span class="n">kk</span><span class="p">)</span> <span class="k">for</span> <span class="n">at</span><span class="p">,</span> <span class="n">rr</span><span class="p">,</span> <span class="n">kk</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">atm_trns</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">K</span><span class="p">)])</span>
+
+        <span class="c1">## Partition into diffuse and beam radiation</span>
+
+        <span class="n">rad_diff</span> <span class="o">=</span> <span class="n">frac_diff</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;sw_inc&#39;</span><span class="p">]</span>  <span class="c1"># Diffuse radiation [W m-2]</span>
+        <span class="n">rad_beam</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;sw_inc&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">rad_diff</span>  <span class="c1"># Beam radiation [W m-2]</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1">#Partition diffuse and beam radiation into PAR following Goudriaan (1977)</span>
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># &quot;Up to now global radiation (300--3000 nm) has been considered, but only the 400--700nm wavebands are photosynthetically active (PAR); the fraction PAR amounts to 0.50 and is remarkably constant over different atmospheric conditions and solar elevation, provided that the angle of sun above horizon (solar altitude) is &gt; 10 degrees (Szeicz, 1974).&quot; (Spitters et al., 1986).</span>
+
+        <span class="n">I_od</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">rad_diff</span>
+        <span class="n">I_ob</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">rad_beam</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Calculating beam radiation transmitted through the canopy</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1">## Calculate the ratio of projected area to hemi-surface area for an ellipsoid</span>
+        <span class="c1">## C&amp;N (1998) Eq. 15.4 sensu Campbell (1986)</span>
+
+        <span class="n">kbe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;x_LAD&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;sza&#39;</span><span class="p">]))</span><span class="o">**</span><span class="mi">2</span>
+                      <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;x_LAD&#39;</span><span class="p">]</span> <span class="o">+</span>
+                           <span class="p">(</span><span class="mf">1.774</span> <span class="o">*</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;x_LAD&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.182</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">0.733</span><span class="p">))))</span>
+
+        <span class="c1"># Fraction of incident beam radiation penetrating the canopy</span>
+        <span class="c1"># C&amp;N (1998) Eq. 15.1 and leaf absorptivity as 0.8 (C&amp;N (1998) pg. 255) as per Camp</span>
+        <span class="n">tau_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span> <span class="o">*</span> <span class="n">kbe</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;lai&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Beam radiation transmitted through the canopy</span>
+        <span class="n">beam_trans</span> <span class="o">=</span> <span class="n">I_ob</span> <span class="o">*</span> <span class="n">tau_b</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Calculating diffuse radiation transmitted through the canopy</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1"># Diffuse transmission coefficient for the canopy (C&amp;N (1998) Eq. 15.5)</span>
+        <span class="n">tau_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_computeDt</span><span class="p">(</span><span class="n">ll</span><span class="p">,</span> <span class="n">x_LAD</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">ll</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;lai&#39;</span><span class="p">]])</span>
+
+        <span class="c1"># Extinction coefficient for black leaves in diffuse radiation</span>
+        <span class="n">kd</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">tau_d</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;lai&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Diffuse radiation transmitted through the canopy</span>
+        <span class="n">diff_trans</span> <span class="o">=</span> <span class="n">I_od</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)</span> <span class="o">*</span> <span class="n">kd</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;lai&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Get the total light transmitted through the canopy</span>
+
+        <span class="n">beam_trans</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">diff_trans</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">transmitted</span> <span class="o">=</span> <span class="n">beam_trans</span> <span class="o">+</span> <span class="n">diff_trans</span>
+        <span class="n">ppfd</span> <span class="o">=</span> <span class="n">transmitted</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">0.235</span>  <span class="c1">#Convert from W m-2 to umol m-2 s-1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;rad_diff_PAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rad_diff</span> <span class="o">*</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;rad_beam_PAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rad_beam</span> <span class="o">*</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;rad_diff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rad_diff</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;rad_beam&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rad_beam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;diff_trans_PAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff_trans</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;beam_trans_PAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">beam_trans</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;total_trans_PAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">transmitted</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;diff_trans&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff_trans</span> <span class="o">/</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;beam_trans&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">beam_trans</span> <span class="o">/</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;total_trans&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">transmitted</span> <span class="o">/</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;total_trans_PAR_ppfd&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ppfd</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_computeDiffuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atm_trns</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">K</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Spitters et al. (1986) Eqs. 20a-20d</span>
+<span class="sd">        </span>
+<span class="sd">            So = Extra-terrestrial irradiance on a plane parallel to the earth surface [J m-2 s-1]</span>
+<span class="sd">        </span>
+<span class="sd">            Sdf = Diffuse flux global radiation [J m-2 s-1]</span>
+<span class="sd">        </span>
+<span class="sd">            Sg = Global radiation (total irradiance at the earth surface) [J m-2 s-1]</span>
+<span class="sd">        </span>
+<span class="sd">            atm_trns = Sg/So</span>
+<span class="sd">        </span>
+<span class="sd">            fdiffuse = Sdf/Sg</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        atm_trns : float</span>
+<span class="sd">            Atmospheric transmission [-].  </span>
+<span class="sd">        R, K : float</span>
+<span class="sd">            Parameters in the regression of diffuse share on transmission [-].  </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fdiffuse : float</span>
+<span class="sd">            Fraction diffused [-].    </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fdiffuse</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="n">atm_trns</span> <span class="o">&gt;</span> <span class="mf">0.22</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">atm_trns</span> <span class="o">&lt;=</span> <span class="mf">0.35</span><span class="p">)):</span>
+            <span class="n">fdiffuse</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="mf">6.4</span> <span class="o">*</span> <span class="p">(</span><span class="n">atm_trns</span><span class="o">-</span><span class="mf">0.22</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">atm_trns</span><span class="o">-</span><span class="mf">0.22</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="p">((</span><span class="n">atm_trns</span> <span class="o">&gt;</span> <span class="mf">0.35</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">atm_trns</span> <span class="o">&lt;=</span> <span class="n">K</span><span class="p">)):</span>
+            <span class="n">fdiffuse</span> <span class="o">=</span> <span class="mf">1.47</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.66</span><span class="o">*</span><span class="n">atm_trns</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">atm_trns</span> <span class="o">&gt;</span> <span class="n">K</span><span class="p">):</span>
+            <span class="n">fdiffuse</span> <span class="o">=</span> <span class="n">R</span>
+        <span class="k">return</span> <span class="n">fdiffuse</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_computeIntegralFunction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">d_sza</span><span class="p">,</span> <span class="n">x_LAD</span><span class="p">,</span> <span class="n">lai</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Function to calculate the integral in Eq. 4 of Savoy et al. (2021)</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        angle : float</span>
+<span class="sd">            solar zenith angle [decimal degrees].</span>
+<span class="sd">        d_sza : float</span>
+<span class="sd">            differential of solar zenith angle [decimal degrees].       </span>
+<span class="sd">        x_LAD: float</span>
+<span class="sd">            Leaf angle distribution [-].   </span>
+<span class="sd">        lai: float</span>
+<span class="sd">            Leaf are index [-].  </span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x_LAD</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">angle</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">x_LAD</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.774</span> <span class="o">*</span> \
+        <span class="p">((</span><span class="n">x_LAD</span> <span class="o">+</span> <span class="mf">1.182</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">0.733</span><span class="p">)))))</span> <span class="o">*</span> <span class="n">lai</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="o">*</span> <span class="n">d_sza</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_computeDt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lai</span><span class="p">,</span> <span class="n">x_LAD</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Function to calculate the diffuse transmission coefficient</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lai: float</span>
+<span class="sd">            Leaf are index [-].  </span>
+<span class="sd">        x_LAD: float</span>
+<span class="sd">            Leaf angle distribution [-].  </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Create a sequence of angles to integrate over</span>
+        <span class="n">angle_seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">90</span><span class="p">))</span>
+
+        <span class="c1"># Numerical integration</span>
+        <span class="n">d_sza</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">angle_seq</span><span class="p">)</span>
+
+        <span class="c1">#Diffuse transmission coefficient for the canopy (C&amp;N (1998) Eq. 15.5)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_computeIntegralFunction</span><span class="p">(</span><span class="n">angle_seq</span><span class="p">,</span> <span class="n">d_sza</span><span class="p">,</span> <span class="n">x_LAD</span><span class="p">,</span> <span class="n">lai</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="StreamLight.computeRiparianStreamShading">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.StreamLight.computeRiparianStreamShading">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">computeRiparianStreamShading</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;SHADE2 model from Li et al. (2012) Modeled riparian stream shading:</span>
+<span class="sd">        Agreement with field measurements and sensitivity to riparian conditions</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lat : float</span>
+<span class="sd">            Latitude [decimal degrees].</span>
+<span class="sd">        lon : float</span>
+<span class="sd">            Longitude [decimal degrees].        </span>
+<span class="sd">        channel_azimuth : float</span>
+<span class="sd">            Channel azimuth [decimal degrees].</span>
+<span class="sd">        bottom_width: float</span>
+<span class="sd">            Channel width at the water-sediment interface [m].</span>
+<span class="sd">        bank_height: float</span>
+<span class="sd">            Bank height [m].</span>
+<span class="sd">        bank_slope: float</span>
+<span class="sd">            Bank slope [-].</span>
+<span class="sd">        water_depth: float</span>
+<span class="sd">            Water depth [m].        </span>
+<span class="sd">        tree_height: float</span>
+<span class="sd">            Tree height [m].</span>
+<span class="sd">        overhang: float</span>
+<span class="sd">            Effectively max canopy radius [m].</span>
+<span class="sd">        overhang_height: float</span>
+<span class="sd">            Height of the maximum canopy overhang (height at max canopy radius) [m].</span>
+<span class="sd">        doy : int</span>
+<span class="sd">            Day of the year.</span>
+<span class="sd">        hour: int</span>
+<span class="sd">            Hour of the day.</span>
+<span class="sd">        tz_offset: int</span>
+<span class="sd">            Time zone offset. </span>
+<span class="sd">        solar_dec_ini : float</span>
+<span class="sd">            Solar declination (initial estimate).</span>
+<span class="sd">        solar_azimuth_ini : float</span>
+<span class="sd">            Initial estimate of azimuth [decimal degrees].   </span>
+<span class="sd">        solar_altitude_ini : float</span>
+<span class="sd">            Initial estimate of solar altitude.         </span>
+<span class="sd">        sw_inc : float</span>
+<span class="sd">            Total incoming shortwave radiation [W m-2].  </span>
+<span class="sd">        lai: float</span>
+<span class="sd">            Leaf are index [-].               </span>
+<span class="sd">        x_LAD: float</span>
+<span class="sd">            Leaf angle distribution, default = 1 [-].</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fraction_shade_veg : float</span>
+<span class="sd">            Percent of the wetted width shaded by vegetation [%].   </span>
+<span class="sd">        fraction_shade_bank : float</span>
+<span class="sd">            Percent of the wetted width shaded by the bank [%].            </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Taking the difference between the sun and stream azimuth (sun-stream)</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1">## This must be handled correctly to determine if the shadow falls towards the river</span>
+        <span class="c1">## [sin(delta)&gt;0] or towards the bank</span>
+        <span class="c1">## Eastern shading</span>
+        <span class="n">delta_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_azimuth_shade2&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;channel_azimuth&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span><span class="p">)</span>
+        <span class="n">delta_prime</span><span class="p">[</span><span class="n">delta_prime</span> <span class="o">&lt;</span>
+                    <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta_prime</span><span class="p">[</span><span class="n">delta_prime</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">])</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>  <span class="c1">#PS 2019</span>
+        <span class="n">delta_east</span> <span class="o">=</span> <span class="n">delta_prime</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+        <span class="c1">## Western shading</span>
+        <span class="n">delta_west</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">delta_east</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">delta_west</span><span class="p">[</span><span class="n">delta_east</span> <span class="o">&gt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">]</span> <span class="o">=</span> <span class="n">delta_east</span><span class="p">[</span><span class="n">delta_east</span> <span class="o">&gt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Doing some housekeeping related to bankfull and wetted widths</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1">## Calculate bankfull width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bankfull_width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bottom_width&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_height&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_slope&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1">## Not sure what to do here, setting water_depth &gt; bank_height, = bank_height</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_depth&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_height&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_depth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_height&#39;</span><span class="p">]</span>
+
+        <span class="c1">## Calculate wetted width</span>
+        <span class="n">water_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bottom_width&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span>
+            <span class="s1">&#39;water_depth&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_slope&#39;</span><span class="p">]</span>
+                              <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_slope&#39;</span><span class="p">])</span>
+
+        <span class="c1">## Not sure what to do here, setting widths &gt; bankfull, = bankfull</span>
+        <span class="k">if</span> <span class="n">water_width</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bankfull_width&#39;</span><span class="p">]:</span>
+            <span class="n">water_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bankfull_width&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_width&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">water_width</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Calculate the length of shading for each bank</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1">## Calculating shade from the &quot;eastern&quot; bank</span>
+
+        <span class="n">east_bank_shade_length</span><span class="p">,</span> <span class="n">east_veg_shade_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeShade</span><span class="p">(</span><span class="n">delta_east</span><span class="p">)</span>
+
+        <span class="c1"># ## Calculating shade from the &quot;western&quot; bank</span>
+        <span class="n">west_bank_shade_length</span><span class="p">,</span> <span class="n">west_veg_shade_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeShade</span><span class="p">(</span><span class="n">delta_west</span><span class="p">)</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Calculate the total length of bank shading</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1">## Calculate the total length of bank shading</span>
+        <span class="n">total_bank_shade_length</span> <span class="o">=</span> <span class="n">east_bank_shade_length</span> <span class="o">+</span> <span class="n">west_bank_shade_length</span>
+
+        <span class="c1">#Generate a logical index where the length of bank shading is longer than wetted width</span>
+        <span class="n">reset_bank_max_index</span> <span class="o">=</span> <span class="n">total_bank_shade_length</span> <span class="o">&gt;</span> <span class="n">water_width</span>
+
+        <span class="c1">## If total bank shade length is longer than wetted width, set to wetted width</span>
+        <span class="n">total_bank_shade_length</span><span class="p">[</span><span class="n">reset_bank_max_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">water_width</span>  <span class="c1">#PS 2021</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Calculate the total length of vegetation shading</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1">## Calculate the total length of vegetation shading</span>
+        <span class="n">total_veg_shade_length</span> <span class="o">=</span> <span class="n">east_veg_shade_length</span> <span class="o">+</span> <span class="n">west_veg_shade_length</span>
+
+        <span class="c1">## Generate a logical index where the length of vegetation shading is longer than wetted width</span>
+        <span class="n">reset_veg_max_index</span> <span class="o">=</span> <span class="n">total_veg_shade_length</span> <span class="o">&gt;</span> <span class="n">water_width</span>
+
+        <span class="c1">## If total vegetation shade length is longer than wetted width, set to wetted width</span>
+        <span class="n">total_veg_shade_length</span><span class="p">[</span><span class="n">total_veg_shade_length</span> <span class="o">&gt;</span> <span class="n">water_width</span><span class="p">]</span> <span class="o">=</span> <span class="n">water_width</span>  <span class="c1">#PS 2021</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1">#Calculating the percentage of water that is shaded</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="n">fraction_shade_bank</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_bank_shade_length</span><span class="p">)</span> <span class="o">/</span> <span class="n">water_width</span>
+        <span class="n">fraction_shade_bank</span><span class="p">[</span><span class="n">fraction_shade_bank</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">fraction_shade_veg</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_veg_shade_length</span><span class="o">-</span><span class="n">total_bank_shade_length</span><span class="p">)</span> <span class="o">/</span> <span class="n">water_width</span>
+        <span class="n">fraction_shade_veg</span><span class="p">[</span><span class="n">fraction_shade_veg</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fraction_shade_veg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fraction_shade_bank</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_correctSolarAzimuth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Calculates solar geometry for use in the SHADE2 model</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lat : float</span>
+<span class="sd">            Latitude [decimal degrees].</span>
+<span class="sd">        lon : float</span>
+<span class="sd">            Longitude [decimal degrees].  </span>
+<span class="sd">        doy : int</span>
+<span class="sd">            Day of the year.</span>
+<span class="sd">        hour: int</span>
+<span class="sd">            Hour of the day.</span>
+<span class="sd">        tz_offset: float</span>
+<span class="sd">            Time zone offset.   </span>
+<span class="sd">        solar_dec_ini : float</span>
+<span class="sd">            Solar declination (initial estimate) [radians].</span>
+<span class="sd">        solar_azimuth_ini : float</span>
+<span class="sd">            Initial estimate of azimuth (initial estimate) [radians].  </span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        solar_azimuth : float</span>
+<span class="sd">            Corrected estimate of azimuth (initial estimate) [radians].</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># Initialize the adjusted azimuth</span>
+        <span class="n">solar_azimuth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_azimuth&#39;</span><span class="p">])</span>
+
+        <span class="c1"># When latitude is &gt; solar declination additional considerations are required to</span>
+        <span class="c1"># determine the correct azimuth</span>
+        <span class="c1"># Generate a logical index where latitude is greater than solar declination</span>
+        <span class="n">lat_greater</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_dec&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Add a small amount of time (1 minute) and recalculate azimuth. This is used to</span>
+        <span class="c1"># help determine the correct solar azimuth for locations where latitude is</span>
+        <span class="c1"># greater than the solar declination angle.</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">azimuth_tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeSolarAngles</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;doy&#39;</span><span class="p">],</span>
+                                                       <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">60</span><span class="o">/</span><span class="mi">24</span><span class="p">),</span>
+                                                       <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;tz_offset&#39;</span><span class="p">],</span>
+                                                       <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">],</span>
+                                                       <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Generate a logical index where azimuth_tmp is greater than the initial estimate</span>
+        <span class="n">az_tmp_greater</span> <span class="o">=</span> <span class="n">azimuth_tmp</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_azimuth&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Generate a logical index where both Lat &gt; solar_dec &amp; azimuth_tmp &gt; azimuth</span>
+        <span class="n">add_az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">lat_greater</span><span class="p">,</span> <span class="n">az_tmp_greater</span><span class="p">)</span>
+        <span class="n">solar_azimuth</span><span class="p">[</span><span class="n">add_az</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_azimuth&#39;</span><span class="p">][</span><span class="n">add_az</span><span class="p">]</span>
+
+        <span class="n">sub_az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">lat_greater</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">az_tmp_greater</span><span class="p">))</span>
+        <span class="n">solar_azimuth</span><span class="p">[</span><span class="n">sub_az</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_azimuth&#39;</span><span class="p">][</span><span class="n">sub_az</span><span class="p">]</span>
+
+        <span class="c1"># When Latitude is &lt; solar declination all angles are 90 - azimuth</span>
+        <span class="n">solar_azimuth</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">lat_greater</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_azimuth&#39;</span><span class="p">][</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">lat_greater</span><span class="p">)]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_azimuth_shade2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">solar_azimuth</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_computeShade</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Calculating the percent of the wetted width shaded by banks and vegetation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        delta : float</span>
+<span class="sd">            Difference between the sun and stream azimuth (sun-stream)[decimal degrees].</span>
+<span class="sd">        solar_altitude : float</span>
+<span class="sd">            Altitude.    </span>
+<span class="sd">        bottom_width: float</span>
+<span class="sd">            Channel width at the water-sediment interface [m].</span>
+<span class="sd">        bank_height: float</span>
+<span class="sd">            Bank height [m].</span>
+<span class="sd">        bank_slope: float</span>
+<span class="sd">            Bank slope [-].</span>
+<span class="sd">        water_depth: float</span>
+<span class="sd">            Water depth [m].        </span>
+<span class="sd">        tree_height: float</span>
+<span class="sd">            Tree height [m].</span>
+<span class="sd">        overhang: float</span>
+<span class="sd">            Effectively max canopy radius [m].</span>
+<span class="sd">        overhang_height: float</span>
+<span class="sd">            Height of the maximum canopy overhang (height at max canopy radius) [m].</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        stream_shade_bank : float</span>
+<span class="sd">            Wetted width shaded by the bank [m].   </span>
+<span class="sd">        stream_shade_veg_max : float</span>
+<span class="sd">            Wetted width shaded by the vegetation [m].       </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Calculating the shading produced by the bank</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1"># Calculating the length of the shadow perpendicular to the bank produced by the bank</span>
+        <span class="n">bank_shadow_length</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_altitude&#39;</span><span class="p">]))</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_height&#39;</span><span class="p">]</span>
+            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_depth&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+
+        <span class="c1"># Finding the amount of exposed bank in the horizontal direction</span>
+        <span class="n">exposed_bank</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_height&#39;</span><span class="p">]</span>
+            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_depth&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_slope&#39;</span><span class="p">]</span>
+
+        <span class="c1"># From PS: if(BH - WL &lt;= 0 | BS == 0) exposed_bank &lt;- 0 #P.S. , commented this out because</span>
+        <span class="c1"># I think I assumed that this couldn&#39;t be negative even if its confusing to be so</span>
+
+        <span class="c1"># Finding how much shade falls on the surface of the water</span>
+        <span class="n">stream_shade_bank</span> <span class="o">=</span> <span class="n">bank_shadow_length</span> <span class="o">-</span> <span class="n">exposed_bank</span>
+        <span class="n">stream_shade_bank</span><span class="p">[</span><span class="n">stream_shade_bank</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1">#Calculating the shading produced by the Vegetation</span>
+        <span class="c1">#-------------------------------------------------</span>
+
+        <span class="c1">#From top of the tree</span>
+        <span class="n">stream_shade_top</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_altitude&#39;</span><span class="p">]))</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;tree_height&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_height&#39;</span><span class="p">]</span>
+            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_depth&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">-</span> <span class="n">exposed_bank</span>
+        <span class="n">stream_shade_top</span><span class="p">[</span><span class="n">stream_shade_top</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1">#From the overhang</span>
+        <span class="n">stream_shade_overhang</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;solar_altitude&#39;</span><span class="p">]))</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;overhang_height&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;bank_height&#39;</span><span class="p">]</span>
+            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_depth&#39;</span><span class="p">]</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;overhang&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">exposed_bank</span>
+        <span class="n">stream_shade_overhang</span><span class="p">[</span><span class="n">stream_shade_overhang</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1">#Selecting the maximum and minimum</span>
+        <span class="n">stream_shade_top</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">stream_shade_top</span><span class="p">)))</span>
+        <span class="n">stream_shade_overhang</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">stream_shade_overhang</span><span class="p">)))</span>
+
+        <span class="c1"># Get max(shade from top, shade from overhang)</span>
+        <span class="c1"># Note from PS: &quot;here I take a departure from the r_shade matlab code. For some reason the code</span>
+        <span class="c1"># Takes the maximum - min shadow length, but in the paper text it clearly states max</span>
+        <span class="c1"># See pg 14 Li et al. (2012)&quot;</span>
+
+        <span class="n">veg_shade_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">stream_shade_top</span><span class="p">,</span> <span class="n">stream_shade_overhang</span><span class="p">))</span>
+        <span class="n">stream_shade_veg_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">veg_shade_bound</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># If the maximum shadow length is longer than the wetted width, set to width</span>
+        <span class="n">stream_shade_veg_max</span><span class="p">[</span>
+            <span class="n">stream_shade_veg_max</span> <span class="o">&gt;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_width&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_properties</span><span class="p">[</span><span class="s1">&#39;water_width&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">stream_shade_bank</span><span class="p">,</span> <span class="n">stream_shade_veg_max</span>
+
+<div class="viewcode-block" id="StreamLight.computeEnergyStream">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.StreamLight.computeEnergyStream">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">computeEnergyStream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1"># Calculating the weighted mean of light reaching the stream surface</span>
+        <span class="c1">#-------------------------------------------------</span>
+        <span class="c1">#Calculating weighted mean of irradiance at the stream surface</span>
+
+        <span class="c1"># From Savoy&#39;s code</span>
+        <span class="c1">#par_surface_original = (self.energy_response[&#39;total_trans_PAR_ppfd&#39;] * self.shading_response[&#39;fraction_shade_veg&#39;]) + (self.energy_drivers[&#39;sw_inc&#39;]* 2.114 * (1 - (self.shading_response[&#39;fraction_shade_veg&#39;] + self.shading_response[&#39;fraction_shade_bank&#39;])))</span>
+
+        <span class="c1"># Corrected estimates</span>
+
+        <span class="n">energy_diff_surface_PAR</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;diff_trans_PAR&#39;</span><span class="p">]</span>
+                                   <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;rad_diff_PAR&#39;</span><span class="p">]</span> <span class="o">*</span>
+                                       <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">]</span>
+                                             <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">])))</span>
+
+        <span class="n">energy_beam_surface_PAR</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;beam_trans_PAR&#39;</span><span class="p">]</span>
+                                   <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;rad_beam_PAR&#39;</span><span class="p">]</span> <span class="o">*</span>
+                                       <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">]</span>
+                                             <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">])))</span>
+
+        <span class="n">energy_total_surface_PAR</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;total_trans_PAR&#39;</span><span class="p">]</span>
+                                    <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;sw_inc&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span>
+                                        <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">]</span>
+                                              <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">])))</span>
+
+        <span class="n">energy_diff_surface</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;diff_trans&#39;</span><span class="p">]</span>
+                               <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;rad_diff&#39;</span><span class="p">]</span> <span class="o">*</span>
+                                   <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">]</span>
+                                         <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">])))</span>
+
+        <span class="n">energy_beam_surface</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;beam_trans&#39;</span><span class="p">]</span>
+                               <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;rad_beam&#39;</span><span class="p">]</span> <span class="o">*</span>
+                                   <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">]</span>
+                                         <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">])))</span>
+
+        <span class="n">energy_total_surface</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;total_trans&#39;</span><span class="p">]</span>
+                                <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;sw_inc&#39;</span><span class="p">]</span> <span class="o">*</span>
+                                    <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">]</span>
+                                          <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">])))</span>
+
+        <span class="c1">#energy_total_surface_PAR_ppfd = energy_total_surface_PAR * (1/0.235)</span>
+        <span class="n">energy_total_surface_PAR_ppfd</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;total_trans_PAR_ppfd&#39;</span><span class="p">]</span>
+                                         <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span>
+                                             <span class="bp">self</span><span class="o">.</span><span class="n">energy_drivers</span><span class="p">[</span><span class="s1">&#39;sw_inc&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">2.114</span> <span class="o">*</span>
+                                             <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_veg&#39;</span><span class="p">]</span>
+                                                   <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">shading_response</span><span class="p">[</span><span class="s1">&#39;fraction_shade_bank&#39;</span><span class="p">])))</span>
+
+        <span class="c1">## Generate a logical index of night and day. Night = SZA &gt; 90</span>
+        <span class="n">is_night</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solar_angles</span><span class="p">[</span><span class="s1">&#39;sza&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="c1">#par_surface_original[is_night] = 0</span>
+        <span class="n">energy_diff_surface_PAR</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">energy_beam_surface_PAR</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">energy_total_surface_PAR</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">energy_diff_surface</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">energy_beam_surface</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">energy_total_surface</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">energy_total_surface_PAR_ppfd</span><span class="p">[</span><span class="n">is_night</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1">#self.energy_response[&#39;par_surface_original&#39;] = par_surface_original</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;energy_diff_surface_PAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_diff_surface_PAR</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;energy_beam_surface_PAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_beam_surface_PAR</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;energy_total_surface_PAR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_total_surface_PAR</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;energy_diff_surface&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_diff_surface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;energy_beam_surface&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_beam_surface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;energy_total_surface&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_total_surface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_response</span><span class="p">[</span><span class="s1">&#39;energy_total_surface_PAR_ppfd&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">energy_total_surface_PAR_ppfd</span></div>
+
+
+<div class="viewcode-block" id="StreamLight.run">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.StreamLight.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computeSolarAngles</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computeRadiativeTransferEstimates</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computeRiparianStreamShading</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">computeEnergyStream</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;StreamLight Object&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="computeStreamLight">
+<a class="viewcode-back" href="../../../api/properties.html#watershed_workflow.properties.stream_light.computeStreamLight">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">computeStreamLight</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span>
+                       <span class="n">lon</span><span class="p">,</span>
+                       <span class="n">channel_azimuth</span><span class="p">,</span>
+                       <span class="n">bottom_width</span><span class="p">,</span>
+                       <span class="n">bank_height</span><span class="p">,</span>
+                       <span class="n">bank_slope</span><span class="p">,</span>
+                       <span class="n">water_depth</span><span class="p">,</span>
+                       <span class="n">tree_height</span><span class="p">,</span>
+                       <span class="n">overhang</span><span class="p">,</span>
+                       <span class="n">overhang_height</span><span class="p">,</span>
+                       <span class="n">doy</span><span class="p">,</span>
+                       <span class="n">hour</span><span class="p">,</span>
+                       <span class="n">tz_offset</span><span class="p">,</span>
+                       <span class="n">sw_inc</span><span class="p">,</span>
+                       <span class="n">lai</span><span class="p">,</span>
+                       <span class="n">x_LAD</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute photosynthetically active radiation (PAR) reaching a stream surface.</span>
+
+<span class="sd">    This is a functional wrapper around :class:`StreamLight` that</span>
+<span class="sd">    configures, runs, and extracts results from the model in one call.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lat : float</span>
+<span class="sd">        Latitude [decimal degrees].</span>
+<span class="sd">    lon : float</span>
+<span class="sd">        Longitude [decimal degrees].</span>
+<span class="sd">    channel_azimuth : float</span>
+<span class="sd">        Channel azimuth [decimal degrees].</span>
+<span class="sd">    bottom_width : float</span>
+<span class="sd">        Channel width at the water-sediment interface [m].</span>
+<span class="sd">    bank_height : float</span>
+<span class="sd">        Bank height [m].</span>
+<span class="sd">    bank_slope : float</span>
+<span class="sd">        Bank slope [-].</span>
+<span class="sd">    water_depth : float</span>
+<span class="sd">        Water depth [m].</span>
+<span class="sd">    tree_height : float</span>
+<span class="sd">        Tree height [m].</span>
+<span class="sd">    overhang : float</span>
+<span class="sd">        Effectively max canopy radius [m].</span>
+<span class="sd">    overhang_height : float</span>
+<span class="sd">        Height of the maximum canopy overhang (height at max canopy radius) [m].</span>
+<span class="sd">    doy : int</span>
+<span class="sd">        Day of the year.</span>
+<span class="sd">    hour : int</span>
+<span class="sd">        Hour of the day.</span>
+<span class="sd">    tz_offset : int</span>
+<span class="sd">        Time zone offset.</span>
+<span class="sd">    sw_inc : float</span>
+<span class="sd">        Total incoming shortwave radiation [W m-2].</span>
+<span class="sd">    lai : float</span>
+<span class="sd">        Leaf area index [-].</span>
+<span class="sd">    x_LAD : float, optional</span>
+<span class="sd">        Leaf angle distribution, default = 1 [-].</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Energy and shading response variables, keyed by name (e.g.</span>
+<span class="sd">        ``&#39;energy_total_surface_PAR_ppfd&#39;``, ``&#39;fraction_shade_veg&#39;``,</span>
+<span class="sd">        ``&#39;fraction_shade_bank&#39;``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sl</span> <span class="o">=</span> <span class="n">StreamLight</span><span class="p">()</span>
+    <span class="n">sl</span><span class="o">.</span><span class="n">setChannelProperties</span><span class="p">(</span><span class="n">lat</span><span class="o">=</span><span class="n">lat</span><span class="p">,</span>
+                            <span class="n">lon</span><span class="o">=</span><span class="n">lon</span><span class="p">,</span>
+                            <span class="n">channel_azimuth</span><span class="o">=</span><span class="n">channel_azimuth</span><span class="p">,</span>
+                            <span class="n">bottom_width</span><span class="o">=</span><span class="n">bottom_width</span><span class="p">,</span>
+                            <span class="n">bank_height</span><span class="o">=</span><span class="n">bank_height</span><span class="p">,</span>
+                            <span class="n">bank_slope</span><span class="o">=</span><span class="n">bank_slope</span><span class="p">,</span>
+                            <span class="n">water_depth</span><span class="o">=</span><span class="n">water_depth</span><span class="p">,</span>
+                            <span class="n">tree_height</span><span class="o">=</span><span class="n">tree_height</span><span class="p">,</span>
+                            <span class="n">overhang</span><span class="o">=</span><span class="n">overhang</span><span class="p">,</span>
+                            <span class="n">overhang_height</span><span class="o">=</span><span class="n">overhang_height</span><span class="p">,</span>
+                            <span class="n">x_LAD</span><span class="o">=</span><span class="n">x_LAD</span><span class="p">)</span>
+    <span class="n">sl</span><span class="o">.</span><span class="n">setEnergyDrivers</span><span class="p">(</span><span class="n">doy</span><span class="o">=</span><span class="n">doy</span><span class="p">,</span> <span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">tz_offset</span><span class="o">=</span><span class="n">tz_offset</span><span class="p">,</span> <span class="n">sw_inc</span><span class="o">=</span><span class="n">sw_inc</span><span class="p">,</span> <span class="n">lai</span><span class="o">=</span><span class="n">lai</span><span class="p">)</span>
+    <span class="n">sl</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span> <span class="o">**</span><span class="n">sl</span><span class="o">.</span><span class="n">energy_response</span><span class="p">,</span> <span class="o">**</span><span class="n">sl</span><span class="o">.</span><span class="n">shading_response</span> <span class="p">}</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2019-202X, UT Battelle, Ethan Coon.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

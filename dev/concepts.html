@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Workflow library Concepts &#8212; Watershed Workflow</title>
+    <title>Key Concepts &#8212; Watershed Workflow</title>
   
   
   
@@ -27,33 +27,34 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/custom_theme.css?v=a03f4c85" />
   
   <!-- So that users can add custom icons -->
-  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="_static/jquery.js?v=5d32c60e"></script>
     <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
     <script src="_static/documentation_options.js?v=3ce10a4d"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'concepts';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="_static/main.js?v=b10558fa"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -63,20 +64,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -102,7 +109,7 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
   <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
@@ -172,23 +179,6 @@
   </a>
 </li>
 
-            <li class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button"
-                data-bs-toggle="dropdown" aria-expanded="false"
-                aria-controls="pst-nav-more-links">
-                    More
-                </button>
-                <ul id="pst-nav-more-links" class="dropdown-menu">
-                    
-<li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="gallery.html">
-    Gallery
-  </a>
-</li>
-
-                </ul>
-            </li>
-            
   </ul>
 </nav></div>
       
@@ -210,11 +200,18 @@
       
         <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
       
     </div>
     
@@ -292,13 +289,6 @@
   </a>
 </li>
 
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="gallery.html">
-    Gallery
-  </a>
-</li>
-
   </ul>
 </nav></div>
           
@@ -311,11 +301,18 @@
         
           <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
         
       </div>
     
@@ -344,6 +341,7 @@ Version dev</div>
   </div>
 </div></div>
         <div class="sidebar-primary-item">
+
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
@@ -355,10 +353,19 @@ Version dev</div>
     class="page-toc tocsection onthispage">
     <i class="fa-solid fa-list"></i> On this page
   </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#package-configuration">Package configuration</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coordinate-reference-systems-crs">Coordinate Reference Systems (CRS)</a></li>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coordinate-reference-systems">Coordinate Reference Systems</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#source-managers">Source Managers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydrology-objects">Hydrology Objects</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#meshes-and-discretization">Meshes and Discretization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh-structure">Mesh Structure</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hydrologic-conditioning">Hydrologic Conditioning</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#land-cover">Land Cover</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#subsurface-layering">Subsurface Layering</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-utilities">Data Utilities</a></li>
 </ul>
   </nav></div>
     </div>
@@ -398,7 +405,7 @@ Version dev</div>
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Workflow library Concepts</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Key Concepts</span></li>
   </ul>
 </nav>
 </div>
@@ -415,46 +422,189 @@ Version dev</div>
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="workflow-library-concepts">
-<h1>Workflow library Concepts<a class="headerlink" href="#workflow-library-concepts" title="Link to this heading">#</a></h1>
-<section id="package-configuration">
-<h2>Package configuration<a class="headerlink" href="#package-configuration" title="Link to this heading">#</a></h2>
-<p>Watershed Workflow is configured through a limited set of parameters
-specified in a file <cite>“.watershed_workflowrc</cite>”, located in the current
-working directory or the user’s home directory.  An example including
-all defaults is shown in the top level directory as
-<cite>“watershed_workflowrc</cite>”.</p>
+  <section id="key-concepts">
+<h1>Key Concepts<a class="headerlink" href="#key-concepts" title="Link to this heading">#</a></h1>
+<section id="coordinate-reference-systems">
+<span id="concepts-crs"></span><h2>Coordinate Reference Systems<a class="headerlink" href="#coordinate-reference-systems" title="Link to this heading">#</a></h2>
+<p>A Coordinate Reference System (CRS) defines how geographic positions
+are mapped to 2D coordinates.  Hydrologic workflows typically use
+equal-area projections (e.g. Albers, EPSG:5070) so that polygon areas
+and water balances are computed correctly.  Datasets come in many
+different CRSs; Watershed Workflow converts all data into a single
+working CRS that the user chooses at the start of a workflow —
+typically the CRS of the meteorological data to be used for forcing,
+or one of the module-level constants such as
+<code class="docutils literal notranslate"><span class="pre">watershed_workflow.crs.default_crs</span></code>.</p>
+<p>Users should create and convert CRS objects using the <code class="docutils literal notranslate"><span class="pre">from_*</span></code> and <code class="docutils literal notranslate"><span class="pre">to_*</span></code>
+functions in <a class="reference internal" href="api/root.html#module-watershed_workflow.crs" title="watershed_workflow.crs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">watershed_workflow.crs</span></code></a> rather than constructing CRS objects
+directly.  This keeps user code independent of the underlying representation,
+which is currently <code class="docutils literal notranslate"><span class="pre">pyproj.CRS</span></code>.</p>
+<p>See <a class="reference internal" href="api/root.html#crs"><span class="std std-ref">Coordinate Reference Systems</span></a> for the full API.</p>
 </section>
-<section id="coordinate-reference-systems-crs">
-<h2>Coordinate Reference Systems (CRS)<a class="headerlink" href="#coordinate-reference-systems-crs" title="Link to this heading">#</a></h2>
-<p>Coordinate Reference Systems are used to locate geographic positions.
-These define a specific map projection, transforming 3D positions on
-the Earth’s surface to 2D coordinates.  Different projections can be
-used to optimize for different things, but typically hydrologic
-simulations work on equal area projections.  These projects maintain,
-at least regionally, proportional areas for polygons, which is
-critical for ensuring accurate water balances.</p>
-<p>CRSs are specified by a dataset, and differ across datasets;
-standardizing and managing these across the workflow is a necessary
-technical detail.  That said, rarely does the user care what
-coordinate system is being used, as long as it is appropriate for the
-watershed in question.  Watershed Workflow aims to make using datasets
-in different CRSs as streamlined as possible.  Typically, a workflow
-will pick a CRS based upon either a default for the region or by
-simply using the CRS of the shapefile that specifies the watershed
-boundary.  This CRS is the passed into each function that acquires
-more data, and that data’s coordinates are changed to the CRS
-requested.</p>
-<p>Often it can be a good idea to work with a CRS that is used by a
-raster dataset, for instance meterological data.  Interpolating from a
-raster to a set of points (e.g. mesh cell centroids) is done by first
-transforming those points into the CRS of the raster and then
-interpolating.  While reprojecting rasters is possible (and supported
-by rasterio), it involves some error and is tricky.  Working in a
-raster’s native CRS allows interpolation without reprojection, which
-is especially useful for rasters that must be repeatedly interpolated
-(i.e. meterological data or other time-dependent datasets).</p>
-<p>See <span class="xref std std-ref">CRS</span> for detailed documentation of working with CRSs.</p>
+<section id="source-managers">
+<span id="concepts-sources"></span><h2>Source Managers<a class="headerlink" href="#source-managers" title="Link to this heading">#</a></h2>
+<p>Source managers in <a class="reference internal" href="api/sources.html#module-watershed_workflow.sources" title="watershed_workflow.sources"><code class="xref py py-mod docutils literal notranslate"><span class="pre">watershed_workflow.sources</span></code></a> handle the full lifecycle
+of geospatial and temporal datasets: discovering, downloading, caching, and
+loading them.  Given a spatial region (and optionally a time range), a manager
+fetches data from a REST API or web service, writes it to a local cache
+directory, and returns it as a standard Python object (GeoDataFrame, xarray
+Dataset, etc.).  Subsequent requests for the same region are served from the
+cache without network access.</p>
+<p>This cache is stored locally in a “data library” that is shared across
+all workflows on a given machine.  In this way nested watersheds can
+share the same underlying data downloads, reducing disk space and time
+spent waiting for data.</p>
+<p>See <a class="reference internal" href="api/utils.html#package-configuration"><span class="std std-ref">Package Configuration</span></a> for how to set your data library, and
+<a class="reference internal" href="api/sources.html#data-sources"><span class="std std-ref">Data Sources</span></a> for the full list of sources.</p>
+</section>
+<section id="hydrology-objects">
+<span id="concepts-hydro"></span><h2>Hydrology Objects<a class="headerlink" href="#hydrology-objects" title="Link to this heading">#</a></h2>
+<p>Two data structures represent the geographic skeleton of a watershed:</p>
+<p><a class="reference internal" href="api/hydro.html#watershed_workflow.hydro.River" title="watershed_workflow.hydro.river.River"><code class="xref py py-class docutils literal notranslate"><span class="pre">River</span></code></a> is a tree whose
+nodes are individual stream reaches.  Children flow into their parent, so the
+root is the outlet.  Each node stores reach geometry as a Shapely LineString
+along with any attributes from the source dataset (e.g. NHDPlus VAAs).  The
+tree structure supports traversal, pruning by stream order, simplification, and
+snapping to watershed boundaries.  Note that the tree structure means Watershed
+Workflow is restricted to <em>dendritic</em> (non-braided) river networks.</p>
+<p><a class="reference internal" href="api/hydro.html#watershed_workflow.hydro.Watershed" title="watershed_workflow.hydro.watershed.Watershed"><code class="xref py py-class docutils literal notranslate"><span class="pre">Watershed</span></code></a> is a
+collection of polygons that partition the simulation domain into sub-catchments
+— for example, HUC-12 units within a HUC-8, or differential contributing areas
+between stream gauges.  The watershed boundary is represented as a set of
+shared linestrings so that topological relationships (shared edges, junction
+points) are maintained and can be manipulated cleanly.</p>
+<p>These two objects are constructed by the source managers and then prepared
+for meshing through a <strong>simplification and snapping</strong> step.  Raw hydrography
+datasets contain more vertices than a mesh needs and may have small
+topological gaps between river endpoints and watershed boundaries.
+<a class="reference internal" href="api/root.html#watershed_workflow.simplify" title="watershed_workflow.simplify"><code class="xref py py-func docutils literal notranslate"><span class="pre">watershed_workflow.simplify()</span></code></a> resamples reach and boundary linestrings
+to a target segment length, removes near-duplicate points, smooths sharp
+angles, and then snaps river endpoints onto watershed boundaries and inserts
+junction points so that the river network and watershed boundary are
+topologically consistent — a requirement for well-formed mesh generation.
+Simplification tolerances directly control mesh density, so choosing them
+carefully is important.</p>
+<p>See <a class="reference internal" href="api/hydro.html#hydrology"><span class="std std-ref">Hydrology</span></a> for the full API.</p>
+</section>
+<section id="meshes-and-discretization">
+<span id="concepts-mesh"></span><h2>Meshes and Discretization<a class="headerlink" href="#meshes-and-discretization" title="Link to this heading">#</a></h2>
+<p>One of the key roles of Watershed Workflow is to create a mesh that is grounded
+in site-specific hydrologic data — elevation, subsurface structure, and surface
+land cover.  Each of the concepts below represents an important decision on the
+way to creating a mesh suitable for hydrologic modelling.</p>
+<section id="mesh-structure">
+<h3>Mesh Structure<a class="headerlink" href="#mesh-structure" title="Link to this heading">#</a></h3>
+<p>A <strong>mesh</strong> is the spatial discretization of the simulation domain.
+<a class="reference internal" href="api/mesh.html#watershed_workflow.mesh.Mesh2D" title="watershed_workflow.mesh.mesh.Mesh2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh2D</span></code></a> stores vertices, polygonal
+cells, and their connectivity.  <a class="reference internal" href="api/mesh.html#watershed_workflow.mesh.Mesh3D" title="watershed_workflow.mesh.mesh.Mesh3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh3D</span></code></a>
+extends a 2D mesh vertically into a column structure suitable for subsurface
+models.</p>
+<p>Watershed Workflow generates <em>stream-aligned</em> meshes <a class="reference internal" href="#rathore2024" id="id1"><span>[Rathore2024]</span></a>: long
+quadrilateral elements track the bank-full river corridor, higher-order
+polygonal elements (pentagons or more) handle stream junctions, and
+unstructured triangles fill the remainder of the watershed.  This design
+ensures that the river channel is resolved by mesh edges rather than
+interpolated across cells, which is critical for accurate surface–subsurface
+exchange.</p>
+<p>What makes a good mesh for hydrology:</p>
+<ul class="simple">
+<li><p><strong>Stream-aligned</strong> — quad elements follow the river corridor; the channel
+boundary is a mesh edge, not a cut through a cell.</p></li>
+<li><p><strong>Graded</strong> — cells are fine near rivers (where dynamics are fast) and coarser
+away from them.</p></li>
+<li><p><strong>Well-conditioned</strong> — triangles should be as close to equilateral as
+possible; very obtuse or very acute triangles degrade numerical accuracy and
+solver performance.</p></li>
+<li><p><strong>Pit-free</strong> — the surface elevation field must drain correctly; local minima
+(pits) that would trap water unphysically are filled or conditioned before
+use.</p></li>
+</ul>
+<p>Meshes carry <strong>data</strong> as cell- or node-centered fields (e.g. elevation, soil
+properties, land cover index).  <strong>Regions</strong> are named subsets of cells or
+faces used to apply boundary conditions, assign material properties, or
+instrument the model to form simulated observations for evaluation against
+field measurements.  <a class="reference internal" href="api/mesh.html#watershed_workflow.mesh.LabeledSet" title="watershed_workflow.mesh.mesh.LabeledSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">LabeledSet</span></code></a> and
+<a class="reference internal" href="api/mesh.html#watershed_workflow.mesh.SideSet" title="watershed_workflow.mesh.mesh.SideSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">SideSet</span></code></a> are the discrete mesh
+representation of a region — a labeled set of cell/node indices or face
+indices respectively.</p>
+<div role="list" class="citation-list">
+<div class="citation" id="rathore2024" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">Rathore2024</a><span class="fn-bracket">]</span></span>
+<p>Rathore, S., Coon, E., et al. “Stream-aligned meshes for
+integrated hydrologic simulation.” <em>Computers &amp; Geosciences</em> (2024).</p>
+</div>
+</div>
+</section>
+<section id="hydrologic-conditioning">
+<h3>Hydrologic Conditioning<a class="headerlink" href="#hydrologic-conditioning" title="Link to this heading">#</a></h3>
+<p>A mesh elevation field derived directly from a DEM almost always contains
+<strong>pits</strong> — cells lower than all their neighbours — that would trap water and
+prevent drainage.  Some pits are real (lakes, reservoirs) and should be
+preserved; others are numerical artifacts that must be removed.
+<code class="xref py py-func docutils literal notranslate"><span class="pre">conditionMesh()</span></code> detects pits and
+raises artifact cells just enough to ensure downslope connectivity, while
+leaving intentional depressions intact.</p>
+<p>The river corridor requires additional conditioning beyond pit-filling.  DEM
+resolution, positional errors in the NHDPlus flowlines, and features such as
+culverts or low-head dams can create artificial obstructions in the river
+channel.  River mesh conditioning adjusts the elevation profile of the
+stream-aligned quad elements to be monotonically decreasing from headwater to
+outlet, ensuring that the modelled channel drains correctly regardless of DEM
+artifacts.  Conditioning the river corridor and the surrounding triangulated
+domain are treated as separate steps because the quad elements in the corridor
+must never be filled as pits.</p>
+</section>
+<section id="land-cover">
+<h3>Land Cover<a class="headerlink" href="#land-cover" title="Link to this heading">#</a></h3>
+<p>Land cover — the vegetation, impervious surfaces, and open water that cover the
+land surface — controls many of the key fluxes in a hydrologic model.
+Evapotranspiration rates, interception, root depth, and leaf area index (LAI)
+all vary by vegetation type.  Surface roughness (Manning’s coefficient) affects
+overland flow velocity and partitioning between fast and slow runoff pathways.
+Impervious fraction determines how much precipitation infiltrates versus runs
+off directly.</p>
+<p>In Watershed Workflow, land cover is typically sourced from NLCD (30 m,
+categorical) and used to define mesh regions corresponding to vegetation or
+land-use classes.  Time-varying LAI, often derived from MODIS, can be
+crosswalked from MODIS land cover classes to NLCD classes and attached to the
+mesh as a time series forcing.  See <a class="reference internal" href="api/properties.html#module-watershed_workflow.properties.land_cover" title="watershed_workflow.properties.land_cover"><code class="xref py py-mod docutils literal notranslate"><span class="pre">watershed_workflow.properties.land_cover</span></code></a>
+and <a class="reference internal" href="api/sources.html#module-watershed_workflow.sources" title="watershed_workflow.sources"><code class="xref py py-mod docutils literal notranslate"><span class="pre">watershed_workflow.sources</span></code></a> for the relevant managers and
+crosswalking utilities.</p>
+</section>
+<section id="subsurface-layering">
+<h3>Subsurface Layering<a class="headerlink" href="#subsurface-layering" title="Link to this heading">#</a></h3>
+<p>Integrated hydrologic models resolve both the land surface and the subsurface.
+<a class="reference internal" href="api/mesh.html#watershed_workflow.mesh.Mesh3D" title="watershed_workflow.mesh.mesh.Mesh3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh3D</span></code></a> is constructed by extruding a
+2D surface mesh vertically into a stack of layers.  Layer thicknesses are
+typically prescribed as a geometric progression — thin near the surface where
+gradients are steep, coarser at depth — and are optimised to span from a
+minimum cell thickness (e.g. 5 cm) to several metres over a target total
+depth.</p>
+<p>Material properties in the subsurface vary with depth.  A common layering
+strategy assigns soil properties (from NRCS or SoilGrids) in the shallow
+column, geologic properties (from GLHYMPS) below, with depth-to-bedrock data
+(Pelletier DTB) determining the transition.  Each vertical layer is assigned a
+material identifier that the simulator uses to look up constitutive relations.
+Regions defined on the 2D surface mesh are extruded alongside the geometry, so
+that boundary conditions and observations defined on the surface carry through
+to the 3D mesh.</p>
+<p>See <a class="reference internal" href="api/mesh.html#mesh"><span class="std std-ref">Mesh</span></a> for the full API.</p>
+</section>
+</section>
+<section id="data-utilities">
+<span id="concepts-data"></span><h2>Data Utilities<a class="headerlink" href="#data-utilities" title="Link to this heading">#</a></h2>
+<p><a class="reference internal" href="api/utils.html#module-watershed_workflow.utils" title="watershed_workflow.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">watershed_workflow.utils</span></code></a> provides functions for working with
+geospatial and temporal data after it has been downloaded.  Common operations
+include interpolating raster values at a set of points (e.g. mesh cell
+centroids or river coordinates), rasterizing vector datasets onto a grid,
+aggregating gridded data over polygons, and resampling time series.  These
+functions operate on standard types — NumPy arrays, Pandas DataFrames, xarray
+Datasets, and GeoPandas GeoDataFrames — and handle coordinate system
+conversions internally.</p>
+<p>Coordinate transformations between CRSs are also provided by
+<a class="reference internal" href="api/utils.html#module-watershed_workflow.utils" title="watershed_workflow.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">watershed_workflow.utils</span></code></a>, which wraps <code class="docutils literal notranslate"><span class="pre">pyproj</span></code> for points,
+arrays, and Shapely geometries.</p>
+<p>See <a class="reference internal" href="api/utils.html#utilities"><span class="std std-ref">Utilities</span></a> for the full API.</p>
 </section>
 </section>
 
@@ -504,8 +654,8 @@ is especially useful for rasters that must be repeatedly interpolated
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -525,7 +675,7 @@ is especially useful for rasters that must be repeatedly interpolated
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>
@@ -539,7 +689,7 @@ is especially useful for rasters that must be repeatedly interpolated
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
 </p></div>
       
     </div>

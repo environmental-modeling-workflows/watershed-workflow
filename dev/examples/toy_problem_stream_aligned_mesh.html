@@ -27,33 +27,34 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css?v=6644e6bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/custom_theme.css?v=a03f4c85" />
   
   <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="../_static/jquery.js?v=5d32c60e"></script>
     <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
     <script src="../_static/documentation_options.js?v=3ce10a4d"></script>
-    <script src="../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/toy_problem_stream_aligned_mesh';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/environmental-modeling-workflows/watershed-workflow/master/docs/source/_static/versions.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v2.0';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
             false;
         </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="../_static/main.js?v=b10558fa"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -63,20 +64,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="dev" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -102,7 +109,7 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
   <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
@@ -172,23 +179,6 @@
   </a>
 </li>
 
-            <li class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button"
-                data-bs-toggle="dropdown" aria-expanded="false"
-                aria-controls="pst-nav-more-links">
-                    More
-                </button>
-                <ul id="pst-nav-more-links" class="dropdown-menu">
-                    
-<li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="../gallery.html">
-    Gallery
-  </a>
-</li>
-
-                </ul>
-            </li>
-            
   </ul>
 </nav></div>
       
@@ -210,11 +200,18 @@
       
         <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
       
     </div>
     
@@ -292,13 +289,6 @@
   </a>
 </li>
 
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../gallery.html">
-    Gallery
-  </a>
-</li>
-
   </ul>
 </nav></div>
           
@@ -311,11 +301,18 @@
         
           <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
         
       </div>
     
@@ -344,6 +341,7 @@ Version dev</div>
   </div>
 </div></div>
         <div class="sidebar-primary-item">
+
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
@@ -364,8 +362,8 @@ Version dev</div>
     class="page-toc tocsection onthispage">
     <i class="fa-solid fa-list"></i> On this page
   </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surface-meshing">Surface Meshing</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh-extrusion">Mesh Extrusion</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh-io">Mesh IO</a></li>
@@ -433,8 +431,8 @@ Version dev</div>
 <p>This workflow provides a testbed for testing features of mixed-element mesh wotkflow. The objects of river tree and huc boundary are a created to mimic what we get from NHDPlus. This example tests the case of two rivers, which is rare but still needs to be considered to make the workflow general</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.ui</span>
-<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.io</span>
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">setupLogging</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -460,8 +458,7 @@ Version dev</div>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow</span> 
 <span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.utils</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.mesh</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.resampling</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.condition</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">watershed_workflow.hydro</span>
 
 <span class="n">crs</span> <span class="o">=</span> <span class="kc">None</span>
 </pre></div>
@@ -499,24 +496,24 @@ Version dev</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># creating watershed_workflow.split_hucs.SplitHUCs object for demo watershed</span>
-<span class="n">watershed</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">split_hucs</span><span class="o">.</span><span class="n">SplitHUCs</span><span class="p">(</span><span class="n">my_hucs</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># creating watershed_workflow.Watershed object for demo watershed</span>
+<span class="n">watershed</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">Watershed</span><span class="p">(</span><span class="n">my_hucs</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:33,542 - root - INFO: Removing holes on 1 polygons
-2025-08-30 18:11:33,543 - root - INFO:   -- removed interior
-2025-08-30 18:11:33,543 - root - INFO:   -- union
-2025-08-30 18:11:33,543 - root - INFO: Parsing 1 components for holes
-2025-08-30 18:11:33,543 - root - INFO:   -- complete
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2026-07-24 21:48:30,826 - root - INFO: Removing holes on 1 polygons
+2026-07-24 21:48:30,827 - root - INFO:   -- removed interior
+2026-07-24 21:48:30,827 - root - INFO:   -- union
+2026-07-24 21:48:30,827 - root - INFO: Parsing 1 components for holes
+2026-07-24 21:48:30,827 - root - INFO:   -- complete
 </pre></div>
 </div>
 </div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">river_tree</span><span class="o">.</span><span class="n">createRivers</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;geometry&#39;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rivers</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">hydro</span><span class="o">.</span><span class="n">createRivers</span><span class="p">(</span><span class="n">reaches</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;geometry&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -538,115 +535,112 @@ Version dev</div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:33,555 - root - INFO: 
-2025-08-30 18:11:33,555 - root - INFO: Simplifying
-2025-08-30 18:11:33,556 - root - INFO: ------------------------------
-2025-08-30 18:11:33,556 - root - INFO: None
-2025-08-30 18:11:33,556 - root - INFO: Presimplify to remove colinear, coincident points.
-2025-08-30 18:11:33,557 - root - INFO: None
-2025-08-30 18:11:33,557 - root - INFO: Pruning leaf reaches &lt; 10
-2025-08-30 18:11:33,557 - root - INFO: None
-2025-08-30 18:11:33,557 - root - INFO: Merging internal reaches &lt; 10
-2025-08-30 18:11:33,559 - root - INFO: None
-2025-08-30 18:11:33,560 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,560 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,562 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,562 - root - INFO: 
-2025-08-30 18:11:33,563 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,563 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,563 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,563 - root - INFO: 
-2025-08-30 18:11:33,564 - root - INFO: Snapping discrete points to make rivers and HUCs discretely consistent.
-2025-08-30 18:11:33,564 - root - INFO:  -- snapping HUC triple junctions to reaches
-2025-08-30 18:11:33,564 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,565 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,565 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,565 - root - INFO: 
-2025-08-30 18:11:33,565 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,565 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,565 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,566 - root - INFO: 
-2025-08-30 18:11:33,566 - root - INFO: None
-2025-08-30 18:11:33,566 - root - INFO:  -- snapping reach endpoints to HUC boundaries
-2025-08-30 18:11:33,567 - root - INFO:   new_lss: min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,568 - root - INFO:   new_lss: med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,568 - root - INFO:   new_lss: max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,568 - root - INFO: 
-2025-08-30 18:11:33,569 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,569 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,570 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,570 - root - INFO: 
-2025-08-30 18:11:33,570 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,570 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,571 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,571 - root - INFO: 
-2025-08-30 18:11:33,571 - root - INFO: None
-2025-08-30 18:11:33,571 - root - INFO:  -- cutting reaches at HUC boundaries
-2025-08-30 18:11:33,571 - root - INFO: intersection found
-2025-08-30 18:11:33,572 - root - INFO:   - cutting reach at external boundary of HUCs:
-2025-08-30 18:11:33,572 - root - INFO:       split HUC boundary ls into 1 pieces
-2025-08-30 18:11:33,572 - root - INFO:       split reach ls into 1 pieces
-2025-08-30 18:11:33,573 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,573 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,573 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,574 - root - INFO: 
-2025-08-30 18:11:33,574 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,574 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,574 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,575 - root - INFO: 
-2025-08-30 18:11:33,575 - root - INFO: None
-2025-08-30 18:11:33,575 - root - INFO: 
-2025-08-30 18:11:33,575 - root - INFO: Simplification Diagnostics
-2025-08-30 18:11:33,576 - root - INFO: ------------------------------
-2025-08-30 18:11:33,576 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,576 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,577 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,577 - root - INFO: 
-2025-08-30 18:11:33,577 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,577 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,577 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,577 - root - INFO: 
-2025-08-30 18:11:33,577 - root - INFO: None
-2025-08-30 18:11:33,578 - root - INFO: 
-2025-08-30 18:11:33,578 - root - INFO: Resampling HUC and river
-2025-08-30 18:11:33,578 - root - INFO: ------------------------------
-2025-08-30 18:11:33,578 - root - INFO:  -- resampling HUCs based on uniform target 10
-2025-08-30 18:11:33,579 - root - INFO: None
-2025-08-30 18:11:33,579 - root - INFO:  -- resampling reaches based on uniform target 10
-2025-08-30 18:11:33,581 - root - INFO: None
-2025-08-30 18:11:33,581 - root - INFO: 
-2025-08-30 18:11:33,581 - root - INFO: Resampling Diagnostics
-2025-08-30 18:11:33,582 - root - INFO: ------------------------------
-2025-08-30 18:11:33,582 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,582 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,582 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,582 - root - INFO: 
-2025-08-30 18:11:33,583 - root - INFO:   HUC  : min seg length: 	    9.7220346848 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,583 - root - INFO:   HUC  : med seg length: 	   10.0000000000 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,583 - root - INFO:   HUC  : max seg length: 	   10.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,583 - root - INFO: 
-2025-08-30 18:11:33,583 - root - INFO: None
-2025-08-30 18:11:33,583 - root - INFO: 
-2025-08-30 18:11:33,583 - root - INFO: Clean up sharp angles, both internally and at junctions.
-2025-08-30 18:11:33,584 - root - INFO: ------------------------------
-2025-08-30 18:11:33,586 - root - INFO: SSA1: None
-2025-08-30 18:11:33,587 - root - INFO: SSA2: None
-2025-08-30 18:11:33,588 - root - INFO: SSA3: None
-2025-08-30 18:11:33,590 - root - INFO: SSA4: None
-2025-08-30 18:11:33,590 - root - INFO: SSA1: None
-2025-08-30 18:11:33,590 - root - INFO: SSA2: None
-2025-08-30 18:11:33,591 - root - INFO: SSA3: None
-2025-08-30 18:11:33,592 - root - INFO: SSA4: None
-2025-08-30 18:11:33,592 - root - INFO: Cleaned up 0 sharp angles.
-2025-08-30 18:11:33,592 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,592 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,593 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,593 - root - INFO: 
-2025-08-30 18:11:33,593 - root - INFO:   HUC  : min seg length: 	    9.7220346848 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,593 - root - INFO:   HUC  : med seg length: 	   10.0000000000 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,593 - root - INFO:   HUC  : max seg length: 	   10.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,593 - root - INFO: 
-2025-08-30 18:11:33,593 - root - INFO: None
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2026-07-24 21:48:30,836 - root - INFO: 
+2026-07-24 21:48:30,836 - root - INFO: Simplifying
+2026-07-24 21:48:30,836 - root - INFO: ------------------------------
+2026-07-24 21:48:30,836 - root - INFO: None
+2026-07-24 21:48:30,836 - root - INFO: Presimplify to remove colinear, coincident points.
+2026-07-24 21:48:30,837 - root - INFO: None
+2026-07-24 21:48:30,837 - root - INFO: Pruning leaf reaches &lt; 10
+2026-07-24 21:48:30,837 - root - INFO: None
+2026-07-24 21:48:30,837 - root - INFO: Merging internal reaches &lt; 10
+2026-07-24 21:48:30,838 - root - INFO: None
+2026-07-24 21:48:30,838 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,838 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,838 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,839 - root - INFO: 
+2026-07-24 21:48:30,839 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,839 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,839 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,839 - root - INFO: 
+2026-07-24 21:48:30,839 - root - INFO: Snapping discrete points to make rivers and HUCs discretely consistent.
+2026-07-24 21:48:30,840 - root - INFO:  -- snapping HUC triple junctions to reaches
+2026-07-24 21:48:30,840 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,840 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,841 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,841 - root - INFO: 
+2026-07-24 21:48:30,841 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,841 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,842 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,842 - root - INFO: 
+2026-07-24 21:48:30,842 - root - INFO: None
+2026-07-24 21:48:30,842 - root - INFO:  -- snapping reach endpoints to HUC boundaries
+2026-07-24 21:48:30,844 - root - INFO:   new_lss: min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,845 - root - INFO:   new_lss: med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,845 - root - INFO:   new_lss: max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,845 - root - INFO: 
+2026-07-24 21:48:30,846 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,846 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,847 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,847 - root - INFO: 
+2026-07-24 21:48:30,847 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,847 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,847 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,847 - root - INFO: 
+2026-07-24 21:48:30,848 - root - INFO: None
+2026-07-24 21:48:30,848 - root - INFO:  -- cutting reaches at HUC boundaries
+2026-07-24 21:48:30,848 - root - INFO: intersection found
+2026-07-24 21:48:30,848 - root - INFO:   - cutting reach at external boundary of HUCs:
+2026-07-24 21:48:30,849 - root - INFO:       split HUC boundary ls into 1 pieces
+2026-07-24 21:48:30,849 - root - INFO:       split reach ls into 1 pieces
+2026-07-24 21:48:30,851 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,851 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,851 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,851 - root - INFO: 
+2026-07-24 21:48:30,851 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,851 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,851 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,852 - root - INFO: 
+2026-07-24 21:48:30,852 - root - INFO: None
+2026-07-24 21:48:30,852 - root - INFO: 
+2026-07-24 21:48:30,852 - root - INFO: Simplification Diagnostics
+2026-07-24 21:48:30,852 - root - INFO: ------------------------------
+2026-07-24 21:48:30,853 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,853 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,853 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,853 - root - INFO: 
+2026-07-24 21:48:30,854 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,854 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,854 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,854 - root - INFO: 
+2026-07-24 21:48:30,854 - root - INFO: None
+2026-07-24 21:48:30,855 - root - INFO: 
+2026-07-24 21:48:30,855 - root - INFO: Resampling HUC and river
+2026-07-24 21:48:30,855 - root - INFO: ------------------------------
+2026-07-24 21:48:30,855 - root - INFO:  -- resampling HUCs based on uniform target 10
+2026-07-24 21:48:30,857 - root - INFO: None
+2026-07-24 21:48:30,858 - root - INFO:  -- resampling reaches based on uniform target 10
+2026-07-24 21:48:30,860 - root - INFO: None
+2026-07-24 21:48:30,860 - root - INFO: 
+2026-07-24 21:48:30,860 - root - INFO: Resampling Diagnostics
+2026-07-24 21:48:30,860 - root - INFO: ------------------------------
+2026-07-24 21:48:30,861 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,861 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,861 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,862 - root - INFO: 
+2026-07-24 21:48:30,862 - root - INFO:   HUC  : min seg length: 	    9.7220346848 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,862 - root - INFO:   HUC  : med seg length: 	   10.0000000000 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,862 - root - INFO:   HUC  : max seg length: 	   10.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,862 - root - INFO: 
+2026-07-24 21:48:30,863 - root - INFO: None
+2026-07-24 21:48:30,863 - root - INFO: 
+2026-07-24 21:48:30,863 - root - INFO: Clean up sharp angles, both internally and at junctions.
+2026-07-24 21:48:30,863 - root - INFO: ------------------------------
+2026-07-24 21:48:30,865 - root - INFO:  ... cleaned up 0 sharp angles on HUCs.
+2026-07-24 21:48:30,866 - root - INFO:  ... cleaned up 0 sharp angles at outlets on river 0.
+2026-07-24 21:48:30,868 - root - INFO:  ... cleaned up 0 internal sharp angles on river 0.
+2026-07-24 21:48:30,869 - root - INFO:  ... cleaned up 0 sharp angles at outlets on river 1.
+2026-07-24 21:48:30,869 - root - INFO:  ... cleaned up 0 internal sharp angles on river 1.
+2026-07-24 21:48:30,869 - root - INFO: Cleaned up 0 sharp angles.
+2026-07-24 21:48:30,870 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,870 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,870 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,870 - root - INFO: 
+2026-07-24 21:48:30,870 - root - INFO:   HUC  : min seg length: 	    9.7220346848 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,870 - root - INFO:   HUC  : med seg length: 	   10.0000000000 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,870 - root - INFO:   HUC  : max seg length: 	   10.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,871 - root - INFO: 
+2026-07-24 21:48:30,871 - root - INFO: None
 </pre></div>
 </div>
 </div>
@@ -660,115 +654,112 @@ Version dev</div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:33,596 - root - INFO: 
-2025-08-30 18:11:33,596 - root - INFO: Simplifying
-2025-08-30 18:11:33,597 - root - INFO: ------------------------------
-2025-08-30 18:11:33,597 - root - INFO: None
-2025-08-30 18:11:33,597 - root - INFO: Presimplify to remove colinear, coincident points.
-2025-08-30 18:11:33,597 - root - INFO: None
-2025-08-30 18:11:33,599 - root - INFO: Pruning leaf reaches &lt; 10
-2025-08-30 18:11:33,600 - root - INFO: None
-2025-08-30 18:11:33,600 - root - INFO: Merging internal reaches &lt; 10
-2025-08-30 18:11:33,600 - root - INFO: None
-2025-08-30 18:11:33,601 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,601 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,601 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,602 - root - INFO: 
-2025-08-30 18:11:33,602 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,603 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,603 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,603 - root - INFO: 
-2025-08-30 18:11:33,603 - root - INFO: Snapping discrete points to make rivers and HUCs discretely consistent.
-2025-08-30 18:11:33,603 - root - INFO:  -- snapping HUC triple junctions to reaches
-2025-08-30 18:11:33,604 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,605 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,605 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,605 - root - INFO: 
-2025-08-30 18:11:33,605 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,606 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,606 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,606 - root - INFO: 
-2025-08-30 18:11:33,606 - root - INFO: None
-2025-08-30 18:11:33,607 - root - INFO:  -- snapping reach endpoints to HUC boundaries
-2025-08-30 18:11:33,609 - root - INFO:   new_lss: min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,609 - root - INFO:   new_lss: med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,610 - root - INFO:   new_lss: max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,610 - root - INFO: 
-2025-08-30 18:11:33,611 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,611 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,611 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,611 - root - INFO: 
-2025-08-30 18:11:33,612 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,612 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,612 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,612 - root - INFO: 
-2025-08-30 18:11:33,612 - root - INFO: None
-2025-08-30 18:11:33,613 - root - INFO:  -- cutting reaches at HUC boundaries
-2025-08-30 18:11:33,613 - root - INFO: intersection found
-2025-08-30 18:11:33,613 - root - INFO:   - cutting reach at external boundary of HUCs:
-2025-08-30 18:11:33,613 - root - INFO:       split HUC boundary ls into 1 pieces
-2025-08-30 18:11:33,613 - root - INFO:       split reach ls into 1 pieces
-2025-08-30 18:11:33,615 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,615 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,615 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,615 - root - INFO: 
-2025-08-30 18:11:33,616 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,616 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,616 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,616 - root - INFO: 
-2025-08-30 18:11:33,616 - root - INFO: None
-2025-08-30 18:11:33,616 - root - INFO: 
-2025-08-30 18:11:33,617 - root - INFO: Simplification Diagnostics
-2025-08-30 18:11:33,617 - root - INFO: ------------------------------
-2025-08-30 18:11:33,617 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,618 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,618 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,618 - root - INFO: 
-2025-08-30 18:11:33,618 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,618 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,619 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,619 - root - INFO: 
-2025-08-30 18:11:33,619 - root - INFO: None
-2025-08-30 18:11:33,619 - root - INFO: 
-2025-08-30 18:11:33,619 - root - INFO: Resampling HUC and river
-2025-08-30 18:11:33,619 - root - INFO: ------------------------------
-2025-08-30 18:11:33,620 - root - INFO:  -- resampling HUCs based on distance function (50, 10, 150, 50)
-2025-08-30 18:11:33,675 - root - INFO: None
-2025-08-30 18:11:33,676 - root - INFO:  -- resampling reaches based on uniform target 10
-2025-08-30 18:11:33,678 - root - INFO: None
-2025-08-30 18:11:33,678 - root - INFO: 
-2025-08-30 18:11:33,678 - root - INFO: Resampling Diagnostics
-2025-08-30 18:11:33,678 - root - INFO: ------------------------------
-2025-08-30 18:11:33,679 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,679 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,679 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,679 - root - INFO: 
-2025-08-30 18:11:33,679 - root - INFO:   HUC  : min seg length: 	    9.2023159404 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,679 - root - INFO:   HUC  : med seg length: 	   12.0793869794 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,680 - root - INFO:   HUC  : max seg length: 	   49.9229443249 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,680 - root - INFO: 
-2025-08-30 18:11:33,680 - root - INFO: None
-2025-08-30 18:11:33,680 - root - INFO: 
-2025-08-30 18:11:33,680 - root - INFO: Clean up sharp angles, both internally and at junctions.
-2025-08-30 18:11:33,680 - root - INFO: ------------------------------
-2025-08-30 18:11:33,682 - root - INFO: SSA1: None
-2025-08-30 18:11:33,683 - root - INFO: SSA2: None
-2025-08-30 18:11:33,684 - root - INFO: SSA3: None
-2025-08-30 18:11:33,685 - root - INFO: SSA4: None
-2025-08-30 18:11:33,686 - root - INFO: SSA1: None
-2025-08-30 18:11:33,686 - root - INFO: SSA2: None
-2025-08-30 18:11:33,686 - root - INFO: SSA3: None
-2025-08-30 18:11:33,687 - root - INFO: SSA4: None
-2025-08-30 18:11:33,687 - root - INFO: Cleaned up 0 sharp angles.
-2025-08-30 18:11:33,687 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
-2025-08-30 18:11:33,687 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
-2025-08-30 18:11:33,687 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
-2025-08-30 18:11:33,687 - root - INFO: 
-2025-08-30 18:11:33,688 - root - INFO:   HUC  : min seg length: 	    9.2023159404 	min geom length: 	 1647.2135955000
-2025-08-30 18:11:33,688 - root - INFO:   HUC  : med seg length: 	   12.0793869794 	med geom length: 	 1647.2135955000
-2025-08-30 18:11:33,688 - root - INFO:   HUC  : max seg length: 	   49.9229443249 	max geom length: 	 1647.2135955000
-2025-08-30 18:11:33,688 - root - INFO: 
-2025-08-30 18:11:33,688 - root - INFO: None
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2026-07-24 21:48:30,874 - root - INFO: 
+2026-07-24 21:48:30,874 - root - INFO: Simplifying
+2026-07-24 21:48:30,874 - root - INFO: ------------------------------
+2026-07-24 21:48:30,875 - root - INFO: None
+2026-07-24 21:48:30,875 - root - INFO: Presimplify to remove colinear, coincident points.
+2026-07-24 21:48:30,875 - root - INFO: None
+2026-07-24 21:48:30,876 - root - INFO: Pruning leaf reaches &lt; 10
+2026-07-24 21:48:30,876 - root - INFO: None
+2026-07-24 21:48:30,876 - root - INFO: Merging internal reaches &lt; 10
+2026-07-24 21:48:30,877 - root - INFO: None
+2026-07-24 21:48:30,877 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,877 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,877 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,877 - root - INFO: 
+2026-07-24 21:48:30,878 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,878 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,878 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,878 - root - INFO: 
+2026-07-24 21:48:30,878 - root - INFO: Snapping discrete points to make rivers and HUCs discretely consistent.
+2026-07-24 21:48:30,878 - root - INFO:  -- snapping HUC triple junctions to reaches
+2026-07-24 21:48:30,879 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,879 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,879 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,879 - root - INFO: 
+2026-07-24 21:48:30,880 - root - INFO:   HUC  : min seg length: 	  223.6067977500 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,880 - root - INFO:   HUC  : med seg length: 	  400.0000000000 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,880 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,880 - root - INFO: 
+2026-07-24 21:48:30,880 - root - INFO: None
+2026-07-24 21:48:30,881 - root - INFO:  -- snapping reach endpoints to HUC boundaries
+2026-07-24 21:48:30,883 - root - INFO:   new_lss: min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,883 - root - INFO:   new_lss: med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,883 - root - INFO:   new_lss: max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,883 - root - INFO: 
+2026-07-24 21:48:30,884 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,884 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,884 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,884 - root - INFO: 
+2026-07-24 21:48:30,884 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,885 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,885 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,885 - root - INFO: 
+2026-07-24 21:48:30,885 - root - INFO: None
+2026-07-24 21:48:30,885 - root - INFO:  -- cutting reaches at HUC boundaries
+2026-07-24 21:48:30,885 - root - INFO: intersection found
+2026-07-24 21:48:30,886 - root - INFO:   - cutting reach at external boundary of HUCs:
+2026-07-24 21:48:30,886 - root - INFO:       split HUC boundary ls into 1 pieces
+2026-07-24 21:48:30,886 - root - INFO:       split reach ls into 1 pieces
+2026-07-24 21:48:30,888 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,888 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,888 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,888 - root - INFO: 
+2026-07-24 21:48:30,888 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,889 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,889 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,889 - root - INFO: 
+2026-07-24 21:48:30,889 - root - INFO: None
+2026-07-24 21:48:30,889 - root - INFO: 
+2026-07-24 21:48:30,889 - root - INFO: Simplification Diagnostics
+2026-07-24 21:48:30,890 - root - INFO: ------------------------------
+2026-07-24 21:48:30,890 - root - INFO:   reach: min seg length: 	   50.0000000000 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,890 - root - INFO:   reach: med seg length: 	  100.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,890 - root - INFO:   reach: max seg length: 	  200.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,891 - root - INFO: 
+2026-07-24 21:48:30,891 - root - INFO:   HUC  : min seg length: 	  200.0000000000 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,891 - root - INFO:   HUC  : med seg length: 	  223.6067977500 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,891 - root - INFO:   HUC  : max seg length: 	  400.0000000000 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,891 - root - INFO: 
+2026-07-24 21:48:30,892 - root - INFO: None
+2026-07-24 21:48:30,892 - root - INFO: 
+2026-07-24 21:48:30,892 - root - INFO: Resampling HUC and river
+2026-07-24 21:48:30,892 - root - INFO: ------------------------------
+2026-07-24 21:48:30,892 - root - INFO:  -- resampling HUCs based on distance function (50, 10, 150, 50)
+2026-07-24 21:48:30,967 - root - INFO: None
+2026-07-24 21:48:30,967 - root - INFO:  -- resampling reaches based on uniform target 10
+2026-07-24 21:48:30,969 - root - INFO: None
+2026-07-24 21:48:30,969 - root - INFO: 
+2026-07-24 21:48:30,970 - root - INFO: Resampling Diagnostics
+2026-07-24 21:48:30,970 - root - INFO: ------------------------------
+2026-07-24 21:48:30,970 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,970 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,970 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,971 - root - INFO: 
+2026-07-24 21:48:30,971 - root - INFO:   HUC  : min seg length: 	    8.7899769497 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,971 - root - INFO:   HUC  : med seg length: 	   11.6648206334 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,971 - root - INFO:   HUC  : max seg length: 	   49.9229443249 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,971 - root - INFO: 
+2026-07-24 21:48:30,971 - root - INFO: None
+2026-07-24 21:48:30,971 - root - INFO: 
+2026-07-24 21:48:30,972 - root - INFO: Clean up sharp angles, both internally and at junctions.
+2026-07-24 21:48:30,972 - root - INFO: ------------------------------
+2026-07-24 21:48:30,973 - root - INFO:  ... cleaned up 0 sharp angles on HUCs.
+2026-07-24 21:48:30,974 - root - INFO:  ... cleaned up 0 sharp angles at outlets on river 0.
+2026-07-24 21:48:30,977 - root - INFO:  ... cleaned up 0 internal sharp angles on river 0.
+2026-07-24 21:48:30,977 - root - INFO:  ... cleaned up 0 sharp angles at outlets on river 1.
+2026-07-24 21:48:30,978 - root - INFO:  ... cleaned up 0 internal sharp angles on river 1.
+2026-07-24 21:48:30,978 - root - INFO: Cleaned up 0 sharp angles.
+2026-07-24 21:48:30,978 - root - INFO:   reach: min seg length: 	    9.4280904158 	min geom length: 	  141.4213562373
+2026-07-24 21:48:30,978 - root - INFO:   reach: med seg length: 	   10.0000000000 	med geom length: 	  225.0000000000
+2026-07-24 21:48:30,978 - root - INFO:   reach: max seg length: 	   10.0000000000 	max geom length: 	  350.0000000000
+2026-07-24 21:48:30,978 - root - INFO: 
+2026-07-24 21:48:30,979 - root - INFO:   HUC  : min seg length: 	    8.7899769497 	min geom length: 	 1647.2135955000
+2026-07-24 21:48:30,979 - root - INFO:   HUC  : med seg length: 	   11.6648206334 	med geom length: 	 1647.2135955000
+2026-07-24 21:48:30,979 - root - INFO:   HUC  : max seg length: 	   49.9229443249 	max geom length: 	 1647.2135955000
+2026-07-24 21:48:30,980 - root - INFO: 
+2026-07-24 21:48:30,980 - root - INFO: None
 </pre></div>
 </div>
 </div>
@@ -799,7 +790,7 @@ Version dev</div>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, &#39;dist-based resampling&#39;)
 </pre></div>
 </div>
-<img alt="../_images/22a883949c2958f0281388ea4a2657b7f6be984b1ae83b63eab467e3a437749c.png" src="../_images/22a883949c2958f0281388ea4a2657b7f6be984b1ae83b63eab467e3a437749c.png" />
+<img alt="../_images/01792ff421d39210d6d274803215f6634f7ff39d266c181056b8342182a38362.png" src="../_images/01792ff421d39210d6d274803215f6634f7ff39d266c181056b8342182a38362.png" />
 </div>
 </div>
 <section id="surface-meshing">
@@ -817,8 +808,9 @@ Version dev</div>
 <span class="c1"># Refine triangles if they get too acute</span>
 <span class="n">min_angle</span> <span class="o">=</span> <span class="mi">32</span> <span class="c1"># degrees</span>
 
-<span class="c1"># width of reach by stream order (order:width) or integer</span>
-<span class="n">widths</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="c1"># function that returns width for each reach. In this case, we use a constant width of 5.0 for all reaches</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">widths</span><span class="p">(</span><span class="n">reach</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">5.0</span>
 
 <span class="c1"># created two versions of the discrete watershed and rivers -- let&#39;s use the second one</span>
 <span class="n">watershed</span><span class="p">,</span> <span class="n">rivers</span> <span class="o">=</span> <span class="n">createCopy</span><span class="p">(</span><span class="n">watershed2</span><span class="p">,</span> <span class="n">rivers2</span><span class="p">)</span>
@@ -832,27 +824,33 @@ Version dev</div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:34,023 - root - INFO: 
-2025-08-30 18:11:34,023 - root - INFO: Stream-aligned Meshing
-2025-08-30 18:11:34,024 - root - INFO: ------------------------------
-2025-08-30 18:11:34,024 - root - INFO: Creating stream-aligned mesh...
-2025-08-30 18:11:34,031 - root - INFO: Adjusting HUC to match reaches at outlet
-2025-08-30 18:11:34,037 - root - INFO: 
-2025-08-30 18:11:34,038 - root - INFO: Triangulation
-2025-08-30 18:11:34,038 - root - INFO: ------------------------------
-2025-08-30 18:11:34,041 - root - INFO: Triangulating...
-2025-08-30 18:11:34,041 - root - INFO:    277 points and 278 facets
-2025-08-30 18:11:34,041 - root - INFO:  checking graph consistency
-2025-08-30 18:11:34,042 - root - INFO:  tolerance is set to 0.1
-2025-08-30 18:11:34,042 - root - INFO:  building graph data structures
-2025-08-30 18:11:34,043 - root - INFO:  triangle.build...
-2025-08-30 18:11:34,128 - root - INFO:   ...built: 872 mesh points and 1467 triangles
-2025-08-30 18:11:34,129 - root - INFO: Plotting triangulation diagnostics
-2025-08-30 18:11:34,156 - root - INFO:   min area = 20.711983156357746
-2025-08-30 18:11:34,157 - root - INFO:   max area = 878.7740910490738
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2026-07-24 21:48:31,222 - root - INFO: 
+2026-07-24 21:48:31,222 - root - INFO: Stream-aligned Meshing
+2026-07-24 21:48:31,222 - root - INFO: ------------------------------
+2026-07-24 21:48:31,222 - root - INFO: Creating stream-aligned mesh...
+2026-07-24 21:48:31,233 - root - INFO:  ... created a mesh with 80 elements for river 0
+2026-07-24 21:48:31,233 - root - INFO: Adjusting HUC to match reaches at outlet
+2026-07-24 21:48:31,237 - root - INFO:  ... created a mesh with 15 elements for river 1
+2026-07-24 21:48:31,239 - root - INFO:   is nonoverlapping?  total_area = 4621.036555146999, summed_area = 4621.036555146998
+2026-07-24 21:48:31,239 - root - INFO: Building the remaining triangular mesh...
+2026-07-24 21:48:31,240 - root - INFO: 
+2026-07-24 21:48:31,240 - root - INFO: Triangulation
+2026-07-24 21:48:31,240 - root - INFO: ------------------------------
+2026-07-24 21:48:31,250 - root - INFO: Triangulating...
+2026-07-24 21:48:31,251 - root - INFO:    277 points and 278 facets
+2026-07-24 21:48:31,251 - root - INFO:  checking graph consistency
+2026-07-24 21:48:31,251 - root - INFO:  tolerance is set to 0.1
+2026-07-24 21:48:31,252 - root - INFO:  building graph data structures
+2026-07-24 21:48:31,253 - root - INFO:  triangle.build...
+2026-07-24 21:48:35,039 - root - INFO:   ...built: 868 mesh points and 1459 triangles
+2026-07-24 21:48:35,040 - root - INFO: Plotting triangulation diagnostics
+2026-07-24 21:48:35,063 - root - INFO:   min area = 20.711983156357746
+2026-07-24 21:48:35,063 - root - INFO:   max area = 865.1326778224702
+2026-07-24 21:48:35,076 - root - INFO: Fixing corridor-spanning triangles...
+2026-07-24 21:48:35,090 - root - INFO:  ... split 7 spanning or junction triangles
 </pre></div>
 </div>
-<img alt="../_images/b6eaa2a9b08201c4badebb9135d8834b99ba9dfb8a01d70e34309ee5148ad211.png" src="../_images/b6eaa2a9b08201c4badebb9135d8834b99ba9dfb8a01d70e34309ee5148ad211.png" />
+<img alt="../_images/2fb1d1fd3c9cd6d123c972f6f2cc05949fc647b9ca13dfadea14bcaf02745a55.png" src="../_images/2fb1d1fd3c9cd6d123c972f6f2cc05949fc647b9ca13dfadea14bcaf02745a55.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -871,7 +869,7 @@ Version dev</div>
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;Axes: &gt;
 </pre></div>
 </div>
-<img alt="../_images/c74bb2beb1f2d9d1cc6b2d139f84bb357b42237cdb6f6f0cfbb0c968e6b9de4c.png" src="../_images/c74bb2beb1f2d9d1cc6b2d139f84bb357b42237cdb6f6f0cfbb0c968e6b9de4c.png" />
+<img alt="../_images/20f698d168a8c3f539e6c4196ed945f98c9bf11ae472c8049f7828f292c6a376.png" src="../_images/20f698d168a8c3f539e6c4196ed945f98c9bf11ae472c8049f7828f292c6a376.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -929,7 +927,7 @@ Version dev</div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/f621015b31bc346645e7bbb1c7fd83791d7d3c713fa75a5a580969d9beb39bea.png" src="../_images/f621015b31bc346645e7bbb1c7fd83791d7d3c713fa75a5a580969d9beb39bea.png" />
+<img alt="../_images/987fe3ef315d0677a8b3fb0d6de30801550798a37271981903cec7525ea4d774.png" src="../_images/987fe3ef315d0677a8b3fb0d6de30801550798a37271981903cec7525ea4d774.png" />
 </div>
 </div>
 </section>
@@ -964,28 +962,28 @@ Version dev</div>
     <span class="n">depth</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dz</span>
 
 <span class="c1"># print the summary</span>
-<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">summarizeExtrusion</span><span class="p">(</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span> 
+<span class="n">watershed_workflow</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">summarizeExtrusion</span><span class="p">(</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span> 
                                             <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:34,518 - root - INFO: Cell summary:
-2025-08-30 18:11:34,518 - root - INFO: ------------------------------------------------------------
-2025-08-30 18:11:34,519 - root - INFO: l_id	| c_id	|mat_id	| dz		| z_top
-2025-08-30 18:11:34,519 - root - INFO: ------------------------------------------------------------
-2025-08-30 18:11:34,519 - root - INFO:  00 	| 00 	| 1000 	|   0.100000 	|   0.000000
-2025-08-30 18:11:34,519 - root - INFO:  01 	| 01 	| 1000 	|   0.200000 	|   0.100000
-2025-08-30 18:11:34,520 - root - INFO:  02 	| 02 	| 1000 	|   0.200000 	|   0.300000
-2025-08-30 18:11:34,520 - root - INFO:  03 	| 03 	| 1000 	|   0.250000 	|   0.500000
-2025-08-30 18:11:34,520 - root - INFO:  04 	| 04 	| 1000 	|   0.250000 	|   0.750000
-2025-08-30 18:11:34,520 - root - INFO:  05 	| 05 	| 1000 	|   0.250000 	|   1.000000
-2025-08-30 18:11:34,520 - root - INFO:  06 	| 06 	| 1000 	|   0.250000 	|   1.250000
-2025-08-30 18:11:34,520 - root - INFO:  07 	| 07 	| 1000 	|   1.000000 	|   1.500000
-2025-08-30 18:11:34,521 - root - INFO:  08 	| 08 	| 1000 	|   1.250000 	|   2.500000
-2025-08-30 18:11:34,521 - root - INFO:  09 	| 09 	| 1000 	|   1.250000 	|   3.750000
-2025-08-30 18:11:34,521 - root - INFO:  10 	| 10 	| 1000 	|   2.000000 	|   5.000000
-2025-08-30 18:11:34,521 - root - INFO:  11 	| 11 	| 1000 	|   3.000000 	|   7.000000
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2026-07-24 21:48:35,318 - root - INFO: Cell summary:
+2026-07-24 21:48:35,319 - root - INFO: ------------------------------------------------------------
+2026-07-24 21:48:35,319 - root - INFO: l_id	| c_id	|mat_id	| dz		| z_top
+2026-07-24 21:48:35,319 - root - INFO: ------------------------------------------------------------
+2026-07-24 21:48:35,319 - root - INFO:  00 	| 00 	| 1000 	|   0.100000 	|   0.000000
+2026-07-24 21:48:35,319 - root - INFO:  01 	| 01 	| 1000 	|   0.200000 	|   0.100000
+2026-07-24 21:48:35,319 - root - INFO:  02 	| 02 	| 1000 	|   0.200000 	|   0.300000
+2026-07-24 21:48:35,319 - root - INFO:  03 	| 03 	| 1000 	|   0.250000 	|   0.500000
+2026-07-24 21:48:35,320 - root - INFO:  04 	| 04 	| 1000 	|   0.250000 	|   0.750000
+2026-07-24 21:48:35,320 - root - INFO:  05 	| 05 	| 1000 	|   0.250000 	|   1.000000
+2026-07-24 21:48:35,320 - root - INFO:  06 	| 06 	| 1000 	|   0.250000 	|   1.250000
+2026-07-24 21:48:35,320 - root - INFO:  07 	| 07 	| 1000 	|   1.000000 	|   1.500000
+2026-07-24 21:48:35,320 - root - INFO:  08 	| 08 	| 1000 	|   1.250000 	|   2.500000
+2026-07-24 21:48:35,320 - root - INFO:  09 	| 09 	| 1000 	|   1.250000 	|   3.750000
+2026-07-24 21:48:35,321 - root - INFO:  10 	| 10 	| 1000 	|   2.000000 	|   5.000000
+2026-07-24 21:48:35,321 - root - INFO:  11 	| 11 	| 1000 	|   3.000000 	|   7.000000
 </pre></div>
 </div>
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>10.0
@@ -996,7 +994,7 @@ Version dev</div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># extrude</span>
-<span class="n">m3</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">mesh</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">extruded_Mesh2D</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span> 
+<span class="n">m3</span> <span class="o">=</span> <span class="n">watershed_workflow</span><span class="o">.</span><span class="n">Mesh3D</span><span class="o">.</span><span class="n">extruded_Mesh2D</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span><span class="n">layer_types</span><span class="p">,</span> <span class="n">layer_data</span><span class="p">,</span> 
                                              <span class="n">layer_ncells</span><span class="p">,</span> <span class="n">layer_mat_ids</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1012,19 +1010,19 @@ Version dev</div>
 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s1">&#39;demo_mixed_element_mesh.exo&#39;</span><span class="p">):</span>
     <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;demo_mixed_element_mesh.exo&#39;</span><span class="p">)</span>
 
-<span class="n">m3</span><span class="o">.</span><span class="n">writeExodus</span><span class="p">(</span><span class="s1">&#39;demo_mixed_element_mesh.exo&#39;</span><span class="p">)</span>
+<span class="n">m3</span><span class="o">.</span><span class="n">writeExodus</span><span class="p">(</span><span class="s1">&#39;demo_mixed_element_mesh.exo&#39;</span><span class="p">,</span> <span class="s1">&#39;material id&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2025-08-30 18:11:34,616 - root - INFO: adding side set: 1
-2025-08-30 18:11:34,622 - root - INFO: adding side set: 2
-2025-08-30 18:11:34,624 - root - INFO: adding side set: 3
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2026-07-24 21:48:35,461 - root - INFO: adding side set: 1
+2026-07-24 21:48:35,464 - root - INFO: adding side set: 2
+2026-07-24 21:48:35,465 - root - INFO: adding side set: 3
 </pre></div>
 </div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>You are using exodus.py v 1.20.10 (seacas-py3), a python wrapper of some of the exodus library.
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>You are using exodus.py v 1.21.6 (seacas-py3), a python wrapper of some of the exodus library.
 
-Copyright (c) 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 National Technology &amp;
+Copyright (c) 2013-2023 National Technology &amp;
 Engineering Solutions of Sandia, LLC (NTESS).  Under the terms of
 Contract DE-NA0003525 with NTESS, the U.S. Government retains certain
 rights in this software.
@@ -1084,8 +1082,8 @@ Closing exodus file: demo_mixed_element_mesh.exo
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1105,7 +1103,7 @@ Closing exodus file: demo_mixed_element_mesh.exo
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
     <br/>
   </p>
 </div>
@@ -1119,7 +1117,7 @@ Closing exodus file: demo_mixed_element_mesh.exo
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
 </p></div>
       
     </div>

@@ -19,7 +19,6 @@ Browse the code at: https://github.com/environmental-modeling-workflow/watershed
    Installation <install>
    Concepts <concepts>
    API Documentation <api>
-   Gallery <gallery>
 
    
 Indices and tables
