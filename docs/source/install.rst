@@ -177,25 +177,64 @@ default, installing this package places a copy of
 be modified.
 
 
+Package Configuration
+--------------------------------------
+
+Watershed Workflow is configured through a small set of parameters
+stored in a file named ``.watershed_workflowrc``, searched for in the
+current working directory first, then the user's home directory.  An
+example file with all defaults is provided at ``watershed_workflowrc``
+in the top level of the repository.
+
+The most important setting is the path to the local **data library** —
+the directory where all downloaded datasets are cached for reuse across
+workflows.  A typical configuration file looks like:
+
+.. code-block:: ini
+
+   [DEFAULT]
+   data_directory = /path/to/my/data_library
+
+See :ref:`Package Configuration` in the API docs for the full list of
+available settings.
+
+
 Run the test suite (developers)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Given that you have activated your environment and successfully
-install the DEV environment above, the unit tests should all pass.
-They are not all fast -- some download files and may be
-internet-connection-speed dependent.  You may be happy enough just
-running the core library tests:
+Tests live in ``watershed_workflow/test/`` and are numbered by
+dependency order (e.g. ``test_00_shapely.py``, ``test_08_triangulate.py``).
+Example notebooks in ``examples/`` are also collected as tests via
+``nbmake``.
+
+Run only the unit tests (fast, no network required):
 
 .. code-block:: console
 
-   pytest watershed_workflow/test
+   pytest watershed_workflow/test/
 
-
-but you can also run the entire suite:
+Some tests require live network access and are marked ``network``.
+Skip them with:
 
 .. code-block:: console
 
-    pytest watershed_workflow                
+   pytest watershed_workflow/test/ -m "not network"
 
-Additionally, all ipynb files in examples should successfully
-complete.
+Run the full suite including example notebooks:
+
+.. code-block:: console
+
+   pytest watershed_workflow/test/ examples/
+
+Notebook tests are tagged ``network`` (requires internet) or
+``integration`` (full end-to-end workflow, slow).  Skip both with:
+
+.. code-block:: console
+
+   pytest watershed_workflow/test/ examples/ -m "not network and not integration"
+
+Use ``--plot`` to display matplotlib figures during a test run:
+
+.. code-block:: console
+
+   pytest watershed_workflow/test/ --plot

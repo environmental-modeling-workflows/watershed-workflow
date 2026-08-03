@@ -33,6 +33,34 @@ Note: Hypothetically, this package works on all of Linux, Mac, and Windows.  It 
 
 [Visit our Installation documentation.](https://environmental-modeling-workflows.github.io/watershed-workflow/stable/install.html)
 
+## Testing
+
+Tests are run with [pytest](https://pytest.org) and [pytest-nbmake](https://github.com/treebeardtech/nbmake).
+
+By default, tests marked `network` (require live data downloads) and `integration` (require optional
+dependencies not present in CI) are excluded.  To run different subsets:
+
+```bash
+# Unit and source manager tests only (default, safe everywhere)
+pytest watershed_workflow/test/ watershed_workflow/sources/test/
+
+# Notebook regression tests (no network or integration required)
+pytest --nbmake examples/
+
+# All non-network, non-integration tests
+pytest --nbmake watershed_workflow/test/ watershed_workflow/sources/test/ examples/
+
+# Include network tests (requires internet access and data service credentials)
+pytest -m 'not integration' --nbmake examples/ watershed_workflow/sources/test/
+
+# Run everything including integration notebooks
+pytest -m '' --nbmake watershed_workflow/test/ watershed_workflow/sources/test/ examples/
+```
+
+Notebook markers are set via cell tags on the first cell of each notebook:
+- `network` — `examples/get_AORC_met_data.ipynb`, `examples/get_Daymet.ipynb`, `examples/get_MODIS_LAI.ipynb`
+- `integration` — `examples/Coweeta/coweeta_ats.ipynb`
+
 ## For more...
 
 * [See the documentation](https://environmental-modeling-workflows.github.io/watershed-workflow)

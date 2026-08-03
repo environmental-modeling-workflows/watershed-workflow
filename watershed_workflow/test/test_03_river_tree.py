@@ -5,7 +5,7 @@ import shapely.geometry
 from matplotlib import pyplot as plt
 
 from watershed_workflow.test.shapes import *
-import watershed_workflow.river_tree
+import watershed_workflow.hydro.river
 
 import geopandas
 
@@ -40,7 +40,7 @@ def test_tree_gen():
                                               shapely.geometry.LineString([(1,1), (1,0)]),
                                               shapely.geometry.LineString([(2,0), (1,0)])]
                                  }).set_index('index')
-    t = watershed_workflow.river_tree.River(0,df)
+    t = watershed_workflow.hydro.river.River(0,df)
     n0 = t.addChild(1)
     n0.addChild(2)
     n0.addChild(3)
@@ -51,24 +51,24 @@ def test_tree_gen():
 
 
 def test_factory_empty():
-    trees = watershed_workflow.river_tree.River.constructRiversByGeometry(list())
+    trees = watershed_workflow.hydro.river.River.constructRiversByGeometry(list())
     assert (len(trees) == 0)
 
 
 def test_factory_y(y):
-    trees = watershed_workflow.river_tree.River.constructRiversByGeometry(y)
+    trees = watershed_workflow.hydro.river.River.constructRiversByGeometry(y)
     assert (len(trees) == 1)
     assert_list_same([n.linestring for n in trees[0].preOrder()], y.geometry)
 
 
 def test_factory_y2(y_with_extension):
-    trees = watershed_workflow.river_tree.River.constructRiversByGeometry(y_with_extension)
+    trees = watershed_workflow.hydro.river.River.constructRiversByGeometry(y_with_extension)
     assert (len(trees) == 1)
     assert_list_same([n.linestring for n in trees[0].preOrder()], y_with_extension.geometry)
 
 
 def test_factory_ys(two_ys):
-    trees = watershed_workflow.river_tree.River.constructRiversByGeometry(two_ys)
+    trees = watershed_workflow.hydro.river.River.constructRiversByGeometry(two_ys)
     assert (len(trees) == 2)
     assert_list_same(itertools.chain([n.linestring for n in trees[0].preOrder()],
                                      [n.linestring for n in trees[1].preOrder()]), two_ys.geometry)
@@ -80,7 +80,7 @@ def test_factory_dfs():
     df = geopandas.GeoDataFrame({'index' : range(len(ml)),
                                  'geometry' : ml}).set_index('index')
 
-    trees = watershed_workflow.river_tree.River.constructRiversByGeometry(df)
+    trees = watershed_workflow.hydro.river.River.constructRiversByGeometry(df)
     riverlist = [n.linestring for n in trees[0].preOrder()]
     assert (riverlist[0] == ml[1])
     assert (riverlist[1] == ml[0])
@@ -88,7 +88,7 @@ def test_factory_dfs():
 
 def test_factory_two_ys_props(two_ys):
     """Creates a river using the mocked HydroSeq data"""
-    trees = watershed_workflow.river_tree.River.constructRiversByHydroseq(two_ys)
+    trees = watershed_workflow.hydro.river.River.constructRiversByHydroseq(two_ys)
     assert (len(trees) == 2)
     assert_list_same(itertools.chain([n.linestring for n in trees[0].preOrder()],
                                      [n.linestring for n in trees[1].preOrder()]), two_ys.geometry)
@@ -101,10 +101,10 @@ def test_factory_braided_geometry(braided_stream):
     braided_stream['index'] = new_order
     braided_stream_rand = braided_stream.sort_index()
     
-    trees = watershed_workflow.river_tree.River.constructRiversByGeometry(braided_stream_rand)
+    trees = watershed_workflow.hydro.river.River.constructRiversByGeometry(braided_stream_rand)
 
     assert (len(trees) == 1)
-    assert (type(trees[0]) is watershed_workflow.river_tree.River)
+    assert (type(trees[0]) is watershed_workflow.hydro.river.River)
     assert (len(trees[0]) == 6)
 
     valid_orderings = [[0, 1, 2, 3, 4, 5], [0, 1, 2, 4, 5, 3], [0, 4, 5, 1, 2, 3],
@@ -123,10 +123,10 @@ def test_factory_braided_hydroseq(braided_stream):
     braided_stream['index'] = new_order
     braided_stream_rand = braided_stream.sort_index()
 
-    trees = watershed_workflow.river_tree.River.constructRiversByHydroseq(braided_stream_rand)
+    trees = watershed_workflow.hydro.river.River.constructRiversByHydroseq(braided_stream_rand)
 
     assert (len(trees) == 1)
-    assert (type(trees[0]) is watershed_workflow.river_tree.River)
+    assert (type(trees[0]) is watershed_workflow.hydro.river.River)
     assert (len(trees[0]) == 6)
     assert_list_same([n.linestring for n in trees[0].preOrder()],
                       braided_stream.geometry)
@@ -138,8 +138,8 @@ def test_merge():
     df = geopandas.GeoDataFrame({'index' : [2,1],
                                  'geometry' : [s2,s1]}).set_index('index')
 
-    n2 = watershed_workflow.river_tree.River(2, df)
-    n1 = watershed_workflow.river_tree.River(1, df, [n2,])
+    n2 = watershed_workflow.hydro.river.River(2, df)
+    n1 = watershed_workflow.hydro.river.River(1, df, [n2,])
     assert n1.isContinuous()
     assert n1.linestring.length == 1
     assert n2.parent is n1
@@ -164,7 +164,7 @@ def _validUpDown(n1,n2):
 def test_split():
     s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
     df = geopandas.GeoDataFrame({'geometry' : [s,]})
-    node = watershed_workflow.river_tree.River(0, df)
+    node = watershed_workflow.hydro.river.River(0, df)
 
     n1,n2 = node.split(1)
     # check topology: n1 --> n2
@@ -178,7 +178,7 @@ def test_split():
 def test_split_errors():
     s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
     df = geopandas.GeoDataFrame({'geometry' : [s,]})
-    node = watershed_workflow.river_tree.River(0, df)
+    node = watershed_workflow.hydro.river.River(0, df)
 
     with pytest.raises(Exception):
         node.split(5)
@@ -186,7 +186,7 @@ def test_split_errors():
 def test_split_arclen():
     s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
     df = geopandas.GeoDataFrame({'geometry' : [s,]})
-    node = watershed_workflow.river_tree.River(0, df)
+    node = watershed_workflow.hydro.river.River(0, df)
 
     n1, n2 = node.splitAtArclen(1.5)
     _validUpDown(n1, n2)
@@ -199,7 +199,7 @@ def test_split_arclen():
 def test_split_arclen_on_coord():
     s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
     df = geopandas.GeoDataFrame({'geometry' : [s,]})
-    node = watershed_workflow.river_tree.River(0, df)
+    node = watershed_workflow.hydro.river.River(0, df)
 
     n1, n2 = node.splitAtArclen(1.0)
     _validUpDown(n1, n2)
@@ -212,7 +212,7 @@ def test_split_arclen_on_coord():
 def test_split_arclen_errors():
     s = shapely.geometry.LineString([(3,0), (1,0), (0,0)])
     df = geopandas.GeoDataFrame({'geometry' : [s,]})
-    node = watershed_workflow.river_tree.River(0, df)
+    node = watershed_workflow.hydro.river.River(0, df)
 
     with pytest.raises(Exception):
         node.split(-0.5)
@@ -226,8 +226,8 @@ def test_prune():
     df = geopandas.GeoDataFrame({'index' : [2,1],
                                  'geometry' : [s2,s1]}).set_index('index')
 
-    n2 = watershed_workflow.river_tree.River(2, df)
-    n1 = watershed_workflow.river_tree.River(1, df, [n2,])
+    n2 = watershed_workflow.hydro.river.River(2, df)
+    n1 = watershed_workflow.hydro.river.River(1, df, [n2,])
     assert n1.isContinuous()
     assert n1.linestring.length == 1
     assert n2.parent is n1
@@ -241,11 +241,11 @@ def test_prune():
     
 
 def test_remove_divergences(braided_stream):
-    rivers = watershed_workflow.river_tree.createRivers(braided_stream, 'hydroseq')
+    rivers = watershed_workflow.hydro.river.createRivers(braided_stream, 'hydroseq')
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 6)
 
-    watershed_workflow.river_tree.removeBraids(rivers)
+    watershed_workflow.hydro.river.removeBraids(rivers)
     assert (len(rivers) == 1)
     assert (len(rivers[0]) == 4)
 

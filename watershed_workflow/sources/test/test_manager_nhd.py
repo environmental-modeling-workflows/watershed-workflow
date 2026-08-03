@@ -27,10 +27,9 @@ def nhd_hr():
 def test_constructor_properties():
     """Test that constructor sets properties correctly"""
     nhd = ManagerNHD('NHDPlus MR v2.1')
-    assert nhd.name == 'NHDPlus MR v2.1'  # Name is overridden to be user-friendly
-    assert nhd.source == 'HyRiver.WaterData'
+    assert nhd.product == 'NHDPlus MR v2.1'
+    assert nhd.source == 'pynhd WaterData'
     assert nhd.native_crs_in == watershed_workflow.crs.latlon_crs
-    assert nhd._protocol_name == 'WaterData'  # Protocol name is the string
     assert nhd._protocol.__name__ == 'WaterData'  # _protocol is the class
     assert nhd._catchments == True  # default
 
@@ -43,7 +42,7 @@ def test_constructor_no_catchments():
 
 def test_invalid_protocol():
     """Test that invalid protocol raises error"""
-    with pytest.raises(ValueError, match="Invalid ManagerNHD dataset_name"):
+    with pytest.raises(ValueError, match="Invalid ManagerNHD product"):
         ManagerNHD('Invalid Protocol')
 
 

@@ -2,7 +2,7 @@
 
 import attr
 import sys, os
-import watershed_workflow.config
+import watershed_workflow.utils.config
 
 
 @attr.s
@@ -21,7 +21,7 @@ class Names:
     raw_template = attr.ib(type=str, default=None)
 
     def data_dir(self):
-        return os.path.join(watershed_workflow.config.rcParams['DEFAULT']['data_directory'],
+        return os.path.join(watershed_workflow.utils.config.rcParams['DEFAULT']['data_directory'],
                             self.base_folder)
 
     def folder_name(self, *args, **kwargs):

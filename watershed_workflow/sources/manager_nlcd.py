@@ -15,10 +15,12 @@ import pygeohydro.helpers
 from watershed_workflow.crs import CRS
 
 from . import manager_dataset
+from .manager import ManagerAttributes
+from .manager_dataset_cached import in_memory_cached_manager
 
 
 colors = {
-    0: ('None', (1., 1., 1.)),
+    -1: ('None', (1., 1., 1.)),
     11: ('Open Water', (0.27843137255, 0.41960784314, 0.62745098039)),
     12: ('Perrenial Ice/Snow', (0.81960784314, 0.86666666667, 0.97647058824)),
     21: ('Developed, Open Space', (0.86666666667, 0.78823529412, 0.78823529412)),
@@ -45,6 +47,7 @@ colors = {
 indices = dict([(pars[0], id) for (id, pars) in colors.items()])
 
 
+@in_memory_cached_manager
 class ManagerNLCD(manager_dataset.ManagerDataset):
     """National Land Cover Database manager for single-year snapshots.
 
@@ -63,10 +66,12 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
     """
     colors = colors
     indices = indices
+    _NODATA = {'cover': -1, 'descriptor': -1}
+    _DTYPE  = {'cover': 'int16', 'descriptor': 'int16'}
 
     def __init__(self, location='L48', year=None):
         """Initialize NLCD manager for specific location and year.
-        
+
         Parameters
         ----------
         location : str, optional
@@ -76,20 +81,26 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
         """
         self.location = self._validateLocation(location)
         self.year = self._validateYear(year, location)
-        
-        # NLCD is non-temporal - each instance represents one year snapshot
+
         native_crs = CRS.from_epsg(4326)  # WGS84 Geographic
-        super().__init__(
-            name=f'NLCD {self.year} {self.location}',
-            source='pygeohydro',
-            native_resolution=0.00027,  # ~30m in degrees (approximately 30m at mid-latitudes)
-            native_crs_in=native_crs,    # Expected input CRS
-            native_crs_out=native_crs,   # Output data CRS
-            native_start=None,           # Non-temporal data
-            native_end=None,             # Non-temporal data
+
+        attrs = ManagerAttributes(
+            category='land_cover',
+            product=f'NLCD {self.year} {self.location}',
+            source='pygeohydro MRLC',
+            description='National Land Cover Database land cover classification.',
+            product_short=f'NLCD_{self.location}_{self.year}',
+            source_short='pygeohydro_mrlc',
+            url='https://www.mrlc.gov/data',
+            license='public domain',
+            citation='Yang et al. 2018',
+            native_crs_in=native_crs,
+            native_crs_out=native_crs,
+            native_resolution=0.00027,  # ~30m in degrees
             valid_variables=['cover', 'impervious', 'canopy', 'descriptor'],
-            default_variables=['cover']
+            default_variables=['cover'],
         )
+        super().__init__(attrs)
 
     def _validateLocation(self, location):
         """Validate location parameter."""
@@ -106,10 +117,10 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
             'HI': [2001],
             'PR': [2001]
         }
-        
+
         if year is None:
             return valid_years[location][0]  # Most recent
-        
+
         if year not in valid_years[location]:
             raise ValueError(f'NLCD invalid year "{year}" for location {location}, '
                             f'valid are: {valid_years[location]}')
@@ -117,72 +128,80 @@ class ManagerNLCD(manager_dataset.ManagerDataset):
 
     def _requestDataset(self, request: manager_dataset.ManagerDataset.Request
                         ) -> manager_dataset.ManagerDataset.Request:
-        """Request NLCD data - ready immediately.
-        
+        """Return the request unchanged — no async step.
+
         Parameters
         ----------
         request : ManagerDataset.Request
             Dataset request with preprocessed parameters.
-            
+
         Returns
         -------
         ManagerDataset.Request
-            Updated request marked as ready.
+            The same request, unchanged.
         """
-        request.is_ready = True
         return request
 
-    def _fetchDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
-        """Fetch NLCD data for the request.
-        
+    def _isServerReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
+        """Return True — pygeohydro is synchronous."""
+        return True
+
+    def _downloadDataset(self, request: manager_dataset.ManagerDataset.Request) -> None:
+        """Fetch NLCD data via pygeohydro and store on ``request._dataset``.
+
         Parameters
         ----------
         request : ManagerDataset.Request
             Dataset request with preprocessed parameters.
-            
-        Returns
-        -------
-        xr.Dataset
-            Dataset with requested NLCD variables for the specified year.
         """
-        # Extract parameters from request
-        geometry = request.geometry
         variables = request.variables
-        
-        assert variables is not None, "Variables should not be None for multi-variable NLCD data"
-        
-        # Create GeoDataFrame with native CRS (geometry is already in native_crs_in)
-        geom_df = gpd.GeoDataFrame(geometry=[geometry], crs=self.native_crs_in)
-        
-        # Build years dict for pygeohydro - single year for all variables
+        assert variables is not None
+
+        geom_df = gpd.GeoDataFrame(geometry=[request.geometry], crs=self.native_crs_in)
         years_dict = {var: [self.year] for var in variables}
-        
-        # Fetch data using pygeohydro
+
         data_dict = pygeohydro.nlcd_bygeom(
             geom_df,
-            resolution=30,  # Use 30 meters (pygeohydro expects meters)
+            resolution=30,
             years=years_dict,
             region=self.location,
         )
-        
-        # Extract the dataset (dict key is GeoDataFrame index, we have index 0)
+
         raw_dataset = data_dict[0]
-        
-        # Create final dataset with variable names as keys (not prefixed)
+
+        # pygeohydro returns float arrays (NaN used for nodata).
+        # Cast to appropriate dtypes: categorical vars → int16 (nodata=-1),
+        # continuous vars → float32.
         final_dataset = xr.Dataset()
         for var in variables:
-            # pygeohydro returns variables as 'var_year'
             source_key = f'{var}_{self.year}'
-            if source_key in raw_dataset:
-                final_dataset[var] = raw_dataset[source_key]
-            else:
+            if source_key not in raw_dataset:
                 raise ValueError(f"Variable {var} for year {self.year} not found in pygeohydro response")
-        
-        # Add metadata attributes
+
+            da = raw_dataset[source_key]
+            da.name = var
+
+            if var in self._NODATA:
+                nodata = self._NODATA[var]
+                # Cast first so the nodata sentinel (-1) can be represented,
+                # then replace any integer nodata values pygeohydro used for
+                # out-of-polygon pixels (stored in nodatavals) with our sentinel.
+                da = da.astype(self._DTYPE[var])
+                for src_nodata in da.attrs.get('nodatavals', ()):
+                    da = da.where(da != src_nodata, nodata)
+                da.attrs['nodata'] = nodata
+                da.attrs.pop('_FillValue', None)
+                da.attrs.pop('nodatavals', None)
+                da.attrs.pop('scale_factor', None)
+                da.attrs.pop('add_offset', None)
+
+            final_dataset[var] = da
+
         final_dataset.attrs['nlcd_year'] = self.year
         final_dataset.attrs['nlcd_location'] = self.location
-        
-        return final_dataset
-    
 
+        request._dataset = final_dataset
 
+    def _loadDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
+        """Return the dataset stored on the request by ``_downloadDataset``."""
+        return request._dataset
