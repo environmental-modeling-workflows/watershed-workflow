@@ -159,14 +159,17 @@ def writeTimeseriesToHDF5(filename: str,
     if time0 is None:
         time0 = times.values[0]
     if isinstance(time0, str):
-        time0 = cftime.datetime.strptime(time0, '%Y-%m-%d').date()
+        time0 = cftime.datetime.strptime(time0, '%Y-%m-%d')
+        time0_noleap = cftime.DatetimeNoLeap(time0.year, time0.month, time0.day)
     if attributes is None:
         attributes = dict()
     attributes['origin date'] = str(time0)
     attributes['start date'] = str(times.values[0])
     attributes['end date'] = str(times.values[-1])
-
-    times = np.array([(t - time0).total_seconds() for t in times])
+    try:
+        times = np.array([(t - time0).total_seconds() for t in times])
+    except TypeError:
+        times = np.array([(t - time0_noleap).total_seconds() for t in times])
     times = times.astype(np.int32)
     logging.info('Writing HDF5 file: {}'.format(filename))
     with h5py.File(filename, 'w') as fid:

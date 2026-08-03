@@ -508,7 +508,8 @@ def mangleGLHYMPSProperties(shapes: gpd.GeoDataFrame,
         'van Genuchten alpha [Pa^-1]': vg_alpha,
         'van Genuchten n [-]': van_genuchten_n,
         'residual saturation [-]': residual_saturation,
-        #'description' : descriptions,
+        'description': shapes['Descriptio'],
+        'type': shapes['XX']
     },
                                   geometry=shapes.geometry,
                                   crs=shapes.crs)
