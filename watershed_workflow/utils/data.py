@@ -719,68 +719,77 @@ def interpolateToRegular(data: Union[pd.DataFrame, xr.DataArray, xr.Dataset],
     
 
 #
-# Compute an annual average
+# Compute an annual average (works at any sub-daily or daily timestep)
 #
 def _computeAverageYear(ds: xr.Dataset,
                         start_date: cftime.DatetimeNoLeap,
                         output_nyears: int,
                         time_dim: str,
                         ) -> Tuple[xr.Dataset, List[cftime.datetime]]:
-    """
-    Compute annual average for a Dataset and generate output times.
-    
+    """Compute climatological-average year for a Dataset at any timestep resolution.
+
+    Bins each timestep by its position within the annual cycle — concretely by
+    the integer number of timesteps elapsed since ``start_date`` modulo the
+    number of timesteps in one 365-day year.  This naturally handles daily,
+    hourly, 3-hourly, or any other regular interval without special-casing.
+
     Parameters
     ----------
     ds : xr.Dataset
         Input Dataset with cftime noleap calendar dates.
     start_date : cftime.DatetimeNoLeap
-        Start date for the output time series.
+        Reference date used to compute within-year position.  Should align
+        with the start of a year (e.g. YYYY-01-01 00:00).
     output_nyears : int
         Number of years to repeat the averaged pattern.
     time_dim : str
         Name of the time dimension.
-        
+
     Returns
     -------
     averaged_ds : xr.Dataset
-        Dataset with averaged values indexed by day of year.
+        Dataset averaged over one year's worth of bins.
     output_times : list of cftime.datetime
-        List of output times for the repeated pattern.
+        Output timestamps for the repeated pattern.
     """
-    # Calculate day of year for each time point
     time_values = ds[time_dim].values
-    doys = np.array([((date - start_date).days) % 365
-                     for date in time_values])
 
-    # Get unique days of year
-    unique_doys = np.unique(doys)
+    # Detect timestep in hours (handles daily, hourly, 3-hourly, etc.)
+    if len(time_values) < 2:
+        raise ValueError("Need at least two timesteps to detect interval.")
+    dt_seconds = (time_values[1] - time_values[0]).total_seconds()
+    dt_hours = dt_seconds / 3600.0
+    if dt_hours <= 0:
+        raise ValueError(f"Non-positive timestep detected: {dt_hours} hours.")
+    steps_per_year = round(365 * 24 / dt_hours)
 
-    # Add day of year coordinate temporarily
-    ds_with_doy = ds.assign_coords(day_of_year=(time_dim, doys))
+    # Bin index: integer steps elapsed since start_date, modulo steps_per_year
+    elapsed_steps = np.array(
+        [round((date - start_date).total_seconds() / dt_seconds) % steps_per_year
+         for date in time_values],
+        dtype=np.int64,
+    )
+    unique_bins = np.unique(elapsed_steps)
 
-    # Group by day of year and compute mean
-    averaged_ds = ds_with_doy.groupby('day_of_year').mean(dim=time_dim)
+    ds_with_bin = ds.assign_coords(year_bin=(time_dim, elapsed_steps))
+    averaged_ds = ds_with_bin.groupby('year_bin').mean(dim=time_dim)
 
-    # Create output times
+    # Build output times and bin indices for output_nyears repeats
     output_times = []
-    output_doys = []
-
+    output_bins = []
     for year_offset in range(output_nyears):
-        for doy in unique_doys:
-            date = start_date + datetime.timedelta(days=(year_offset*365 + int(doy)))
+        for bin_idx in unique_bins:
+            offset_seconds = (year_offset * steps_per_year + int(bin_idx)) * dt_seconds
+            date = start_date + datetime.timedelta(seconds=offset_seconds)
             output_times.append(date)
-            output_doys.append(doy)
+            output_bins.append(bin_idx)
 
-    # Create mapping from output indices to day of year
-    output_doys_array = xr.DataArray(output_doys, dims=['new_time'])
+    output_bins_array = xr.DataArray(output_bins, dims=['new_time'])
+    result_ds = averaged_ds.sel(year_bin=output_bins_array)
+    result_ds = result_ds.rename({'new_time': time_dim})
 
-    # Create result by selecting appropriate days
-    result_ds = averaged_ds.sel(day_of_year=output_doys_array)
-    result_ds = result_ds.rename({ 'new_time': time_dim })
-
-    # Drop day_of_year coordinate
-    if 'day_of_year' in result_ds.coords:
-        result_ds = result_ds.drop_vars('day_of_year')
+    if 'year_bin' in result_ds.coords:
+        result_ds = result_ds.drop_vars('year_bin')
 
     return result_ds, output_times
 
