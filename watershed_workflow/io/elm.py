@@ -371,6 +371,11 @@ class SurfdataBuilder:
 
               'total gravel pct [%]'    percent gravel (0-100)
               'organic matter [kg/m^3]' organic matter density
+
+            If present, 'porosity [-]' is also written out as WATSAT (for
+            ELM's watsat_type='from_file' namelist option); omitted from the
+            output file entirely if absent, since ELM's default
+            watsat_type='cosby_1984' does not read WATSAT at all.
         """
         soil_type = np.asarray(soil_type, dtype=int)
         assert soil_type.shape == (self._nlevsoi, self._ncells), (
@@ -400,6 +405,13 @@ class SurfdataBuilder:
         self._ds['PCT_CLAY'] = xr.DataArray(pct_clay, dims=('nlevsoi', 'gridcell'), attrs=_a('PCT_CLAY'))
         self._ds['PCT_GRVL'] = xr.DataArray(pct_grvl, dims=('nlevsoi', 'gridcell'), attrs=_a('PCT_GRVL'))
         self._ds['ORGANIC']  = xr.DataArray(organic,  dims=('nlevsoi', 'gridcell'), attrs=_a('ORGANIC'))
+
+        if 'porosity [-]' in soil_properties.columns:
+            watsat = (soil_properties.loc[flat, 'porosity [-]']
+                      .values.reshape(self._nlevsoi, self._ncells))
+            self._ds['WATSAT'] = xr.DataArray(
+                watsat, dims=('nlevsoi', 'gridcell'),
+                attrs={'long_name': 'water content at saturation', 'units': 'mm3/mm3'})
 
     def setPhenology(self, lai=False, sai=False, height_top=False, height_bot=False):
         """Set monthly canopy phenology tables.

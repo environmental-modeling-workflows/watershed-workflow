@@ -555,7 +555,7 @@ class Mesh2D:
         meshes the z component is ignored.
         """
         return np.array([
-            watershed_workflow.utils.utils.computeArea([self.coords[v, 0:2] for v in conn])
+            watershed_workflow.utils.geometry.computeArea([self.coords[v, 0:2] for v in conn])
             for conn in self.conn
         ])
 
