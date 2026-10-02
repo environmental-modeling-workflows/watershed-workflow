@@ -1,21 +1,15 @@
 """Manager for interacting with DayMet datasets."""
-from typing import List, Optional
+from typing import List
 
-import os, sys
+import os
 import logging
-import numpy as np
-import requests
-import requests.exceptions
-import shapely.geometry
 import cftime, datetime
 import xarray as xr
 
 import watershed_workflow.crs
 from watershed_workflow.crs import CRS
-import watershed_workflow.utils.warp
 import watershed_workflow.utils.data
 
-from . import utils as source_utils
 from . import manager_dataset
 from .manager import ManagerAttributes
 from .manager_dataset_cached import cached_dataset_manager
@@ -30,6 +24,14 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
     number of point-sources of meterological data, aggregates them to daily
     time series, and spatially interpolates them onto a 1km gridded product that
     covers all of North America from 1980 to present [Daymet]_.
+
+    Data is accessed through NASA Earthdata OPeNDAP, and requires a NASA 
+    Earthdata login. This is the same account used for MODIS (AppEEARS), so add
+    the username and password to ~/.netrc like below:: 
+
+        machine urs.earthdata.nasa.gov
+        login MY_USERNAME
+        password MY_PASSWORD
 
     Variable names and descriptions
 
@@ -63,41 +65,159 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
     """
 
     # DayMet-specific constants
-    URL = "http://thredds.daac.ornl.gov/thredds/ncss/grid/ornldaac/2129/daymet_v4_daily_na_{variable}_{year}.nc"
+    DOI = "10.3334/ORNLDAAC/2129"
+    GRANULE_NAME = "*_na_{variable}_{year}.nc"
+    VALID_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
+    DEFAULT_VARIABLES = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
 
     def __init__(self):
-        native_resolution = 1000.0  # 1km in meters
         native_start = cftime.datetime(1980, 1, 1, calendar='noleap')
         # DayMet is released annually, ~30+ days after year-end; update this
         # once the following year's data is confirmed published.
         native_end = cftime.datetime(2024, 12, 31, calendar='noleap')
-        native_crs_daymet = watershed_workflow.crs.from_string(
+        native_crs_daymet = CRS.from_proj4(
             '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
         )
-        valid_variables = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'swe', 'dayl']
-        default_variables = ['tmin', 'tmax', 'prcp', 'srad', 'vp', 'dayl']
+        native_resolution = 1000.0  # 1km in meters
 
         attrs = ManagerAttributes(
             category='meteorology',
             product='DayMet 1km',
-            source='ORNL DAAC THREDDS',
+            source='NASA Earthdata ORNL DAAC OPeNDAP',
             description='Daily surface weather data on a 1-km grid for North America.',
             product_short='daymet',
-            source_short='ornl_daac_thredds',
+            source_short='nasa_earthdata_opendap',
             url='https://daymet.ornl.gov',
             license='public domain',
             citation='Thornton et al. 2022',
-            native_crs_in=CRS.from_epsg(4326),
+            native_crs_in=native_crs_daymet,
             native_crs_out=native_crs_daymet,
             native_resolution=native_resolution,
             native_start=native_start,
             native_end=native_end,
-            valid_variables=valid_variables,
-            default_variables=default_variables,
+            valid_variables=self.VALID_VARIABLES,
+            default_variables=self.DEFAULT_VARIABLES,
             is_temporal=True,
         )
         super().__init__(attrs)
+        self._session = None
 
+
+    def _authenticate(self) -> None:
+        """Log in to NASA Earthdata once, using ~/.netrc, and cache the OPeNDAP session."""
+        if self._session is not None:
+            return
+        
+        import earthaccess
+    
+        try:
+            earthaccess.login(strategy='netrc')
+        except Exception as e:
+            raise RuntimeError(
+                'NASA Earthdata credentials not found. Add an entry to ~/.netrc:\n\n'
+                '    machine urs.earthdata.nasa.gov login <username> password <password>\n\n'
+                'Register for a free account at https://urs.earthdata.nasa.gov\n'
+                f'Original error: {e}'
+            ) from e
+
+        self._session = earthaccess.get_requests_https_session()
+
+
+    def _findOpendapURL(self, var: str, year: int) -> str:
+        """Search for the OPeNDAP URL of a (variable, year) granule.
+
+        Parameters
+        ----------
+        var : str
+            Variable name.
+        year : int
+            A year in the valid range (currently 1980-2024).
+        """
+        import earthaccess
+
+        results = earthaccess.search_data(
+            doi=self.DOI,
+            temporal=(f'{year}-01-01', f'{year}-12-31'),
+            granule_name=self.GRANULE_NAME.format(variable=var, year=year),
+        )
+
+        for item in results:
+            for url in item['umm']['RelatedUrls']:
+                if 'OPENDAP' in url.get('Description', '').upper():
+                    ce = f"?dap4.ce=/{var}%3B/y%3B/x%3B/time"
+                    return url['URL'].replace('https', 'dap4') + ce
+
+        raise RuntimeError(f'DayMet: no OPeNDAP granule found for variable "{var}", year {year}')
+
+    
+    def _downloadDataset(self, request: manager_dataset.ManagerDataset.Request) -> None:
+        """Download per-variable, per-year DayMet NetCDF files.
+
+        Parameters
+        ----------
+        request : ManagerDataset.Request
+            Request object containing geometry, dates, and variables.
+            Files are written to ``request._download_path/{var}_{year}.nc``.
+        """
+        start_year = request.start.year
+        end_year = request.end.year
+
+        # Snap bounds in DayMet CRS.
+        snapped_bounds = snapBounds(request.geometry.bounds, self.native_resolution)
+
+        for var in request.variables:
+            for year in range(start_year, end_year + 1):
+                filename = os.path.join(request._download_path, f'{var}_{year}.nc')
+                self._downloadFile(var, year, snapped_bounds, filename)
+
+
+    def _downloadFile(self,
+                      var: str,
+                      year: int,
+                      snapped_bounds: tuple,
+                      filename: str,
+                      force: bool = False) -> None:
+        """Download a single DayMet NetCDF file.
+
+        Parameters
+        ----------
+        var : str
+            Variable name, see class documentation.
+        year : int
+            A year in the valid range (currently 1980-2024).
+        snapped_bounds : tuple of float
+            (xmin, ymin, xmax, ymax) in DayMet CRS, from self._downloadDataset(request).
+        filename : str
+            Destination NetCDF file path.
+        force : bool, optional
+            If true, re-download even if the file already exists.
+        """
+        logging.info(f"Collecting DayMet file to tile bounds: {snapped_bounds}")
+
+        if (not os.path.exists(filename)) or force:
+            self._authenticate()
+            url = self._findOpendapURL(var, year)
+            logging.info(f"  Downloading: {url}")
+            logging.info(f"      to file: {filename}")
+
+            xmin, ymin, xmax, ymax = snapped_bounds
+            ds = xr.open_dataset(url, engine='pydap', session=self._session)
+    
+            # y is stored in decreasing order on the DayMet grid
+            y_slice = slice(ymax, ymin) if ds.y[0] > ds.y[-1] else slice(ymin, ymax)
+            ds_subset = ds.sel(x=slice(xmin, xmax), y=y_slice)
+            if ds_subset.sizes['x'] == 0 or ds_subset.sizes['y'] == 0:
+                raise RuntimeError(f'DayMet: bounds {snapped_bounds} do not intersect the DayMet domain')
+            ds_subset = ds_subset.compute()
+
+            # save to a temporary filename first in case of interruption
+            tmp_filename = filename + '.tmp'
+            ds_subset.to_netcdf(tmp_filename)
+            os.replace(tmp_filename, filename)
+        else:
+            logging.info(f"  Using existing: {filename}")
+
+                
     def isComplete(self, dir: str, request: manager_dataset.ManagerDataset.Request) -> bool:
         """Return True if all per-variable, per-year files exist in the cache directory.
 
@@ -115,91 +235,39 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
             variable and year.
         """
         start_year = request.start.year
-        end_year = (request.end - datetime.timedelta(days=1)).year
+        end_year = request.end.year
         for var in request.variables:
             for year in range(start_year, end_year + 1):
                 if not os.path.isfile(os.path.join(dir, f'{var}_{year}.nc')):
                     return False
         return True
 
-    def _requestDataset(self, request: manager_dataset.ManagerDataset.Request) -> manager_dataset.ManagerDataset.Request:
-        """No op -- no server side request"""
+
+    def _preprocessParameters(self, *args, **kwargs) -> manager_dataset.ManagerDataset.Request:
+        """ Make the end date include its 12:00 record.
+
+        DayMet records are stamped at 12:00 of each day. This operation includes
+        the end day's record when end is given as a date (00:00)
+        """
+        request = super()._preprocessParameters(*args, **kwargs)
+        if request.end is not None and (
+            request.end.hour, request.end.minute, request.end.second
+        ) == (0, 0, 0): 
+            request.end += datetime.timedelta(hours=12)
         return request
 
+
+    def _requestDataset(self, 
+                        request: manager_dataset.ManagerDataset.Request,
+                        ) -> manager_dataset.ManagerDataset.Request:
+        """No op -- no server side request."""
+        return request
+
+
     def _isServerReady(self, request: manager_dataset.ManagerDataset.Request) -> bool:
-        """Return True — DayMet THREDDS is synchronous."""
+        """Return True — DayMet downloads are synchronous."""
         return True
 
-    def _downloadDataset(self, request: manager_dataset.ManagerDataset.Request) -> None:
-        """Download per-variable, per-year DayMet NetCDF files.
-
-        Parameters
-        ----------
-        request : ManagerDataset.Request
-            Request object containing geometry, dates, and variables.
-            Files are written to ``request._download_path/{var}_{year}.nc``.
-        """
-        start_year = request.start.year
-        end_year = (request.end - datetime.timedelta(days=1)).year
-
-        # Snap bounds in WGS84 degrees for use in the THREDDS URL parameters.
-        snapped_bounds = snapBounds(request.geometry.bounds, self.native_resolution)
-
-        for var in request.variables:
-            for year in range(start_year, end_year + 1):
-                filename = os.path.join(request._download_path, f'{var}_{year}.nc')
-                self._downloadFile(var, year, snapped_bounds, filename)
-
-    def _downloadFile(self,
-                      var: str,
-                      year: int,
-                      snapped_bounds: tuple,
-                      filename: str,
-                      force: bool = False) -> None:
-        """Download a single DayMet NetCDF file.
-
-        Parameters
-        ----------
-        var : str
-            Variable name, see class documentation.
-        year : int
-            A year in the valid range (currently 1980-2023).
-        snapped_bounds : tuple of float
-            (xmin, ymin, xmax, ymax) in WGS84 degrees.
-        filename : str
-            Destination NetCDF file path.
-        force : bool, optional
-            If true, re-download even if the file already exists.
-        """
-        logging.info(f"Collecting DayMet file to tile bounds: {snapped_bounds}")
-
-        if (not os.path.exists(filename)) or force:
-            url_dict = {'year': str(year), 'variable': var}
-            url = self.URL.format(**url_dict)
-            logging.info(f"  Downloading: {url}")
-            logging.info(f"      to file: {filename}")
-
-            xmin, ymin, xmax, ymax = snapped_bounds
-            request_params = [
-                ('var', 'lat'), ('var', 'lon'), ('var', var),
-                ('west',  f'{xmin:.4f}'),
-                ('south', f'{ymin:.4f}'),
-                ('east',  f'{xmax:.4f}'),
-                ('north', f'{ymax:.4f}'),
-                ('horizStride', '1'),
-                ('time_start', f'{year}-01-01T12:00:00Z'),
-                ('time_end',   f'{year}-12-31T12:00:00Z'),
-                ('timeStride', '1'),
-                ('accept', 'netcdf'),
-            ]
-
-            r = requests.get(url, params=request_params, verify=source_utils.getVerifyOption())
-            r.raise_for_status()
-
-            with open(filename, 'wb') as fid:
-                fid.write(r.content)
-        else:
-            logging.info(f"  Using existing: {filename}")
 
     def _loadDataset(self, request: manager_dataset.ManagerDataset.Request) -> xr.Dataset:
         """Open all per-variable, per-year files and concatenate into a dataset.
@@ -226,6 +294,7 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
 
         return self._openFiles(file_lists, variables)
 
+
     def _openFiles(self,
                    file_lists: List[List[str]],
                    variables: List[str]) -> xr.Dataset:
@@ -240,17 +309,11 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
 
         ds_combined = xr.Dataset({da.name: da for da in ds_list_allvars})
 
-        # convert x/y coordinates from km to meters
-        attrs_ref = ds_combined.x.attrs.copy()
-        attrs_ref['units'] = 'm'
-        new_x = ds_combined.x * 1000
-        new_y = ds_combined.y * 1000
+        # raw x/y coordinates have already been meters
         new_time = watershed_workflow.utils.data.convertTimesToCFTimeNoleap(
             watershed_workflow.utils.data.convertTimesToCFTime(ds_combined['time'].values))
 
-        ds_combined = ds_combined.assign_coords(x=new_x, y=new_y, time=new_time)
-        ds_combined.x.attrs = attrs_ref
-        ds_combined.y.attrs = attrs_ref
+        ds_combined = ds_combined.assign_coords(time=new_time)
         ds_combined.attrs = ds_concat.attrs
 
         return ds_combined
