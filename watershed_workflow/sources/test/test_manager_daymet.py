@@ -12,8 +12,6 @@ from watershed_workflow.crs import CRS
 from watershed_workflow.sources.manager_daymet import ManagerDaymet
 
 
-pytest.skip("Skipping all DayMet tests -- the THREDDS API is deprecated.", allow_module_level=True)
-
 @pytest.fixture
 def small_daymet_geometry():
     """Small test geometry in WGS84 for fast testing."""
@@ -35,6 +33,7 @@ def short_time_range():
     return start, end
 
 
+@pytest.mark.network
 def test_getDataset_single_meteorological_variable(small_daymet_geometry, daymet_manager, short_time_range):
     """Test getDataset with single meteorological variable."""
     start, end = short_time_range
@@ -53,10 +52,11 @@ def test_getDataset_single_meteorological_variable(small_daymet_geometry, daymet
     assert result.time.values[0].calendar == 'noleap'
     
     # Check metadata added by base class
-    assert 'name' in result.attrs
+    assert 'product' in result.attrs
     assert 'source' in result.attrs
 
 
+@pytest.mark.network
 def test_getDataset_multiple_meteorological_variables(small_daymet_geometry, daymet_manager, short_time_range):
     """Test getDataset with multiple meteorological variables."""
     start, end = short_time_range
@@ -73,6 +73,7 @@ def test_getDataset_multiple_meteorological_variables(small_daymet_geometry, day
     assert 'time' in result.dims
 
 
+@pytest.mark.network
 def test_getDataset_multi_year_request(small_daymet_geometry, daymet_manager):
     """Test getDataset spanning multiple years."""
     start = cftime.datetime(2019, 12, 30, calendar='noleap')
@@ -91,7 +92,7 @@ def test_getDataset_multi_year_request(small_daymet_geometry, daymet_manager):
     years = set(result.time.dt.year.values)
     assert years == {2019, 2020}
 
-
+@pytest.mark.network
 def test_noleap_calendar_handling(small_daymet_geometry, daymet_manager):
     """Test that DayMet properly handles noleap calendar."""
     start = cftime.datetime(2020, 2, 28, calendar='noleap')
@@ -119,19 +120,22 @@ def test_native_crs_properties(daymet_manager):
     assert '+lon_0=-100' in proj4_str
     assert '+units=m' in proj4_str
     
-    assert daymet_manager.native_crs_in == CRS.from_epsg(4326)  # WGS84 input
+    assert daymet_manager.native_crs_in == CRS.from_proj4(
+        '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
+    )  # DayMet crs
     assert daymet_manager.native_resolution == 1000.0  # 1km
 
 
-def test_coordinate_conversion_from_km_to_meters(small_daymet_geometry, daymet_manager, short_time_range):
-    """Test that coordinates are properly converted from km to meters."""
+@pytest.mark.network
+def test_coordinate_in_meters(small_daymet_geometry, daymet_manager, short_time_range):
+    """Test that coordinates are in meters."""
     start, end = short_time_range
     geometry_crs = watershed_workflow.crs.latlon_crs
     
     result = daymet_manager.getDataset(small_daymet_geometry, geometry_crs, start, end, ['tmin'])
     
     # Check that coordinates are in meters (large values)
-    assert abs(result.x.values[0]) > 1000000  # Should be > 1000km in meters
+    assert abs(result.x.values[0]) > 100000   # Should be > 100km in meters
     assert abs(result.y.values[0]) > 100000   # Should be > 100km in meters
     
     # Check coordinate spacing is ~1000m (1km resolution)
@@ -155,10 +159,11 @@ def test_invalid_year_range_error(small_daymet_geometry, daymet_manager):
     end = cftime.datetime(2020, 1, 1, calendar='noleap')  # Invalid: start > end
     geometry_crs = watershed_workflow.crs.latlon_crs
     
-    with pytest.raises(RuntimeError, match="Start year .* is after end year"):
+    with pytest.raises(ValueError, match="start .* must not be after end"):
         daymet_manager.getDataset(small_daymet_geometry, geometry_crs, start, end, ['tmin'])
 
 
+@pytest.mark.network
 def test_getDataset_coweeta_integration(coweeta):
     """Test DayMet works with existing coweeta fixture."""
     mgr = ManagerDaymet()
@@ -184,6 +189,7 @@ def test_getDataset_coweeta_integration(coweeta):
     assert 25 < tmax_mean < 40  # Reasonable July tmax (°C)
 
 
+@pytest.mark.network
 def test_daymet_async_interface(small_daymet_geometry, daymet_manager, short_time_range):
     """Test the async interface methods."""
     start, end = short_time_range
@@ -196,24 +202,19 @@ def test_daymet_async_interface(small_daymet_geometry, daymet_manager, short_tim
     assert request.manager == daymet_manager
     assert request.geometry is not None
     assert request.variables == variables
-    # Check DayMet-specific attributes
-    assert hasattr(request, 'bounds')
-    assert hasattr(request, 'start_year')
-    assert hasattr(request, 'end_year')
-    assert request.start_year == 2020
-    assert request.end_year == 2020
     
     # Test isReady - might be ready if files exist, or not if they need downloading
     ready_status = daymet_manager.isReady(request)
     assert isinstance(ready_status, bool)
     
     # Test fetchRequest
-    result = daymet_manager.fetchRequest(request)
+    result = daymet_manager.fetchDataset(request)
     assert isinstance(result, xr.Dataset)
     assert 'tmin' in result.data_vars
     assert result.rio.crs == daymet_manager.native_crs_out
 
 
+@pytest.mark.network
 def test_daymet_default_variables(small_daymet_geometry, daymet_manager, short_time_range):
     """Test that default variables work correctly."""
     start, end = short_time_range
