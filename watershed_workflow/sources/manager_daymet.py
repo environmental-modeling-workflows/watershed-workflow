@@ -74,7 +74,7 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
         native_start = cftime.datetime(1980, 1, 1, calendar='noleap')
         # DayMet is released annually, ~30+ days after year-end; update this
         # once the following year's data is confirmed published.
-        native_end = cftime.datetime(2024, 12, 31, calendar='noleap')
+        native_end = cftime.datetime(2025, 12, 31, calendar='noleap')
         native_crs_daymet = CRS.from_proj4(
             '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
         )
@@ -131,7 +131,7 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
         var : str
             Variable name.
         year : int
-            A year in the valid range (currently 1980-2024).
+            A year in the valid range (currently 1980-2025).
         """
         import earthaccess
 
@@ -184,7 +184,7 @@ class ManagerDaymet(manager_dataset.ManagerDataset):
         var : str
             Variable name, see class documentation.
         year : int
-            A year in the valid range (currently 1980-2024).
+            A year in the valid range (currently 1980-2025).
         snapped_bounds : tuple of float
             (xmin, ymin, xmax, ymax) in DayMet CRS, from self._downloadDataset(request).
         filename : str
