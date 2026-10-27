@@ -30,6 +30,7 @@ PACKAGES_BASE=['python<3.13',           # limited for cert issues in docker cont
                'metis',
                'pymetis>=2025',         # arm64 builds are correct
                'earthaccess',           # NASA Earthdata synchronous download
+               'pydap',                 # access data on OPeNDAP servers
                'pyhdf',                 # read MODIS HDF4 granules
                ]
 
