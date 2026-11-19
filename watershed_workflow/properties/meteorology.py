@@ -53,8 +53,11 @@ def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
     else:
         tt_K = transition_temperature
 
-    rain = xr.where(air_temp >= tt_K, precip, 0)
-    snow = xr.where(air_temp < tt_K, precip, 0)
+    if (air_temp < 100).all():
+        air_temp_K = air_temp + 273.15
+
+    rain = xr.where(air_temp_K >= tt_K, precip, 0)
+    snow = xr.where(air_temp_K < tt_K, precip, 0)
     return rain, snow
 
 
@@ -98,7 +101,7 @@ def convertDayMetToATS(dat: xr.Dataset, transition_temperature: float = 0.) -> x
     dout['incoming shortwave radiation [W m^-2]'] = dat['srad'] * dat['dayl'] / 86400  # Wm2
     dout['vapor pressure air [Pa]'] = dat['vp']  # Pa
     dout['precipitation rain [m s^-1]'], dout['precipitation snow [m SWE s^-1]'] = \
-        allocatePrecipitation(precip_ms, mean_air_temp_c, transition_temperature)
+        allocatePrecipitation(precip_ms, dout['air temperature [K]'], transition_temperature)
     return dout
 
 

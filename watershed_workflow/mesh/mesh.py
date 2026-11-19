@@ -1164,40 +1164,28 @@ class Mesh2D:
                     # I screwed up... debug me!
                     logging.info("Uh oh bad geom: up_i = {}, dn_i = {}, c = {}".format(
                         up_i, dn_i, c))
-                    fig = plt.figure()
-                    ax = fig.add_subplot(111)
+
+                    from matplotlib import pyplot as plt
 
                     cc_sorted = np.array([cell_coords[k] for k in order]) + dual_vertices[c0]
                     cb_sorted = np.array([dual_vertices[cdn], dual_vertices[c], dual_vertices[cup]])
+                    
+                    fig, ax = plt.subplots()
                     ax.plot(cc_sorted[:, 0], cc_sorted[:, 1], 'k-x')
                     ax.scatter(dual_vertices[c0, 0], dual_vertices[c0, 1], color='r')
                     ax.scatter(dual_vertices[cup, 0], dual_vertices[cup, 1], color='m')
                     ax.scatter(dual_vertices[cdn, 0], dual_vertices[cdn, 1], color='b')
-                    plt.show()
 
-                    fig = plt.figure(figsize=figsize)
-                    ax = watershed_workflow.plot.plot.get_ax(crs, fig)
-
-                    mp = watershed_workflow.plot.plot.triangulation(mesh_points3,
-                                                               mesh_tris,
-                                                               crs,
-                                                               ax=ax,
-                                                               color='elevation',
-                                                               edgecolor='white',
-                                                               linewidth=0.4)
+                    fig, ax = plt.subplots()
+                    mp = watershed_workflow.plot.plot.triangulation(
+                        self.coords, self.conn, ax=ax, color='elevation', 
+                        edgecolor='white', linewidth=0.4
+                    )
                     cbar = fig.colorbar(mp, orientation="horizontal", pad=0.05)
-                    #watershed_workflow.plot.plot.hucs(shapes, crs, ax=ax, color='k', linewidth=1)
-                    watershed_workflow.plot.plot.shply([shapely.geometry.LineString(cc_sorted), ],
-                                                  crs,
-                                                  ax=ax,
-                                                  color='red',
-                                                  linewidth=1)
-                    watershed_workflow.plot.plot.shply([shapely.geometry.LineString(cb_sorted), ],
-                                                  crs,
-                                                  ax=ax,
-                                                  color='blue',
-                                                  linewidth=1)
+                    ax.plot(cc_sorted[:, 0], cc_sorted[:, 1], color='red', linewidth=1)
+                    ax.plot(cb_sorted[:, 0], cb_sorted[:, 1], color='blue', linewidth=1)
                     ax.set_aspect('equal', 'datalim')
+                    plt.show()
 
                     raise RuntimeError('uh oh borked geom')
 
