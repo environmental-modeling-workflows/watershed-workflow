@@ -53,8 +53,11 @@ def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
     else:
         tt_K = transition_temperature
 
-    rain = xr.where(air_temp >= tt_K, precip, 0)
-    snow = xr.where(air_temp < tt_K, precip, 0)
+    if (air_temp < 100).all():
+        air_temp_K = air_temp + 273.15
+
+    rain = xr.where(air_temp_K >= tt_K, precip, 0)
+    snow = xr.where(air_temp_K < tt_K, precip, 0)
     return rain, snow
 
 
