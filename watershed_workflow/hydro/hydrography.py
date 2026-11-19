@@ -182,7 +182,14 @@ def findOutletsByCrossings(hucs: Watershed,
         logging.info(f'last outlet is {last_outlet} in polygon {last_outlet_poly} '
                      'at {crossings_clusters_centroids[last_outlet]}')
     else:
-        logging.info(f'did not find a domain outlet')
+        # This river tree never crosses any HUC boundary (e.g. a small
+        # interior tributary that joins another tree before reaching the
+        # domain edge) -- there is no outlet to find here.  Leave any
+        # previously-set hucs.exterior_outlet/hucs.df[OUTLET] untouched
+        # rather than crash on crossings_clusters_centroids[None].
+        logging.warning('findOutletsByCrossings: river does not cross any HUC '
+                        'boundary; no domain outlet found for this river, skipping.')
+        return
 
     # create the output
     outlet_locs = {}
