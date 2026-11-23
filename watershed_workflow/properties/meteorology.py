@@ -27,7 +27,7 @@ __all__ = [
 
 
 def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
-                          transition_temperature: float) -> Tuple[xr.DataArray, xr.DataArray]:
+                          transition_temperature: float | None = None) -> Tuple[xr.DataArray, xr.DataArray]:
     """Allocates precipitation between rain and snow based on temperature.
 
     Parameters
@@ -35,10 +35,12 @@ def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
     precip : xr.DataArray
         Total precipitation data.
     air_temp : xr.DataArray
-        Air temperature data.
-    transition_temperature : float
-        Temperature threshold for rain/snow transition. If < 100, assumed
-        to be in Celsius; otherwise Kelvin.
+        Air temperature data, either in unit K or C. If all > 100, assumed
+        to be in Kelvin, otherwise Celsius.
+    transition_temperature : float, optional
+        Temperature threshold for rain/snow transition, in the same units
+        as air_temp. Default is None, which means 0 C or 273.15 K if air_temp
+        is in unit K.
 
     Returns
     -------
@@ -48,25 +50,26 @@ def allocatePrecipitation(precip: xr.DataArray, air_temp: xr.DataArray,
         Snow precipitation (when temp < transition_temperature).
 
     """
-    if transition_temperature < 100:
-        tt_K = transition_temperature + 273.15
+    is_airtemp_K = bool((air_temp > 100).all())
+    if transition_temperature is None:
+        transition_temperature = 273.15 if is_airtemp_K else 0.
     else:
-        tt_K = transition_temperature
+        is_tt_K = transition_temperature > 100
+        if is_tt_K != is_airtemp_K:
+            raise ValueError("allocatePrecipitation: air_temp and transition_temperature "
+                             "must be in the same units (both C or both K).")
 
-    if (air_temp < 100).all():
-        air_temp_K = air_temp + 273.15
-
-    rain = xr.where(air_temp_K >= tt_K, precip, 0)
-    snow = xr.where(air_temp_K < tt_K, precip, 0)
+    rain = xr.where(air_temp >= transition_temperature, precip, 0)
+    snow = xr.where(air_temp < transition_temperature, precip, 0)
     return rain, snow
 
 
-def convertDayMetToATS(dat: xr.Dataset, transition_temperature: float = 0.) -> xr.Dataset:
+def convertDayMetToATS(dat: xr.Dataset, transition_temperature: float = 273.15) -> xr.Dataset:
     """Convert xarray.Dataset Daymet datasets to daily average data in standard form.
 
     This:
     - takes tmin and tmax to compute a mean
-    - splits rain and snow precip based on mean air temp relative to transition_temperature [C]
+    - splits rain and snow precip based on mean air temp relative to transition_temperature [K]
     - standardizes units and names for ATS
 
     Parameters
@@ -74,7 +77,7 @@ def convertDayMetToATS(dat: xr.Dataset, transition_temperature: float = 0.) -> x
     dat : xr.Dataset
         Input Daymet dataset with variables: tmin, tmax, prcp, srad, dayl, vp.
     transition_temperature : float, optional
-        Temperature threshold for rain/snow split in Celsius. Default is 0.
+        Temperature to transition from snow to rain [K].  Default is 273.15 K.
 
     Returns
     -------
@@ -106,7 +109,7 @@ def convertDayMetToATS(dat: xr.Dataset, transition_temperature: float = 0.) -> x
 
 
 def convertAORCToATS(dat: xr.Dataset,
-                     transition_temperature: float = 0.,
+                     transition_temperature: float = 273.15,
                      resample_interval: int = 1,
                      remove_leap_day: bool = False) -> xr.Dataset:
     """Convert xarray.Dataset AORC datasets to standard ATS format output.
@@ -121,7 +124,7 @@ def convertAORCToATS(dat: xr.Dataset,
     dat : xr.Dataset
       Input including AORC raw data.
     transition_temperature : float
-      Temperature to transition from snow to rain [C].  Default is 0 C.
+      Temperature to transition from snow to rain [K].  Default is 273.15 K.
     n_hourly : int
       Convert data from 1-hourly to n_hourly to reduce data needs.
       Defaults to 24 hours (daily data).
@@ -170,7 +173,7 @@ def convertAORCToATS(dat: xr.Dataset,
 
 def computeTypicalYear(dat: xr.Dataset,
                        repeat_nyears : int,
-                       transition_temperature: float = 0.,
+                       transition_temperature: float = 273.15,
                        time_dim: str = 'time',
                        smooth_kwargs: dict = None,
                        ) -> xr.Dataset:
@@ -189,7 +192,7 @@ def computeTypicalYear(dat: xr.Dataset,
       Number of years to replicate the data.  Note that first day of
       the returned dataset will be dat['time'][0] - repeat_nyears
     transition_temperature : float
-      Temperature to transition from snow to rain [C].  Default is 0 C.
+      Temperature to transition from snow to rain [K].  Default is 273.15 K.
     smooth_kwargs : dict, optional
       If provided, keyword arguments passed to ``ww.utils.smoothTimeSeries``
       to smooth all non-precipitation variables before computing the average
