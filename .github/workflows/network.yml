@@ -1,0 +1,87 @@
+name: Network tests
+
+# Runs the tests that require live access to external data services
+# (pytest marker "network", and notebooks tagged "network").  These are
+# excluded from the PR/push CI in main.yml because the services are not
+# reliable enough to gate merges on.
+#
+# Tests that require credentials use the optional repository secrets:
+#   EARTHDATA_USERNAME, EARTHDATA_PASSWORD  -- NASA Earthdata (MODIS, AppEEARS)
+#   HFHYDRODATA_EMAIL, HFHYDRODATA_PIN      -- HydroFrame hf_hydrodata
+# Without them, those tests fail.
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      ci_env_tag:
+        description: 'Tag of the watershed_workflow-ci_env image to test in'
+        default: 'master'
+        type: string
+
+  # Uncomment to run periodically (Mondays, 06:00 UTC)
+  # schedule:
+  #   - cron: '0 6 * * 1'
+
+jobs:
+  network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    container:
+      image: ecoon/watershed_workflow-ci_env:${{ inputs.ci_env_tag || 'master' }}
+
+    env:
+      DATA_DIR: ${{ github.workspace }}/../ww_data
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install watershed_workflow
+        run: conda run -n watershed_workflow_CI python -m pip install -e .
+
+      - name: Configure data directory and credentials
+        env:
+          EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
+          EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
+          HFHYDRODATA_EMAIL: ${{ secrets.HFHYDRODATA_EMAIL }}
+          HFHYDRODATA_PIN: ${{ secrets.HFHYDRODATA_PIN }}
+        run: |
+          # start from an empty data directory so that everything is downloaded
+          mkdir -p ${DATA_DIR}
+          {
+            cat watershed_workflowrc
+            echo "data_directory : ${DATA_DIR}"
+            if [ -n "${EARTHDATA_USERNAME}" ]; then
+              printf '\n[AppEEARS]\nusername : %s\npassword : %s\n' "${EARTHDATA_USERNAME}" "${EARTHDATA_PASSWORD}"
+            fi
+            if [ -n "${HFHYDRODATA_EMAIL}" ]; then
+              printf '\n[HFHydrodata]\nemail : %s\npin : %s\n' "${HFHYDRODATA_EMAIL}" "${HFHYDRODATA_PIN}"
+            fi
+          } > ~/.watershed_workflowrc
+
+          if [ -n "${EARTHDATA_USERNAME}" ]; then
+            printf 'machine urs.earthdata.nasa.gov login %s password %s\n' "${EARTHDATA_USERNAME}" "${EARTHDATA_PASSWORD}" > ~/.netrc
+            chmod 600 ~/.netrc
+          fi
+
+      - name: Library network tests
+        run: >
+          conda run --no-capture-output -n watershed_workflow_CI
+          python -m pytest watershed_workflow/ -m network -v -rA
+          --junitxml=test-results/library.xml
+
+      - name: Notebook network tests
+        if: ${{ !cancelled() }}
+        run: >
+          conda run --no-capture-output -n watershed_workflow_CI
+          python -m pytest --nbmake --nbmake-kernel=python3 examples/ -m network -v -rA
+          --junitxml=test-results/notebooks.xml
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: network-test-results
+          path: test-results/

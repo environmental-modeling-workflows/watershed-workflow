@@ -215,3 +215,43 @@ def test_getShapesByID_named_field_invalid_value(shapefile_path):
     # Should return empty dataframe
     assert isinstance(result, gpd.GeoDataFrame)
     assert len(result) == 0
+
+
+@pytest.fixture
+def parquet_path(multi_shape_path, tmp_path):
+    """GeoParquet file with a second geometry column"""
+    df = gpd.read_file(multi_shape_path)
+    df['point'] = df.geometry.representative_point()
+    fname = os.path.join(tmp_path, 'multi_shapes.parquet')
+    df.to_parquet(fname)
+    return fname
+
+
+def test_parquet_getShapes(parquet_path, multi_shape_path):
+    """Test reading all shapes from GeoParquet"""
+    result = ManagerShapefile(parquet_path).getShapes()
+    assert len(result) == len(gpd.read_file(multi_shape_path))
+    assert result.geometry.name == 'geometry'
+    assert isinstance(result['point'], gpd.GeoSeries)
+
+
+def test_parquet_getShapesByGeometry(parquet_path, multi_shape_path, test_geometry, test_crs):
+    """Test that GeoParquet matches the original file, with all geometry columns reprojected"""
+    expected = ManagerShapefile(multi_shape_path, id_name='OBJECTID_1').getShapesByGeometry(test_geometry, test_crs, out_crs=test_crs)
+    result = ManagerShapefile(parquet_path, id_name='OBJECTID_1').getShapesByGeometry(test_geometry, test_crs, out_crs=test_crs)
+
+    assert len(result) > 0
+    assert list(result[names.ID]) == list(expected[names.ID])
+    assert result.geometry.geom_equals(expected.geometry, align=False).all()
+
+    assert watershed_workflow.crs.isEqual(result['point'].crs, test_crs)
+    assert result['point'].within(result.geometry).all()
+
+
+def test_parquet_getShapesByID_row_indices(parquet_path):
+    """Test getShapesByID with row indices from GeoParquet"""
+    ms = ManagerShapefile(parquet_path)
+    assert len(ms.getShapesByID(['0'])) == 1
+    assert len(ms.getShapesByID(['0', '5', '10'])) == 3
+    with pytest.raises(ValueError, match="Invalid row indices"):
+        ms.getShapesByID(['999'])

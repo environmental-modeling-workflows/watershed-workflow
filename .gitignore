@@ -16,6 +16,9 @@ examples/**/*.nc
 examples/**/*.xml
 examples/**/*.csv
 examples/**/*.exo
+# cached data required to run the Coweeta example offline (e.g. in CI)
+!examples/Coweeta/input_data/hydrography/*.parquet
+!examples/Coweeta/input_data/elevation/3DEP_60m/py3dep_tnm/py3dep_tnm_-83.4818_35.0244_-83.4181_35.0773/data.nc
 CLAUDE*
 .claude
 cache
